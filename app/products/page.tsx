@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import Header from "@/components/Header"; // Đảm bảo đường dẫn này đúng với project của bạn
+import Header from "@/components/Header"; 
 
-// Import dữ liệu từ 2 file JSON
+// Import dữ liệu từ 3 file JSON
 import phoneData from '../data/data_phone.json'; 
 import tabletData from '../data/data_tablet.json'; 
+import laptopData from '../data/data_laptop.json';
 
 export default async function ProductsPage({
     searchParams,
@@ -17,9 +18,10 @@ export default async function ProductsPage({
     // 2. CHUYỂN ĐỔI DỮ LIỆU VỀ DẠNG MẢNG
     const phones = Array.isArray(phoneData) ? phoneData : [phoneData];
     const tablets = Array.isArray(tabletData) ? tabletData : [tabletData];
+    const laptops = Array.isArray(laptopData) ? laptopData : [laptopData]; // <-- Xử lý laptop
 
-    // 3. GỘP 2 MẢNG LẠI VỚI NHAU
-    const allProducts: any[] = [...phones, ...tablets];
+    // 3. GỘP 3 MẢNG LẠI VỚI NHAU
+    const allProducts: any[] = [...phones, ...tablets, ...laptops]; // <-- Gộp laptop vào
 
     // 4. LỌC SẢN PHẨM THEO TỪ KHÓA (Không phân biệt hoa thường)
     const filteredProducts = queryName
@@ -75,7 +77,6 @@ export default async function ProductsPage({
                             <div className="mb-8">
                                 <h3 className="mb-2 text-xs font-bold text-gray-800">Mức giá</h3>
                                 <p className="mb-4 text-xs font-bold text-[#EE4D2D]">10.10M - 20M</p>
-                                {/* Thanh Slider giả lập */}
                                 <div className="relative flex h-1 w-full items-center rounded-full bg-gray-200">
                                     <div className="absolute left-[20%] right-[30%] h-full bg-[#EE4D2D]"></div>
                                     <div className="absolute left-[20%] h-3.5 w-3.5 -ml-1.5 rounded-full border-[2.5px] border-[#EE4D2D] bg-white shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
@@ -125,25 +126,38 @@ export default async function ProductsPage({
                         {filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:gap-5">
                                 {filteredProducts.map((product: any, index) => {
-                                    // 1. Trích xuất thông tin cấu hình từ JSON
-                                    const cpu = product.detailed_specs?.["Chip xử lý (CPU)"] || product.detailed_specs?.["Vi xử lý (CPU)"] || "Đang cập nhật CPU";
+                                    // 1. Trích xuất CPU (Hỗ trợ thêm "Công nghệ CPU" của laptop)
+                                    const cpu = product.detailed_specs?.["Chip xử lý (CPU)"] || 
+                                                product.detailed_specs?.["Vi xử lý (CPU)"] || 
+                                                product.detailed_specs?.["Công nghệ CPU"] || "Đang cập nhật CPU";
+                                                
+                                    // 2. Trích xuất Màn hình (Hỗ trợ thêm "Kích thước màn hình" của laptop)
                                     const screenTech = product.detailed_specs?.["Công nghệ màn hình"] || "";
-                                    const screenSize = product.detailed_specs?.["Màn hình rộng"] || product.detailed_specs?.["Màn hình"] || "";
+                                    const screenSize = product.detailed_specs?.["Màn hình rộng"] || 
+                                                       product.detailed_specs?.["Màn hình"] || 
+                                                       product.detailed_specs?.["Kích thước màn hình"] || "";
                                     
-                                    // Tách lấy kích thước màn hình
                                     const cleanScreenSize = screenSize.split("-")[0].trim();
                                     const screenInfo = [cleanScreenSize, screenTech].filter(Boolean).join(", ") || "Đang cập nhật màn hình";
                                     
                                     const ram = product.detailed_specs?.["RAM"] || "";
                                     const storageOptions = product.storage_variants?.map((v: any) => v.storage_name) || [];
 
-                                    // --- XỬ LÝ GIÁ (Hỗ trợ cả Phone và Tablet) ---
-                                    // Mặc định lấy main_price nếu có
-                                    let displayCurrentPrice = product.main_price || "Giá liên hệ";
+                                    // --- XỬ LÝ GIÁ (Hỗ trợ Phone, Tablet và Laptop) ---
+                                    let basePrice = product.main_price; // Ưu tiên main_price trước
+                                    
+                                    // Nếu không có main_price nhưng có trường price (như Laptop)
+                                    if (!basePrice && product.price) {
+                                        const priceNum = parseFloat(product.price);
+                                        // Format số 16490000 thành 16.490.000₫
+                                        basePrice = !isNaN(priceNum) ? priceNum.toLocaleString('vi-VN') + '₫' : product.price;
+                                    }
+
+                                    let displayCurrentPrice = basePrice || "Giá liên hệ";
                                     let displayOriginalPrice = "";
                                     let discountPercent = 0;
 
-                                    // Ưu tiên lấy từ service_packages nếu có dữ liệu (thường dùng cho điện thoại)
+                                    // Chạy logic % giảm giá (thường dùng cho điện thoại)
                                     if (product.service_packages && product.service_packages.length > 0) {
                                         const activePackage = product.service_packages.find((p: any) => p.is_active) || product.service_packages[0];
 
@@ -166,10 +180,14 @@ export default async function ProductsPage({
 
                                     // --- XỬ LÝ ĐÁNH GIÁ ---
                                     const reviewCount = product.customer_reviews ? product.customer_reviews.length : 0;
+                                    // Lấy trung bình sao nếu có, nếu không mặc định hiển thị 5 sao màu xám/vàng
+                                    const avgRating = reviewCount > 0 
+                                        ? product.customer_reviews.reduce((acc: number, curr: any) => acc + (curr.rating_stars || 5), 0) / reviewCount 
+                                        : 0;
 
                                     return (
                                         <Link 
-                                            href={"#"} 
+                                            href={`/products/${product.sku}`} 
                                             key={product.sku || index} 
                                             className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[#EE4D2D]/30"
                                         >
@@ -188,7 +206,7 @@ export default async function ProductsPage({
 
                                             {/* Thông tin sản phẩm */}
                                             <div className="flex flex-1 flex-col p-4 bg-white z-10 relative">
-                                                <h3 className="mb-2 line-clamp-2 text-[15px] font-medium text-gray-900 group-hover:text-blue-600 transition-colors leading-snug">
+                                                <h3 className="mb-2 line-clamp-2 text-[15px] font-medium text-gray-900 group-hover:text-[#EE4D2D] transition-colors leading-snug">
                                                     {product.product_name}
                                                 </h3>
 
@@ -235,7 +253,10 @@ export default async function ProductsPage({
                                                     {/* Cụm đánh giá sao */}
                                                     <div className="flex items-center gap-1 mt-1.5 text-[12px] text-gray-400">
                                                         <div className="flex text-[#FB6E2E]">
-                                                            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                                                            {/* Render đủ 5 sao, tô màu dựa trên điểm */}
+                                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                                <span key={star} className={star <= Math.round(avgRating) || reviewCount === 0 ? "text-[#FFD400]" : "text-gray-300"}>★</span>
+                                                            ))}
                                                         </div>
                                                         <span>({reviewCount})</span>
                                                     </div>

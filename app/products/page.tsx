@@ -18,10 +18,10 @@ export default async function ProductsPage({
     // 2. CHUYỂN ĐỔI DỮ LIỆU VỀ DẠNG MẢNG
     const phones = Array.isArray(phoneData) ? phoneData : [phoneData];
     const tablets = Array.isArray(tabletData) ? tabletData : [tabletData];
-    const laptops = Array.isArray(laptopData) ? laptopData : [laptopData]; // <-- Xử lý laptop
+    const laptops = Array.isArray(laptopData) ? laptopData : [laptopData]; 
 
     // 3. GỘP 3 MẢNG LẠI VỚI NHAU
-    const allProducts: any[] = [...phones, ...tablets, ...laptops]; // <-- Gộp laptop vào
+    const allProducts: any[] = [...phones, ...tablets, ...laptops]; 
 
     // 4. LỌC SẢN PHẨM THEO TỪ KHÓA (Không phân biệt hoa thường)
     const filteredProducts = queryName
@@ -126,12 +126,12 @@ export default async function ProductsPage({
                         {filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:gap-5">
                                 {filteredProducts.map((product: any, index) => {
-                                    // 1. Trích xuất CPU (Hỗ trợ thêm "Công nghệ CPU" của laptop)
+                                    // 1. Trích xuất CPU 
                                     const cpu = product.detailed_specs?.["Chip xử lý (CPU)"] || 
                                                 product.detailed_specs?.["Vi xử lý (CPU)"] || 
                                                 product.detailed_specs?.["Công nghệ CPU"] || "Đang cập nhật CPU";
                                                 
-                                    // 2. Trích xuất Màn hình (Hỗ trợ thêm "Kích thước màn hình" của laptop)
+                                    // 2. Trích xuất Màn hình 
                                     const screenTech = product.detailed_specs?.["Công nghệ màn hình"] || "";
                                     const screenSize = product.detailed_specs?.["Màn hình rộng"] || 
                                                        product.detailed_specs?.["Màn hình"] || 
@@ -143,44 +143,28 @@ export default async function ProductsPage({
                                     const ram = product.detailed_specs?.["RAM"] || "";
                                     const storageOptions = product.storage_variants?.map((v: any) => v.storage_name) || [];
 
-                                    // --- XỬ LÝ GIÁ (Hỗ trợ Phone, Tablet và Laptop) ---
-                                    let basePrice = product.main_price; // Ưu tiên main_price trước
-                                    
-                                    // Nếu không có main_price nhưng có trường price (như Laptop)
-                                    if (!basePrice && product.price) {
-                                        const priceNum = parseFloat(product.price);
-                                        // Format số 16490000 thành 16.490.000₫
-                                        basePrice = !isNaN(priceNum) ? priceNum.toLocaleString('vi-VN') + '₫' : product.price;
-                                    }
-
-                                    let displayCurrentPrice = basePrice || "Giá liên hệ";
-                                    let displayOriginalPrice = "";
+                                    // --- XỬ LÝ GIÁ (Đã được đơn giản hóa nhờ data chuẩn) ---
+                                    let displayCurrentPrice = product.current_price || "Giá liên hệ";
+                                    let displayOriginalPrice = product.original_price || "";
                                     let discountPercent = 0;
 
-                                    // Chạy logic % giảm giá (thường dùng cho điện thoại)
-                                    if (product.service_packages && product.service_packages.length > 0) {
-                                        const activePackage = product.service_packages.find((p: any) => p.is_active) || product.service_packages[0];
+                                    // Tính % giảm giá nếu có cả giá hiện tại và giá gốc
+                                    if (displayCurrentPrice && displayOriginalPrice && displayCurrentPrice !== "Giá liên hệ" && displayCurrentPrice !== displayOriginalPrice) {
+                                        const currentStr = displayCurrentPrice.replace(/[^\d]/g, '');
+                                        const originalStr = displayOriginalPrice.replace(/[^\d]/g, '');
+                                        const currentNum = parseInt(currentStr, 10);
+                                        const originalNum = parseInt(originalStr, 10);
 
-                                        if (activePackage) {
-                                            displayCurrentPrice = activePackage.current_price || displayCurrentPrice;
-                                            displayOriginalPrice = activePackage.original_price || "";
-
-                                            if (displayCurrentPrice && displayOriginalPrice && displayCurrentPrice !== "Giá liên hệ") {
-                                                const currentStr = displayCurrentPrice.replace(/[^\d]/g, '');
-                                                const originalStr = displayOriginalPrice.replace(/[^\d]/g, '');
-                                                const currentNum = parseInt(currentStr, 10);
-                                                const originalNum = parseInt(originalStr, 10);
-
-                                                if (!isNaN(currentNum) && !isNaN(originalNum) && originalNum > 0 && originalNum > currentNum) {
-                                                    discountPercent = Math.round(((originalNum - currentNum) / originalNum) * 100);
-                                                }
-                                            }
+                                        if (!isNaN(currentNum) && !isNaN(originalNum) && originalNum > 0 && originalNum > currentNum) {
+                                            discountPercent = Math.round(((originalNum - currentNum) / originalNum) * 100);
                                         }
+                                    } else {
+                                        // Nếu giá bằng nhau thì không hiện giá gạch ngang
+                                        displayOriginalPrice = "";
                                     }
 
                                     // --- XỬ LÝ ĐÁNH GIÁ ---
                                     const reviewCount = product.customer_reviews ? product.customer_reviews.length : 0;
-                                    // Lấy trung bình sao nếu có, nếu không mặc định hiển thị 5 sao màu xám/vàng
                                     const avgRating = reviewCount > 0 
                                         ? product.customer_reviews.reduce((acc: number, curr: any) => acc + (curr.rating_stars || 5), 0) / reviewCount 
                                         : 0;
@@ -238,7 +222,7 @@ export default async function ProductsPage({
                                                     
                                                     {/* Khu vực Giá gốc & Phần trăm giảm */}
                                                     <div className="flex items-center gap-2 mt-0.5 min-h-[20px]">
-                                                        {discountPercent > 0 && (
+                                                        {discountPercent > 0 && displayOriginalPrice && (
                                                             <>
                                                                 <span className="text-sm text-gray-400 line-through">
                                                                     {displayOriginalPrice}
@@ -253,7 +237,6 @@ export default async function ProductsPage({
                                                     {/* Cụm đánh giá sao */}
                                                     <div className="flex items-center gap-1 mt-1.5 text-[12px] text-gray-400">
                                                         <div className="flex text-[#FB6E2E]">
-                                                            {/* Render đủ 5 sao, tô màu dựa trên điểm */}
                                                             {[1, 2, 3, 4, 5].map((star) => (
                                                                 <span key={star} className={star <= Math.round(avgRating) || reviewCount === 0 ? "text-[#FFD400]" : "text-gray-300"}>★</span>
                                                             ))}

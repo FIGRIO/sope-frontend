@@ -8,7 +8,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M4 11 inch WiFi 128GB",
-        "main_price": "16.390.000₫",
         "short_description": "iPad Air M4 11 inch 128GB giá rẻ, trả trước 0đ, góp 0%, PMH Apple Pencil 400K, thu cũ 2tr, BH 1 đổi 1. Chip M4 mạnh mẽ, RAM 12GB, pin cả ngày. Đặt ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Củ sạc nhanh rời đầu Type C, Hộp máy, Cáp Type C - Type C, Sách hướng dẫn",
@@ -89,7 +88,10 @@
                 "review_content": null,
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "16.390.000₫",
+        "current_price": "16.390.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/oppo-pad-5-8gb-256gb",
@@ -100,7 +102,6 @@
             ]
         ],
         "product_name": "Máy tính bảng OPPO Pad 5 8GB/256GB",
-        "main_price": "13.990.000₫",
         "short_description": "OPPO Pad 5 8GB/256GB giá tốt, nhận bộ quà đến 3 triệu, tặng bút cảm ứng OPPO Pencil 2R, bàn phím thông minh, bảo hành 18 tháng, trả chậm 0% lãi suất. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "LTPS LCD",
@@ -158,7 +159,10 @@
                 "review_content": null,
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "13.990.000₫",
+        "current_price": "13.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-pad-8-8gb-128gb",
@@ -169,7 +173,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Pad 8 8GB/128GB",
-        "main_price": "11.190.000₫",
         "short_description": "Xiaomi Pad 8 8GB/128GB chính hãng, giá tốt, giảm ngay 800k hoặc PMH 1 triệu đồng, trả chậm 0% lãi suất, bảo hành 18 tháng, 1 đổi 1 trong 30 ngày. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Củ sạc nhanh rời đầu Type A, Cây lấy sim, Hộp máy, Cáp Type C - Type A, Sách hướng dẫn",
@@ -232,7 +235,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "11.190.000₫",
+        "current_price": "11.190.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-a11-plus-5g-6gb-128gb",
@@ -243,7 +249,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab A11+ 5G 6GB/128GB",
-        "main_price": "8.590.000₫",
         "short_description": "Samsung Galaxy Tab A11+ (Plus) 5G 6GB/128GB giá tốt, tặng bộ quà dịch vụ 3.6tr, trả chậm 0% lãi suất, giảm ngay 300K hoặc tặng phiếu mua hàng 350K. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -297,7 +302,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "8.590.000₫",
+        "current_price": "8.590.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-a11-plus-wifi-6gb-128gb",
@@ -308,7 +316,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab A11+ WiFi 6GB/128GB",
-        "main_price": "6.990.000₫",
         "short_description": "Samsung Galaxy Tab A11+ (Plus) Wifi 6GB/128GB giá tốt, tặng bộ quà dịch vụ 3.6tr, giảm thêm 200K cho HSSV-GV, giảm ngay 300K hoặc tặng PMH 350K. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -376,7 +383,10 @@
                 "review_content": null,
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "6.990.000₫",
+        "current_price": "6.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-pad-8-pro-8gb-128gb",
@@ -387,7 +397,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Pad 8 Pro 8GB/128GB",
-        "main_price": "16.190.000₫",
         "short_description": "Xiaomi Pad 8 Pro 8GB/128GB chính hãng, giá tốt, thu cũ giảm đến 5tr, giảm ngay 800k hoặc PMH 1 triệu đồng, bảo hành 18 tháng, trả chậm 0% lãi suất. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A, Cây lấy sim, Hộp máy, Sách hướng dẫn",
@@ -447,7 +456,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "16.190.000₫",
+        "current_price": "16.190.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/oppo-pad-se-matte-display-edition",
@@ -458,7 +470,6 @@
             ]
         ],
         "product_name": "Máy tính bảng OPPO Pad SE WiFi màn hình nhám 4GB/128GB",
-        "main_price": "7.290.000₫",
         "short_description": "OPPO Pad SE màn hình nhám 4GB/128GB chính hãng, giá tốt, 1 đổi 1 trong 30 ngày, giảm ngay 200k, trả chậm 0% lãi suất - trả trước từ 0đ. Click mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "IPS LCD",
@@ -512,7 +523,10 @@
                 "review_content": "Máy yếu, lướt chậm, vào ứng dụng chưa được 5p bị văng ra, tuỳ theo giá tiền nên k trách được, mình mới mua 2 tháng còn bảo hành giờ muốn đổi lên máy mạnh hơn có được không ạ",
                 "rating_stars": 3.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "7.290.000₫",
+        "current_price": "7.290.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-11-wifi-128gb",
@@ -523,7 +537,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad A16 WiFi 128GB",
-        "main_price": "9.790.000₫",
         "short_description": "iPad Gen 11 (A16) WiFi 128GB giá rẻ, trả trước 0đ, góp 0%, ưu đãi 400K, thu cũ 2tr, hư gì đổi nấy 12 tháng. Màn hình 11 inch, chip A16, pin đến 10h. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Sách hướng dẫn, Củ sạc nhanh rời đầu Type C, Cáp Type C - Type C",
@@ -641,7 +654,10 @@
                 "review_content": "Ngon mà mượt lắm mọi người mua đi 4loa nghe âm thanh hay máy mượt vô đối trong tầm giá",
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "9.790.000₫",
+        "current_price": "9.790.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-11-5g-128gb",
@@ -652,7 +668,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad A16 5G 128GB",
-        "main_price": "13.990.000₫",
         "short_description": "Mua máy tính bảng Apple iPad A16 5G 128GB chính hãng, giá rẻ, mua trả góp 0% lãi suất, trả trước 0 đồng, giảm thêm 300K cho HSSV. Click xem ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Sách hướng dẫn, Củ sạc nhanh rời đầu Type C, Cáp Type C - Type C",
@@ -744,7 +759,10 @@
                 "review_content": "pin nhanh hết mau tuộc pin sau 7 tháng sd màng hình bị đơ vào ứng dụng bị dăn ra pin sài dc 4h thôi",
                 "rating_stars": 1.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "13.990.000₫",
+        "current_price": "13.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/oppo-pad-neo-6gb",
@@ -755,7 +773,6 @@
             ]
         ],
         "product_name": "Máy tính bảng OPPO Pad Neo WiFi 6GB/128GB",
-        "main_price": "6.370.000₫",
         "short_description": "OPPO Pad Neo WiFi 6GB/128GB giá rẻ, có mua trả chậm, nhiều khuyến mãi và quà tặng hấp dẫn. Giao hàng nhanh chóng, 1 đổi 1 trong 1 tháng tận nhà nếu lỗi.",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Cây lấy sim, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -829,7 +846,10 @@
                 "review_content": "Kết nối wifi hơi yếu. Điện thoại và lap top của mình cùng sài 1 mạng wifi đều mạnh, còn sài nó thì cứ chốc chốc lại lỗi kết nối, mạng không khả dụng quài luôn, xem video trên Youtube hay X nhiều lúc nó load quay mòng mòng....",
                 "rating_stars": 4.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "6.370.000₫",
+        "current_price": "6.370.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s10-lite-5g-6gb-128gb",
@@ -840,7 +860,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S10 Lite 5G 6GB/128GB",
-        "main_price": "10.490.000₫",
         "short_description": "Samsung Galaxy Tab S10 Lite 5G 6GB/128GB giá tốt, giảm ngay 500K hoặc tặng PMH 500K hoặc giảm thêm 10% cho HSSV-GV, tặng gói dịch vụ trị giá 4.5tr. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -901,7 +920,10 @@
                 "review_content": "Dây sạc chính hãng sạc chậm hơn so với dây sạc nhanh ở nhà . Mua hàng có dây sạc nhưng không kèm theo củ sạc. Thay vì tặng quà camera, nên tặng củ sạc cho khách .Nên cần coi lại tính hợp lý trong chính sách bán hàng .",
                 "rating_stars": 3.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "10.490.000₫",
+        "current_price": "10.490.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-a11-4g-4gb-64gb",
@@ -912,7 +934,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab A11 4G 4GB/64GB",
-        "main_price": "4.990.000₫",
         "short_description": "Samsung Galaxy Tab A11 4G 4GB/64GB giá tốt, giảm ngay 300K, giảm thêm đến 200K cho HSSV-GV, trả chậm 0% lãi suất, bảo hành 12 tháng chính hãng. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -966,7 +987,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "4.990.000₫",
+        "current_price": "4.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/honor-pad-x7-wifi-4gb-64gb",
@@ -977,7 +1001,6 @@
             ]
         ],
         "product_name": "Máy tính bảng HONOR Pad X7 WiFi 4GB/64GB",
-        "main_price": "3.290.000₫",
         "short_description": "Mua Honor Pad X7 Wifi 4GB/64GB giá tốt, tặng kèm ốp lưng da, trả góp 0% lãi suất, 1 đổi 1 trong 100 ngày, thu cũ trợ giá đến 300K, bảo hành 18 tháng. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Củ sạc nhanh rời đầu Type C, Cáp Type C - Type C",
@@ -1034,7 +1057,10 @@
                 "review_content": "Máy dùng tạm ổn doi khi bị nóng bất thường",
                 "rating_stars": 3.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "3.290.000₫",
+        "current_price": "3.290.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s11-5g-12gb-128gb",
@@ -1045,7 +1071,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S11 5G 12GB/128GB",
-        "main_price": "25.190.000₫",
         "short_description": "Samsung Galaxy Tab S11 5G 12GB/128GB giá tốt, tặng gói dịch vụ trị giá 6.5 triệu, giảm ngay 2 triệu, trả chậm 0% lãi suất, bảo hành 12 tháng. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "Dynamic AMOLED 2X",
@@ -1098,7 +1123,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "25.190.000₫",
+        "current_price": "25.190.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/lenovo-idea-tab-5g-8gb-128gb",
@@ -1109,7 +1137,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Lenovo Idea Tab 5G 8GB/128GB",
-        "main_price": "7.090.000₫",
         "short_description": "Lenovo Idea Tab 5G 8GB/128GB giá tốt, giảm ngay 200k hoặc tặng phiếu mua hàng trị giá 250k, tặng bao da kèm bút trị giá 990k, trả chậm 0% lãi suất. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Bút cảm ứng, Cáp Type C - Type A, Củ sạc rời đầu Type A, Cây lấy sim, Hộp máy, Sách hướng dẫn",
@@ -1175,7 +1202,10 @@
                 "review_content": "Trải nghiệm mua hàng rất tệ. Nhân viên hỗ trợ trả lời mỗi người một kiểu. Khi đặt hàng, tôi yêu cầu giao máy nguyên seal. Các bạn phản hồi lại nói không cam kết nguyên seal. Lý do Bạn A Phải test trước, nếu còn nguyên seal thì hãng ko cho đổi. Bạn B Phải test trước, nếu ko hàng giao cho khách mà lỗi thì các bạn phải đền. Bạn C Do có khách mua hàng muốn mở ra xem màu. Cho hỏi trong cả 3 lý do trên, lý do nào tự các bạn cảm thấy thuyết phục Được rồi, tôi đồng ý không nguyên seal, vì các bạn cam kết hàng mới chưa qua sử dụng, chưa từng kích hoạt bảo hành. Tôi có xem về chế độ bảo hành trên web, khi tôi muốn xác nhận lại với hỗ trợ, các bạn lại vòng vo lần nữa. Tôi hỏi Lỗi do nhà sản xuất, trong tháng đầu tôi có thể đổi trả không mất phí ko. Bạn A Dạ chị được đổi mới. Bạn B Phải gửi lên hãng để hãng đánh giá lỗi, chưa biết lỗi gì nên e chưa trả lời ngay được. Bây giờ đến khâu bảo hành. Tôi ko rõ vì sao sản phẩm tôi vừa mua hôm trước, hôm sau check thông tin trên web hãng, bảo hành đã chạy từ hơn 10 tháng trước. Và tôi cũng ko biết vì sao từ sau khi nhận hàng, tôi thử liên lạc với các bạn mấy lần không được. Qua chat zalo, các bạn nói sẽ có hỗ trợ gọi lại trước 17h, ko ai gọi. Hôm sau tôi hỏi lại, bạn cũng ko giải quyết ngay, lại hẹn sẽ có nhân viên gọi lại trước 21h30. Cũng ko ai gọi, đúng ko. Tôi khuyên các bạn một câu Đào tạo lại đội ngũ nhân viên chăm sóc khách hàng. Các bạn nói chuyện rất lịch sự, nhưng cách trả lời cố gắng né rủi ro của các bạn thì hãy xem lại, và cũng nên thống nhất, trả lời thẳng luôn vào trọng tâm câu hỏi của khách ấy. Vấn đề đơn giản mà tôi thấy tôi cứ phải hỏi đi hỏi lại mãi, chỉ vì chả ai nói giống ai. Tôi có thể cho các bạn câu trả lời mẫu Máy của chị là hàng mới chính hãng. Nhưng hãng tính bảo hành từ ngày xuất kho để theo dõi và kiểm soát tồn kho, nên có thể bị lệch với thời điểm chị mua. Bên e sẽ hỗ trợ liên hệ hãng để cập nhật lại đúng ngày cho chị, mọi quyền lợi của chị vẫn giữ như cam kết. Các bạn có làm được ko Ko hề. . Tôi vốn vẫn muốn chờ bên phía tgdd liên lạc lại nhưng thôi ko cần nữa. Tôi từ chối giao tiếp với bên bạn từ bây giờ. Lần trước đánh giá 3 sao vẫn còn là hào phóng, sao mà các bạn phải ẩn đi Nếu cần, tôi có thể giúp các bạn chia sẻ trải nghiệm mua hàng này lên mạng để mọi người đóng góp ý kiến Mệt như viết văn tiểu học. Hẹn không gặp lại.",
                 "rating_stars": 2.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "7.090.000₫",
+        "current_price": "7.090.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-redmi-pad-2-wifi-4gb-128gb",
@@ -1186,7 +1216,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad 2 WiFi 4GB/128GB",
-        "main_price": "5.690.000₫",
         "short_description": "Xiaomi Redmi Pad 2 WiFi 4GB/128GB chính hãng, giá tốt, nhận ưu đãi lên đến 500.000đ, bảo hành 18 tháng, trả chậm 0% lãi suất - trả trước từ 0đ. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -1278,7 +1307,10 @@
                 "review_content": "Con máy mình thất vọng nhất 2026,chip g100 unltra, chơi game liên quân giật lắc phải giảm đồ họa xuống mức thấp nhất mới chơi được, trong khi chip Snapdragon 680 đã ra mắt rất lâu của mình lại chơi mượt mà ko giật lắc,",
                 "rating_stars": 3.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "5.690.000₫",
+        "current_price": "5.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/masstel-tab-11-ultra-4gb-128gb",
@@ -1289,7 +1321,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Masstel Tab 11 Ultra 4G 4GB/128GB",
-        "main_price": "3.790.000₫",
         "short_description": "Máy tính bảng Masstel Tab 11 Ultra 4GB/128GB giá chỉ từ 3tr790, giảm ngay 200K hoặc tặng phiếu mua hàng trị giá đến 250K, bảo hành 12 tháng. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Bao da, Cây lấy sim, Hộp máy, Cáp Type C - Type C, Củ sạc nhanh rời đầu Type C",
@@ -1329,7 +1360,10 @@
         ],
         "color_variants": [],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "3.790.000₫",
+        "current_price": "3.790.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-mini-7-wifi",
@@ -1340,7 +1374,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad mini 7 WiFi 128GB",
-        "main_price": "13.290.000₫",
         "short_description": "iPad mini 7 WiFi 128GB giá rẻ, trả trước 0đ, góp 0%, thu cũ trợ giá 2tr, phiếu mua Apple Pencil 400K. Chip A17 Pro, RAM 8GB, mỏng nhẹ. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type-C, Củ sạc nhanh rời đầu Type C, Hộp máy, Sách hướng dẫn",
@@ -1449,7 +1482,10 @@
                 "review_content": "mua máy ở cầu dần vụ bản nam định,bóc siu bị chấm bẩn máy,bụi bẩn trong hộp dưới củ sạc,mà siu cực kì dễ bóc và dán lại,tại không có máy khác để đổi đành chấp nhận lấy,tổng đài gọi điện xuống siêu thị nói chỉ bẩn máy không bẩn trong hộp,siêu thị ăn không nói có.",
                 "rating_stars": 1.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "13.290.000₫",
+        "current_price": "13.290.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-redmi-pad-2-pro-6gb-128gb",
@@ -1460,7 +1496,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad 2 Pro WiFi 6GB/128GB",
-        "main_price": "7.690.000₫",
         "short_description": "Máy tính bảng Xiaomi Redmi Pad 2 Pro Wifi 6GB/128GB chính hãng, giá tốt, hiệu năng mạnh. Giảm đến 1tr2, trả góp 0% lãi suất, bảo hành 18 tháng. Đặt ngay đến 16/10!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -1544,7 +1579,10 @@
                 "review_content": "OK máy rất ổn pin trâu",
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "7.690.000₫",
+        "current_price": "7.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-pad-7-8gb-256gb",
@@ -1555,7 +1593,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Pad 7 WiFi 8GB/256GB",
-        "main_price": "11.290.000₫",
         "short_description": "Máy tính bảng Xiaomi Pad 7 8GB/256GB chính hãng, giá rẻ, giảm ngay 800K, tặng phiếu mua hàng máy lọc nước trị giá 300K, trả chậm 0% lãi suất. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -1628,7 +1665,10 @@
                 "review_content": "Bây giờ đổi trả hết bao % add",
                 "rating_stars": 4.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "11.290.000₫",
+        "current_price": "11.290.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/oppo-pad-3",
@@ -1639,7 +1679,6 @@
             ]
         ],
         "product_name": "Máy tính bảng OPPO Pad 3 8GB/256GB",
-        "main_price": "11.580.000₫",
         "short_description": "OPPO Pad 3 chính hãng, giá tốt, tặng vỏ bảo vệ máy tính bảng Oppo OPC2403 - Pad 3 hoặc giảm 400K, trả chậm 0% lãi suất, tặng thêm 12 tháng bảo hành. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "LTPS LCD",
@@ -1676,7 +1715,10 @@
                 "review_content": "Sản phẩm mới 12tr mà không kèm củ sạc.. quá tệ",
                 "rating_stars": 2.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "11.580.000₫",
+        "current_price": "11.580.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-pro-m4-11-inch-wifi-2tb",
@@ -1687,7 +1729,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Pro M4 11 inch WiFi 2TB",
-        "main_price": "50.990.000₫",
         "short_description": "Máy tính bảng iPad Pro M4 11 inch WiFi 2TB chính hãng, giá tốt, giảm ngay 3 triệu, trả chậm 0% lãi suất, thu cũ trợ giá đến 2 triệu, bảo hành 1 năm. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type C - Type C, Củ sạc rời đầu Type A ( 20W ), Hộp máy, Sách hướng dẫn",
@@ -1738,7 +1779,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "50.990.000₫",
+        "current_price": "50.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s10-fe-plus",
@@ -1749,7 +1793,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S10 FE+ WiFi 8GB/128GB",
-        "main_price": "15.990.000₫",
         "short_description": "Samsung Galaxy Tab S10 FE Plus 8GB/128GB chính hãng, giá tốt, tặng bảo hành mở rộng 12 tháng, giảm ngay 1 triệu, hư gì đổi nấy 12 tháng, bảo hành 1 năm. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -1810,7 +1853,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "15.990.000₫",
+        "current_price": "15.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s10-plus",
@@ -1821,7 +1867,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S10+ WiFi 12GB/256GB",
-        "main_price": "21.890.000₫",
         "short_description": "Samsung Galaxy Tab S10 Plus WIFI 256GB chính hãng, giá tốt, giảm ngay 5.5tr, mua trả chậm 0% lãi suất thẻ tín dụng qua Galaxy Member, bảo hành 1 năm. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "Dynamic AMOLED 2X",
@@ -1889,7 +1934,10 @@
                 "review_content": "máy dùng siêu ổn, mượt không khác gì với iPad mình chuyển từ iPad Pro M2 sang. Do tỉ lệ màn hình ngang nên khi xem phim cũng rất ok, đặc biệt dùng tấm màn Dynamic Amoled 2X nên chắc chắn sẽ rất đẹp. Loa siêu to, màn cũng không quá nhỏ, dùng để học tập + giải trí thì khỏi phải bàn. Không hề có một chút nóng hay giật lag nào.",
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "21.890.000₫",
+        "current_price": "21.890.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-mini-7-5g",
@@ -1900,7 +1948,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad mini 7 5G 128GB",
-        "main_price": "17.590.000₫",
         "short_description": "iPad mini 7 5G 128GB chính hãng, giá tốt, giảm ngay 2.2 triệu, trả chậm 0% lãi suất, thu cũ trợ giá lên đến 2tr, hư gì đổi nấy 12 tháng. Mua sản phẩm ngay tại đây!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type-C, Củ sạc nhanh rời đầu Type C, Hộp máy, Sách hướng dẫn",
@@ -1968,7 +2015,10 @@
                 "review_content": null,
                 "rating_stars": 4.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "17.590.000₫",
+        "current_price": "17.590.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s10-fe-5g",
@@ -1979,7 +2029,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S10 FE 5G 8GB/128GB",
-        "main_price": "14.190.000₫",
         "short_description": "Samsung Galaxy Tab S10 FE 5G 8GB/128GB chính hãng, giá tốt, giảm ngay 1 triệu, tặng phiếu mua hàng trị giá 1 triệu mua tablet, bảo hành chính hãng 1 năm. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -2039,7 +2088,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "14.190.000₫",
+        "current_price": "14.190.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/redmi-pad-se-8-7-4g-4gb-128gb",
@@ -2050,7 +2102,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad SE 8.7 4G 4GB/128GB",
-        "main_price": "4.400.000₫",
         "short_description": "Xiaomi Redmi Pad SE 8.7 4G 4GB/128GB giá rẻ, có mua trả chậm, nhiều khuyến mãi và quà tặng hấp dẫn. Giao hàng nhanh chóng, 1 đổi 1 trong 1 tháng tận nhà nếu lỗi.",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc rời đầu Type A",
@@ -2081,7 +2132,10 @@
         "storage_variants": [],
         "color_variants": [],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "4.400.000₫",
+        "current_price": "4.400.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-redmi-pad-2-4g-4gb-128gb",
@@ -2092,7 +2146,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad 2 4G 4GB/128GB",
-        "main_price": "6.490.000₫",
         "short_description": "Mua Xiaomi Redmi Pad 2 4G 4GB/128GB chính hãng, giá tốt, ưu đãi lên đến 500K, trả chậm 0% lãi suất - trả trước từ 0đ, 1 đổi 1 trong 30 ngày, bảo hành 18 tháng. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -2136,7 +2189,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "6.490.000₫",
+        "current_price": "6.490.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s10-fe",
@@ -2147,7 +2203,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S10 FE WiFi 8GB/128GB",
-        "main_price": "12.190.000₫",
         "short_description": "Máy tính bảng Samsung Galaxy Tab S10 FE WiFi 8GB/128GB chính hãng, giá tốt, giảm ngay 1 triệu, bảo hành chính hãng 1 năm, hư gì đổi nấy 12 tháng. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -2221,7 +2276,10 @@
                 "review_content": null,
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "12.190.000₫",
+        "current_price": "12.190.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/oppo-pad-se-4g-4gb-128gb",
@@ -2232,7 +2290,6 @@
             ]
         ],
         "product_name": "Máy tính bảng OPPO Pad SE 4G 4GB/128GB",
-        "main_price": "7.990.000₫",
         "short_description": "OPPO Pad SE 4G 4GB/128GB chính hãng, trả chậm 0% lãi suất - trả trước từ 0đ, giảm ngay 200k, 1 đổi 1 trong 30 ngày, học sinh - sinh viên giảm thêm 200K. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "IPS LCD",
@@ -2279,7 +2336,10 @@
                 "review_content": "Tạm ổn",
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "7.990.000₫",
+        "current_price": "7.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s10-lite-wifi-8gb-256gb",
@@ -2290,7 +2350,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S10 Lite Wifi 8GB/256GB",
-        "main_price": "11.190.000₫",
         "short_description": "Samsung Galaxy Tab S10 Lite Wifi 8GB/256GB giá rẻ, có mua trả chậm, nhiều khuyến mãi và quà tặng hấp dẫn. Giao hàng nhanh chóng, 1 đổi 1 trong 1 tháng tận nhà nếu lỗi.",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -2333,7 +2392,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "11.190.000₫",
+        "current_price": "11.190.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-redmi-pad-2-pro-5g-6gb-128gb",
@@ -2344,7 +2406,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad 2 Pro 5G 6GB/128GB",
-        "main_price": "8.990.000₫",
         "short_description": "Xiaomi Redmi Pad 2 Pro 5G 6GB/128GB giá rẻ, có mua trả chậm, nhiều khuyến mãi và quà tặng hấp dẫn. Giao hàng nhanh chóng, 1 đổi 1 trong 1 tháng tận nhà nếu lỗi.",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A, Hộp máy, Sách hướng dẫn",
@@ -2405,7 +2466,10 @@
                 "review_content": "Đã dùng trên 2 tháng. Pin của nó như vô tận vậy. Kích dup mở khóa cực nhạy. Kích dup khóa lại hơi khó nên cài app clock. Còn lại mượt mà màn đẹp. Nhược điểm là khá nặng",
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "8.990.000₫",
+        "current_price": "8.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-pad-2-wifi-9-7-4gb-64gb",
@@ -2416,7 +2480,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad 2 Wifi 9.7 4GB/64GB",
-        "main_price": "4.790.000₫",
         "short_description": "Xiaomi Redmi Pad 2 Wifi 9.7 4GB/64GB giá tốt, giảm đến 300K hoặc tặng PMH 350K, thu cũ trợ giá đến 1.5 triệu từ 1/5 - 31/5. Trả chậm 0%, BH 18 tháng, mua ngay tại TGDĐ!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -2474,7 +2537,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "4.790.000₫",
+        "current_price": "4.790.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-pro-m5-13-inch-wifi-256gb",
@@ -2485,7 +2551,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Pro M5 13 inch WiFi 256GB",
-        "main_price": "38.690.000₫",
         "short_description": "Máy tính bảng iPad Pro M5 13 inch WiFi 256GB chính hãng, iPadOS 26 mạnh mẽ, có mua trả chậm 0% lãi suất, giá tốt, thu cũ trợ giá đến 2 triệu. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Cáp Type-C, Củ sạc nhanh rời đầu Type C",
@@ -2547,7 +2612,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "38.690.000₫",
+        "current_price": "38.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-a11-wifi-4gb-64gb",
@@ -2558,7 +2626,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab A11 WiFi 4GB/64GB",
-        "main_price": "3.890.000₫",
         "short_description": "Samsung Galaxy Tab A11 Wifi 4GB/64GB giá tốt, hư gì đổi nấy 12 tháng, tặng PMH đồng hồ thông minh trị giá 1tr, giảm ngay 500K, bảo hành 12 tháng. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "TFT LCD",
@@ -2612,7 +2679,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "3.890.000₫",
+        "current_price": "3.890.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-air-m4-13-inch-wifi-128gb",
@@ -2623,7 +2693,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M4 13 inch WiFi 128GB",
-        "main_price": "21.590.000₫",
         "short_description": "Máy tính bảng iPad Air M4 13 inch 128GB với RAM 12GB, camera Center Stage đặt ngang cực tiện lợi, trả chậm 0%, thu cũ đổi mới 2 triệu, PMH 400K, BH 1 đổi 1. Đặt ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type C - Type C, Củ sạc nhanh rời đầu Type C, Hộp máy, Sách hướng dẫn",
@@ -2701,7 +2770,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "21.590.000₫",
+        "current_price": "21.590.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/xiaomi-pad-2-4g-9-7-4gb-64gb",
@@ -2712,7 +2784,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad 2 4G 9.7 4GB/64GB",
-        "main_price": "5.690.000₫",
         "short_description": "Mua Xiaomi Redmi Pad 2 4G 9.7 4GB/64GB ưu đãi đến hết tháng 5 giảm đến 300K hoặc tặng PMH 350K, thu cũ trợ giá đến 1,5TR, BH 18 tháng. Tablet pin khủng, màn hình nét.",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc nhanh rời đầu Type A",
@@ -2772,7 +2843,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "5.690.000₫",
+        "current_price": "5.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-air-m4-11-inch-5g-128gb",
@@ -2783,7 +2857,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M4 11 inch 5G 128GB",
-        "main_price": "20.390.000₫",
         "short_description": "Máy tính bảng iPad Air M4 11 inch 5G 128GB tiết kiệm pin 30%, hỗ trợ eSIM an toàn, giá tốt, trả chậm 0% 12 tháng, thu cũ đổi mới 2 triệu, bảo hành 1 đổi 1. Đặt ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type C - Type C, Củ sạc nhanh rời đầu Type C, Hộp máy, Sách hướng dẫn",
@@ -2845,7 +2918,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "20.390.000₫",
+        "current_price": "20.390.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/honor-pad-x9a?utm_flashsale=1",
@@ -2856,7 +2932,6 @@
             ]
         ],
         "product_name": "Máy tính bảng HONOR Pad X9a 8GB/256GB",
-        "main_price": "8.490.000₫",
         "short_description": "Honor Pad X9a 8GB/256GB chính hãng, giá tốt, tặng bao da kèm bàn phím (trị giá 600K), thu cũ đổi mới trợ giá đến 1 triệu, bảo hành 18 tháng. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Cây lấy sim, Hộp máy, Cáp Type C - Type C, Củ sạc nhanh rời đầu Type C",
@@ -2892,7 +2967,10 @@
                 "review_content": "Mua xài chưa được 3 tháng cài có 1 game mà máy lag quá trời dù bộ nhớ còn trống nhiều.Không nên xài",
                 "rating_stars": 1.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "8.490.000₫",
+        "current_price": "8.490.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s11-wifi-12gb-128gb",
@@ -2903,7 +2981,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S11 WiFi 12GB/128GB",
-        "main_price": "21.490.000₫",
         "short_description": "Samsung Galaxy Tab S11 Wifi 12GB/128GB giá tốt, tặng gói dịch vụ trị giá 6.5 triệu, tặng phiếu mua hàng trị giá 2.5 triệu, trả chậm 0% lãi suất. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "Dynamic AMOLED 2X",
@@ -2969,7 +3046,10 @@
                 "review_content": "Máy tính bảng này thật sự không tốt, camera rất tệ, mic thu âm cũng không hay, hệ điều hành như trên điện thoại, không được tối ưu hóa cho máy tính bảng. Không đáng để mua.",
                 "rating_stars": 1.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "21.490.000₫",
+        "current_price": "21.490.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-air-m4-13-inch-5g-128gb",
@@ -2980,7 +3060,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M4 13 inch 5G 128GB",
-        "main_price": "25.690.000₫",
         "short_description": "Máy tính bảng iPad Air M4 13 inch 5G kết nối dữ liệu siêu tốc, màn hình lớn đa nhiệm, iPadOS 26 thông minh, bảo hành 1 đổi 1, thu cũ lên đời 2 triệu, góp 0%. Đặt ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Cáp Type C - Type C, Củ sạc nhanh rời đầu Type C, Hộp máy, Sách hướng dẫn",
@@ -3053,7 +3132,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "25.690.000₫",
+        "current_price": "25.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/samsung-galaxy-tab-s11-ultra-5g-12gb-256gb",
@@ -3064,7 +3146,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB",
-        "main_price": "34.490.000₫",
         "short_description": "Samsung Galaxy Tab S11 Ultra 5G 12GB/256GB giá tốt, giảm ngay 2 triệu, trả chậm 0% lãi suất, giảm đến 3.5tr cho học sinh - sinh viên - giáo viên, BH 12 tháng. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "Dynamic AMOLED 2X",
@@ -3118,7 +3199,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "34.490.000₫",
+        "current_price": "34.490.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-pro-m5-11-inch-wifi-cellular-256gb",
@@ -3129,7 +3213,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Pro M5 11 inch 5G 256GB",
-        "main_price": "35.590.000₫",
         "short_description": "Mua iPad Pro M5 11 inch 5G 256GB chính hãng, giá tốt, nhận ưu đãi thu cũ đổi mới trợ giá đến 2tr, trả chậm 0% lãi suất. Hiệu năng mạnh mẽ với chip Apple M5. Mua ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "Ultra Retina XDR",
@@ -3187,7 +3270,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "35.590.000₫",
+        "current_price": "35.590.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-pro-m5-13-inch-wifi-cellular-256gb",
@@ -3198,7 +3284,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Pro M5 13 inch 5G 256GB",
-        "main_price": "43.690.000₫",
         "short_description": "iPad Pro M5 13 inch 5G 256GB ra mắt, giá tốt, iPadOS 26 mạnh mẽ, pin dùng cả ngày, có trả chậm 0%, thu cũ giảm đến 2tr, mua ngay nhận ưu đãi sản phẩm. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Cáp Type-C, Củ sạc nhanh rời đầu Type C",
@@ -3257,7 +3342,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "43.690.000₫",
+        "current_price": "43.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-doc-sach/may-doc-sach-new-kindle-2024-6-inch-16gb",
@@ -3268,7 +3356,6 @@
             ]
         ],
         "product_name": "Máy đọc sách New Kindle 2024 6 inch 16 GB",
-        "main_price": "4.990.000₫",
         "short_description": "Máy đọc sách New Kindle 16GB chính hãng. Màn hình sắc nét, chống chói, lưu trữ hàng ngàn cuốn sách. Giao hàng miễn phí toàn quốc. Xem ngay giá Kindle 6 inch 16GB!",
         "detailed_specs": {
             "Loại màn hình": "E-Ink Carta 1200 – Màn hình lõm",
@@ -3309,7 +3396,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "4.990.000₫",
+        "current_price": "4.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-doc-sach/may-doc-sach-boox-savi-6s-6-inch-32gb",
@@ -3320,7 +3410,6 @@
             ]
         ],
         "product_name": "Máy đọc sách Boox Savi 6S 6 inch 32GB",
-        "main_price": "4.390.000₫",
         "short_description": "Máy đọc sách Máy đọc sách Boox Savi 6S 6 inch 32GB chính hãng . Giao hàng miễn phí toàn quốc trong 1 giờ. 1 đổi 1 tháng đầu tiên với sản phẩm lỗi.",
         "detailed_specs": {
             "Loại màn hình": "E-Ink Carta 1200 – Màn hình lõm",
@@ -3353,7 +3442,10 @@
                 "review_content": "Sản phẩm tệ, chính sách bảo hành và chất lượng dịch vụ không chuyên nghiệp.Ngày 5/5 mình mua một máy đọc sách được vận chuyển từ TGDĐ. Tuy nhiên chỉ đến ngày 10/5, tức mới sử dụng được khoảng 5 ngày thì máy đã phát sinh lỗi/hư hỏng. Một sản phẩm điện tử mới mua chưa đầy 1 tuần đã gặp sự cố là điều rất khó chấp nhận.Sau khi mang máy đến cửa hàng để được hỗ trợ bảo hành, mình nghĩ sẽ được xử lý nhanh chóng vì sản phẩm còn trong thời hạn bảo hành.Nhưng đến thời điểm hiện tại, phía bảo hành vẫn chưa đưa ra hướng giải quyết rõ ràng cho khách hàng. Tôi liên tục phải chờ đợi, không có câu trả lời thỏa đáng, trong khi phía bảo hành lại có xu hướng đổ lỗi cho người tiêu dùng để từ chối trách nhiệm bảo hành. Trong suốt quá trình sử dụng tôi giữ máy rất cẩn thận, không va đập, không rơi vỡ, không tác động gây hư hỏng. Nhưng thay vì hỗ trợ khách hàng kiểm tra minh bạch và thiện chí xử lý, tôi lại cảm thấy mình đang bị đẩy trách nhiệm. Sản phẩm lỗi quá nhanh Quy trình bảo hành chậm Không có hướng giải quyết rõ ràng Khách hàng phải tự chứng minh mình không làm hư máy Quy trách nhiệm Thái độ xử lý khiến khách hàng mất niềm tinMình phải chờ đợi nhiều ngày, nhưng câu trả lời nhận được chỉ là đang kiểm tra, đợi phản hồi, không có thời gian cụ thể cũng không có phương án xử lý thỏa đáng.Điều khiến mình không hài lòng nhất không chỉ là chất lượng sản phẩm, mà còn là cách chăm sóc khách hàng và quy trình bảo hành quá chậm chạp. Khi khách hàng bỏ tiền mua sản phẩm mới, đặc biệt là tại một hệ thống lớn như Thế Giới Di Động, điều mong đợi là sự uy tín và trách nhiệm sau bán hàng. Nhưng trải nghiệm lần này thật sự khiến mình mất niềm tin, Việc để khách hàng chờ đợi kéo dài mà không có hướng giải quyết cụ thể là điều rất thiếu chuyên nghiệp. Mình chia sẻ trải nghiệm thực tế của bản thân, đồng thời mong phía cửa hàng và trung tâm bảo hành xem xét lại cách xử lý đủ và đúng dứt điểm hỗ trợ",
                 "rating_stars": 1.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "4.390.000₫",
+        "current_price": "4.390.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-doc-sach/combo-may-doc-sach-boox-savi-6-6-inch-32gb",
@@ -3364,7 +3456,6 @@
             ]
         ],
         "product_name": "Combo máy đọc sách Boox Savi 6 6 inch 32 GB",
-        "main_price": "5.990.000₫",
         "short_description": "Máy đọc sách Boox Savi 6 6 inch 32GB nhỏ gọn, màn hình E-Ink chống chói, pin lâu, cài app linh hoạt. Giao nhanh, chính hãng, đọc sách thoải mái mỗi ngày. Xem ngay!",
         "detailed_specs": {
             "Loại màn hình": "E-Ink Carta 1300 – Màn hình phủ kính chống loá",
@@ -3391,7 +3482,10 @@
         "storage_variants": [],
         "color_variants": [],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "5.990.000₫",
+        "current_price": "5.990.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-doc-sach/may-doc-sach-boox-go-6-6-inch-32gb",
@@ -3402,7 +3496,6 @@
             ]
         ],
         "product_name": "Máy đọc sách Boox Go 6 6 inch 32GB",
-        "main_price": "5.590.000₫",
         "short_description": "Máy đọc sách Máy đọc sách Boox Go 6 6 inch 32GB chính hãng . Giao hàng miễn phí toàn quốc trong 1 giờ. 1 đổi 1 tháng đầu tiên với sản phẩm lỗi.",
         "detailed_specs": {
             "Loại màn hình": "E-Ink Carta 1300 – Màn hình phủ kính chống loá",
@@ -3428,7 +3521,10 @@
         "storage_variants": [],
         "color_variants": [],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "5.590.000₫",
+        "current_price": "5.590.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-doc-sach/may-doc-sach-boox-palma2-6-inch-128gb",
@@ -3439,7 +3535,6 @@
             ]
         ],
         "product_name": "Máy đọc sách Boox Palma2 6.13 inch 128 GB",
-        "main_price": "9.790.000₫",
         "short_description": "Máy đọc sách Boox Palma2 6.13 inch 128GB nhỏ gọn như điện thoại, màn hình E-Ink chống chói, pin lâu, bộ nhớ lớn, đọc sách thoải mái mọi lúc mọi nơi. Xem ngay!",
         "detailed_specs": {
             "Loại màn hình": "E-Ink Carta 1200 – Màn hình lõm",
@@ -3466,7 +3561,10 @@
         "storage_variants": [],
         "color_variants": [],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "9.790.000₫",
+        "current_price": "9.790.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-pro-m5-11-inch-wifi-256gb?utm_flashsale=1",
@@ -3477,7 +3575,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Pro M5 11 inch WiFi 256GB",
-        "main_price": "27.890.000₫",
         "short_description": "iPad Pro M5 11 inch WiFi 256GB chính hãng, giá tốt, trả góp 0%, 400K mua Apple Pencil, thu cũ đến 2 triệu, 1 đổi 1 đến 12 tháng. Đặt mua ngay tại TGDĐ!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Củ sạc nhanh rời đầu Type C, Cáp Type-C",
@@ -3554,7 +3651,10 @@
                 "review_content": null,
                 "rating_stars": 5.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "27.890.000₫",
+        "current_price": "27.890.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-air-m3-11-inch-wifi-128gb?utm_flashsale=1",
@@ -3565,7 +3665,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M3 11 inch WiFi 128GB",
-        "main_price": "14.390.000₫",
         "short_description": "Máy tính bảng iPad Air M3 11 inch WiFi 128GB giá tốt, chip M3 nhanh hơn 35% CPU và 40% GPU, màn hình sắc nét, thu cũ trợ giá 2tr, BH 1 năm 1 đổi 1, giao nhanh. Mua ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Sách hướng dẫn, Củ sạc nhanh rời đầu Type C, Cáp Type C - Type C",
@@ -3627,7 +3726,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "14.390.000₫",
+        "current_price": "14.390.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-air-m3-13-inch-wifi-128gb?utm_flashsale=1",
@@ -3638,7 +3740,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M3 13 inch WiFi 128GB",
-        "main_price": "18.290.000₫",
         "short_description": "Mua máy tính bảng iPad Air M3 13 inch WiFi 128GB giá tốt, chính hãng Apple, có mua trả chậm 0% lãi suất, HSSV giảm thêm 300K, bảo hành chính hãng 1 năm. Xem ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Sách hướng dẫn, Củ sạc nhanh rời đầu Type C, Cáp Type C - Type C",
@@ -3700,7 +3801,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "18.290.000₫",
+        "current_price": "18.290.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/redmi-pad-se-8-7-wifi-6gb-128gb?utm_flashsale=1",
@@ -3711,7 +3815,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Xiaomi Redmi Pad SE 8.7 WiFi 6GB/128GB",
-        "main_price": "3.890.000₫",
         "short_description": "Xiaomi Redmi Pad SE 8.7 WiFi 6GB/128GB giá rẻ, có mua trả chậm, nhiều khuyến mãi và quà tặng hấp dẫn. Giao hàng nhanh chóng, 1 đổi 1 trong 1 tháng tận nhà nếu lỗi.",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Sách hướng dẫn, Hộp máy, Cáp Type C - Type A, Củ sạc rời đầu Type A",
@@ -3788,7 +3891,10 @@
                 "review_content": "Máy bắt wf rất kém. Mổi lần mở ứng dụng cho con học hoặc coi YouTube là nó quay vòng vòng đợi rất lâu.",
                 "rating_stars": 2.0
             }
-        ]
+        ],
+        "category": "tablet",
+        "original_price": "3.890.000₫",
+        "current_price": "3.890.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/ipad-air-m3-11-inch-5g-128gb?utm_flashsale=1",
@@ -3799,7 +3905,6 @@
             ]
         ],
         "product_name": "Máy tính bảng iPad Air M3 11 inch 5G 128GB",
-        "main_price": "18.690.000₫",
         "short_description": "Máy tính bảng iPad Air M3 11 inch 5G 128GB chính hãng Apple, giá rẻ, tặng phiếu mua hàng trị giá 300K, trả chậm 0% lãi suất, ưu đãi giảm thêm 300K cho HSSV. Xem ngay!",
         "detailed_specs": {
             "Bộ sản phẩm gồm": "Hộp máy, Sách hướng dẫn, Củ sạc nhanh rời đầu Type C, Cáp Type C - Type C",
@@ -3860,7 +3965,10 @@
             }
         ],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "18.690.000₫",
+        "current_price": "18.690.000₫"
     },
     {
         "url": "https://www.thegioididong.com/may-tinh-bang/honor-pad-x8b-6gb-128gb",
@@ -3871,7 +3979,6 @@
             ]
         ],
         "product_name": "Máy tính bảng Honor Pad X8b 6GB/128GB",
-        "main_price": "Hàng sắp về",
         "short_description": "Honor Pad X8b 6GB/128GB | Cập nhật thông tin, hình ảnh và đánh giá chi tiết nhanh, chính xác. Hỗ trợ giải đáp thắc mắc khách hàng. Click xem ngay!",
         "detailed_specs": {
             "Công nghệ màn hình": "IPS LCD",
@@ -3902,6 +4009,9 @@
         "storage_variants": [],
         "color_variants": [],
         "service_packages": [],
-        "customer_reviews": []
+        "customer_reviews": [],
+        "category": "tablet",
+        "original_price": "Hàng sắp về",
+        "current_price": "Hàng sắp về"
     }
 ]

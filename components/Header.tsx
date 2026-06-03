@@ -1,6 +1,17 @@
+"use client";
 import Link from 'next/link';
-
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 export default function Header() {
+    const [searchQuery, setSearchQuery] = useState('');
+    const router = useRouter();
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (searchQuery.trim()) {
+            router.push(`/products?name=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
     return (
         <header className="sticky top-0 z-50 bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] shadow-md">
             <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -13,18 +24,23 @@ export default function Header() {
 
                     {/* Thanh Tìm kiếm */}
                     <div className="flex-1 max-w-3xl">
-                        <div className="relative flex w-full items-center">
+                        <form onSubmit={handleSearch} className="relative flex w-full items-center">
                             <input
                                 type="text"
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
                                 placeholder="Tìm kiếm sản phẩm, thương hiệu..."
                                 className="w-full rounded-full border-none bg-white px-6 py-2.5 pr-12 text-sm text-gray-800 shadow-inner outline-none focus:ring-2 focus:ring-orange-300"
                             />
-                            <button className="absolute right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#EE4D2D] text-white transition hover:bg-orange-600">
+                            <button 
+                                type="submit"
+                                className="absolute right-2 flex h-8 w-8 items-center justify-center rounded-full bg-[#EE4D2D] text-white transition hover:bg-orange-600"
+                            >
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                 </svg>
                             </button>
-                        </div>
+                        </form>
                     </div>
 
                     {/* Giỏ hàng & Nút Đăng nhập/Đăng ký */}

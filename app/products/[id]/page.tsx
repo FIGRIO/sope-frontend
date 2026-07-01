@@ -2,122 +2,257 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from "@/components/Header";
-import { useParams } from 'next/navigation'; // Hook lấy id từ URL
+import { useParams } from 'next/navigation';
 
-// 1. IMPORT CẢ 3 FILE DỮ LIỆU
-import phoneData from '../../data/data_phone.json'; 
-import tabletData from '../../data/data_tablet.json'; 
-import laptopData from '../../data/data_laptop.json';
+// --- ĐỊNH NGHĨA CÁC INTERFACE ĐỂ XÓA SẠCH LỖI ANY ---
+interface Review {
+    reviewerName?: string;
+    ratingStars?: number;
+    rating?: number;
+    publishDate?: string;
+    reviewContent?: string;
+}
 
-// Hàm hỗ trợ format tiền tệ thông minh (Đã sửa lỗi 10,59)
+interface StorageVariant {
+    storageName?: string;
+    name?: string;
+    value?: string;
+}
+
+interface ColorVariant {
+    colorName?: string;
+    name?: string;
+    value?: string;
+}
+
+interface Product {
+    id: string | number;
+    name: string;
+    category?: string;
+    brand?: string;
+    sku?: string;
+    price: number;
+    oldPrice?: number;
+    mainThumbnail?: string;
+    images?: string[];
+    shortDescription?: string;
+    description?: string;
+    specs?: Record<string, string>;
+    reviews?: Review[];
+    storageVariants?: StorageVariant[];
+    colorVariants?: ColorVariant[];
+}
+
+// Hàm hỗ trợ format tiền tệ thông minh
 const formatPrice = (priceStr: string | number) => {
     if (!priceStr || priceStr === "Giá liên hệ") return "Giá liên hệ";
     
     let str = String(priceStr);
 
-    // 1. Xóa đuôi thập phân ".0" hoặc ".00" nếu có (thường bị dư ở data laptop)
     if (str.endsWith('.0')) str = str.slice(0, -2);
     if (str.endsWith('.00')) str = str.slice(0, -3);
 
-    // 2. Tẩy sạch TẤT CẢ dấu chấm, dấu phẩy, và chữ "₫" 
     const numericString = str.replace(/[^\d]/g, '');
     
     if (!numericString) return str;
 
-    // 3. Đọc số nguyên (parseInt) và format lại chuẩn Việt Nam
     const num = parseInt(numericString, 10);
     return num.toLocaleString('vi-VN') + '₫';
 };
+import Link from 'next/link';
 
+// --- COMPONENT GỢI Ý SẢN PHẨM TƯƠNG TỰ (CONTENT-BASED) ---
+const SimilarProducts = ({ productId }: { productId: string | number }) => {
+    const [similar, setSimilar] = useState<Product[]>([]);
+    
+    // Khởi tạo mặc định là true, nên không cần gọi lại setIsLoading(true) trong useEffect nữa
+    const [isLoading, setIsLoading] = useState(true); 
+
+    useEffect(() => {
+        if (!productId) return;
+
+        let isMounted = true; // Cờ theo dõi trạng thái mount của component
+
+        const fetchRecommendations = async () => {
+            console.log("Đang tải gợi ý Content-Based cho Product ID:", productId);
+            
+            try {
+                // Gọi sang API MỚI của Spring Boot: /content-similar/
+                const res = await fetch(`http://localhost:8080/api/recommendations/content-similar/${productId}`);
+                
+                if (!res.ok) {
+                    throw new Error("Lỗi fetch dữ liệu");
+                }
+                
+                const data = await res.json();
+                
+                // Chỉ cập nhật state nếu component vẫn đang hiển thị
+                if (isMounted) {
+                    console.log("Recommendation API (CBF):", data);
+                    if (Array.isArray(data)) {
+                        setSimilar(data);
+                    }
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                if (isMounted) {
+                    console.error("Lỗi tải sản phẩm tương tự (CBF):", err);
+                    setIsLoading(false);
+                }
+            }
+        };
+
+        fetchRecommendations();
+
+        // Cleanup function: Hàm này chạy khi component unmount hoặc khi productId thay đổi
+        return () => {
+            isMounted = false;
+        };
+    }, [productId]);
+
+    if (isLoading) {
+        // Skeleton loading hiển thị mượt mà hơn cho UI
+        return (
+            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6 mt-6">
+                <div className="h-6 w-1/3 bg-gray-200 animate-pulse rounded-md mb-6"></div>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                    {[1, 2, 3, 4, 5].map((item) => (
+                        <div key={item} className="h-48 w-full bg-gray-100 animate-pulse rounded-lg"></div>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+    if (similar.length === 0) return null;
+
+    return (
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6 mt-6">
+            <h2 className="text-lg font-bold mb-6 text-gray-800 uppercase tracking-wide flex items-center gap-2">
+                <span className="text-[#EE4D2D]">✨</span> Sản phẩm có cấu hình tương tự
+            </h2>
+            
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+                {similar.map((prod) => (
+                    <Link 
+                        href={`/products/${prod.id}`}
+                        key={prod.id}
+                        className="group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-100 hover:border-[#EE4D2D]/50 hover:shadow-md bg-white transition-all duration-300 hover:-translate-y-1"
+                    >
+                        <div className="aspect-square w-full bg-gray-50 relative overflow-hidden flex items-center justify-center p-4">
+                            {prod.mainThumbnail ? (
+                                <img src={prod.mainThumbnail} alt={prod.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
+                            ) : prod.images && prod.images.length > 0 ? (
+                                <img src={prod.images[0]} alt={prod.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
+                            ) : (
+                                <span className="text-gray-300 text-sm">Hình sản phẩm</span>
+                            )}
+                        </div>
+                        <div className="flex flex-1 flex-col justify-between p-4">
+                            <h3 className="mb-2 line-clamp-2 text-[13px] font-medium text-gray-700 transition-colors group-hover:text-[#EE4D2D] leading-relaxed">
+                                {prod.name}
+                            </h3>
+                            <div className="mt-auto">
+                                <span className="text-sm font-bold text-[#D0021C]">
+                                    {formatPrice(prod.price)}
+                                </span>
+                            </div>
+                        </div>
+                    </Link>
+                ))}
+            </div>
+        </div>
+    );
+};
 export default function ProductDetailPage() {
-    // Lấy tham số từ URL
     const params = useParams();
     const productId = params?.id; 
-    // State quản lý trạng thái đóng/mở bảng cấu hình chi tiết đầy đủ
+    
+    // 1. STATE QUẢN LÝ DỮ LIỆU TỪ API (Sử dụng Type chuẩn chỉnh thay vì any)
+    const [product, setProduct] = useState<Product | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
-    // 2. GỘP DỮ LIỆU VÀ TÌM KIẾM SẢN PHẨM
-    const phones = Array.isArray(phoneData) ? phoneData : [phoneData];
-    const tablets = Array.isArray(tabletData) ? tabletData : [tabletData];
-    const laptops = Array.isArray(laptopData) ? laptopData : [laptopData]; 
-    const allProducts: any[] = [...phones, ...tablets, ...laptops];
-
-    // TÌM SẢN PHẨM ĐỘNG
-    const product = allProducts.find((p: any) => p.sku === productId);
-
-    // State quản lý ảnh đang hiển thị
     const [mainImage, setMainImage] = useState("");
-
-    // State quản lý trạng thái mở rộng bài viết
     const [isArticleExpanded, setIsArticleExpanded] = useState(false);
 
-    // Set ảnh mặc định khi load xong product
+    // 2. GỌI API TỪ SPRING BOOT
     useEffect(() => {
-        if (product && product.infographic_images && product.infographic_images.length > 0) {
-            setMainImage(product.infographic_images[0]);
-        }
-    }, [product]);
+        if (!productId) return;
 
-    // XỬ LÝ NẾU KHÔNG TÌM THẤY SẢN PHẨM HOẶC SAI URL
+        // Gọi API đến Spring Boot Backend (Đảm bảo backend đang chạy ở port 8080)
+        fetch(`http://localhost:8080/api/products/${productId}`)
+            .then(res => {
+                if (!res.ok) throw new Error("Không tìm thấy sản phẩm");
+                return res.json();
+            })
+            .then((data: Product) => {
+                setProduct(data);
+                
+                // TỐI ƯU HOÁ: Thiết lập ảnh hiển thị chính mặc định ngay tại đây để tránh cascading renders
+                // (Giữ nguyên vẹn logic: Ưu tiên dùng mảng images[0], nếu không có thì dùng mainThumbnail)
+                if (data.images && data.images.length > 0) {
+                    setMainImage(data.images[0]);
+                } else if (data.mainThumbnail) {
+                    setMainImage(data.mainThumbnail);
+                }
+                
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.error("Lỗi khi tải dữ liệu:", err);
+                setIsLoading(false);
+            });
+    }, [productId]);
+
+    // HỦY BỎ: Đã xóa hoàn toàn useEffect phụ lắng nghe [product] cũ gây ra lỗi cascading renders.
+
+    // HIỂN THỊ MÀN HÌNH LOADING
+    if (isLoading) {
+        return (
+            <div className="bg-[#F4F6F8] min-h-screen">
+                <Header />
+                <div className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center justify-center">
+                    <div className="w-10 h-10 border-4 border-[#EE4D2D] border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-gray-500 mt-4 font-medium">Đang tải thông tin sản phẩm...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // XỬ LÝ NẾU KHÔNG TÌM THẤY SẢN PHẨM
     if (!product) {
         return (
             <div className="bg-[#F4F6F8] min-h-screen">
                 <Header />
                 <div className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center">
                     <h1 className="text-2xl font-bold text-gray-800">Không tìm thấy sản phẩm</h1>
-                    <p className="text-gray-500 mt-2">Sản phẩm với mã SKU "{productId}" không tồn tại.</p>
+                    <p className="text-gray-500 mt-2">Sản phẩm này không tồn tại hoặc đã bị xóa.</p>
                 </div>
             </div>
         );
     }
 
-    // Tính toán số lượng và điểm trung bình đánh giá
-    const reviewCount = product.customer_reviews?.length || 0;
-    const avgRating = reviewCount > 0 
-        ? product.customer_reviews.reduce((acc: number, curr: any) => acc + (curr.rating_stars || 5), 0) / reviewCount 
+    // 3. ĐỒNG BỘ CÁC TRƯỜNG DỮ LIỆU VỚI BACKEND (CamelCase)
+    const reviewCount = product.reviews?.length || 0;
+    const avgRating = reviewCount > 0 && product.reviews
+        ? product.reviews.reduce((acc: number, curr: Review) => acc + (curr.ratingStars || curr.rating || 5), 0) / reviewCount 
         : 0;
 
-    // Trích xuất thông tin Cấu hình (Chip / Màn hình)
-    const cpu = product.detailed_specs?.["Chip xử lý (CPU)"] || product.detailed_specs?.["Vi xử lý (CPU)"] || product.detailed_specs?.["Công nghệ CPU"] || "Đang cập nhật CPU";
-    const screenTech = product.detailed_specs?.["Công nghệ màn hình"] || "";
-    const screenSize = product.detailed_specs?.["Màn hình rộng"] || product.detailed_specs?.["Màn hình"] || product.detailed_specs?.["Kích thước màn hình"] || "";
+    const cpu = product.specs?.["Chip xử lý (CPU)"] || product.specs?.["Vi xử lý (CPU)"] || product.specs?.["Công nghệ CPU"] || "Đang cập nhật CPU";
+    const screenTech = product.specs?.["Công nghệ màn hình"] || "";
+    const screenSize = product.specs?.["Màn hình rộng"] || product.specs?.["Màn hình"] || product.specs?.["Kích thước màn hình"] || "";
     const cleanScreenSize = screenSize.split("-")[0].trim();
     const screenInfo = [cleanScreenSize, screenTech].filter(Boolean).join(", ") || "Đang cập nhật màn hình";
 
-    // --- TÍNH TOÁN VÀ FORMAT GIÁ TIỀN TỰ ĐỘNG ---
-    let rawCurrentPrice = product.current_price || product.main_price;
-    let rawOriginalPrice = product.original_price || "";
-
-    // Xử lý nếu là Laptop (dùng trường price)
-    if (!rawCurrentPrice && product.price) {
-        rawCurrentPrice = product.price;
-        rawOriginalPrice = product.price;
-    }
-
-    // Xử lý nếu là Điện thoại (dùng mảng service_packages)
-    if (product.service_packages && product.service_packages.length > 0) {
-        const activePackage = product.service_packages.find((p: any) => p.is_active) || product.service_packages[0];
-        if (activePackage) {
-            rawCurrentPrice = activePackage.current_price || rawCurrentPrice;
-            rawOriginalPrice = activePackage.original_price || rawOriginalPrice;
-        }
-    }
-
-    // Format thành chuỗi hiển thị
-    const displayCurrentPrice = formatPrice(rawCurrentPrice);
-    let displayOriginalPrice = formatPrice(rawOriginalPrice);
+    // Giá tiền (Logic đã được làm sạch đi rất nhiều do Java Database đã chuẩn hóa)
+    const displayCurrentPrice = formatPrice(product.price);
+    let displayOriginalPrice = formatPrice(product.oldPrice || 0);
     
-    // Tính phần trăm giảm giá (nếu có)
     let discountPercent = 0;
-    if (displayCurrentPrice && displayOriginalPrice && displayCurrentPrice !== "Giá liên hệ" && displayCurrentPrice !== displayOriginalPrice) {
-        // Lọc bỏ ký tự chữ, chỉ giữ lại số để tính toán
-        const currentNum = parseInt(displayCurrentPrice.replace(/[^\d]/g, ''), 10);
-        const originalNum = parseInt(displayOriginalPrice.replace(/[^\d]/g, ''), 10);
-        
-        if (!isNaN(currentNum) && !isNaN(originalNum) && originalNum > currentNum) {
-            discountPercent = Math.round(((originalNum - currentNum) / originalNum) * 100);
-        }
+    if (product.price && product.oldPrice && product.oldPrice > product.price) {
+        discountPercent = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
     } else {
-        // Nếu giá giống nhau thì ẩn giá gốc (gạch ngang) đi
         displayOriginalPrice = "";
     }
 
@@ -133,60 +268,51 @@ export default function ProductDetailPage() {
                     <span>{'>'}</span> 
                     <span className="cursor-pointer hover:text-[#EE4D2D] transition-colors capitalize">{product.category || "Sản phẩm"}</span> 
                     <span>{'>'}</span> 
-                    <span className="cursor-pointer hover:text-[#EE4D2D] transition-colors">{product.brand?.[0]?.[0]}</span>
+                    <span className="cursor-pointer hover:text-[#EE4D2D] transition-colors">{product.brand}</span>
                     <span>{'>'}</span> 
-                    <span className="text-[#EE4D2D] font-semibold">{product.product_name}</span>
+                    <span className="text-[#EE4D2D] font-semibold">{product.name}</span>
                 </nav>
 
                 {/* 2. SECTION CHÍNH: ẢNH & THÔNG TIN SẢN PHẨM */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-10 mb-6">
-
-                    {/* Cột trái: Ảnh sản phẩm (Gallery) */}
                     <div className="w-full md:w-5/12 flex flex-col items-center">
-                        {/* ẢNH CHÍNH (Đã nâng cấp để tự động khớp mọi loại ảnh: Vuông, Ngang, Dọc) */}
                         <div className="w-full bg-white border border-gray-100 rounded-xl mb-4 flex items-center justify-center overflow-hidden transition-all duration-300">
                             {mainImage ? (
                                 <img 
                                     src={mainImage} 
-                                    alt={product.product_name} 
-                                    // Thay 'h-full object-contain' bằng 'h-auto rounded-xl object-contain'
+                                    alt={product.name} 
                                     className="w-full h-auto rounded-xl object-contain transition-transform duration-500 hover:scale-105" 
                                 />
                             ) : (
-                                // Nếu không có ảnh, hiện khung vuông màu xám để giữ bố cục
                                 <div className="aspect-square w-full flex items-center justify-center bg-gray-50 rounded-xl">
                                     <span className="text-gray-300 text-sm font-medium">Không có ảnh</span>
                                 </div>
                             )}
                         </div>
-                        {/* Thumbnails */}
                         <div className="flex gap-3 overflow-x-auto w-full pb-2 scrollbar-hide">
-                            {product.infographic_images?.map((imgUrl: string, idx: number) => (
+                            {product.images?.map((imgUrl: string, idx: number) => (
                                 <div 
                                     key={idx} 
                                     onClick={() => setMainImage(imgUrl)}
                                     className={`w-16 h-16 shrink-0 rounded-lg border-2 cursor-pointer overflow-hidden bg-white
                                         ${mainImage === imgUrl ? 'border-[#EE4D2D]' : 'border-gray-200 hover:border-gray-300'}`}
                                 >
-                                    {/* Ảnh thumbnail nhỏ bên trong không cần xóa p-1 vì nó là trang trí */}
                                     <img src={imgUrl} alt={`Thumb ${idx}`} className="w-full h-full object-contain p-1" />
                                 </div>
                             ))}
                         </div>
                     </div>
 
-                    {/* Cột phải: Thông tin & Mua hàng */}
                     <div className="w-full md:w-7/12 flex flex-col">
                         <h1 className="text-2xl font-bold text-gray-800 mb-2 leading-snug">
-                            {product.product_name}
+                            {product.name}
                         </h1>
 
                         <div className="flex items-center gap-4 mb-4 text-sm text-gray-500 border-b border-gray-100 pb-4">
-                            <span className="text-gray-600">Thương hiệu: <span className="font-semibold text-[#EE4D2D]">{product.brand?.[0]?.[0]}</span></span>
+                            <span className="text-gray-600">Thương hiệu: <span className="font-semibold text-[#EE4D2D]">{product.brand}</span></span>
                             <span className="text-gray-300">|</span>
                             <span>SKU: {product.sku}</span>
                             <span className="text-gray-300">|</span>
-                            {/* Star Rating */}
                             <div className="flex items-center gap-1">
                                 <span className="text-[#FFD400] text-sm">★</span>
                                 <span className="font-semibold text-gray-700">{avgRating.toFixed(1)}</span>
@@ -194,7 +320,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
 
-                        {/* Giá */}
                         <div className="bg-gray-50 rounded-lg p-4 mb-6">
                             <div className="flex items-end gap-3">
                                 <span className="text-3xl font-extrabold text-[#D0021C]">
@@ -202,7 +327,7 @@ export default function ProductDetailPage() {
                                 </span>
                                 {discountPercent > 0 && displayOriginalPrice && (
                                     <>
-                                        <span className="text-base text-gray-400 line-through mb-1 hover:text-gray-600 cursor-help" title={`Giá gốc: ${displayOriginalPrice}`}>
+                                        <span className="text-base text-gray-400 line-through mb-1 hover:text-gray-600">
                                             {displayOriginalPrice}
                                         </span>
                                         <span className="text-xs font-bold text-white bg-[#D0021C] px-1.5 py-0.5 rounded mb-1.5">
@@ -213,59 +338,52 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
 
-                        {/* Cấu hình cơ bản (Chip / Màn hình) */}
                         <div className="flex flex-wrap gap-2 mb-5">
                             <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Chip: {cpu}</span>
                             <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Màn hình: {screenInfo}</span>
                         </div>
 
-                        {/* Phiên bản bộ nhớ (Storage Variants) */}
-                        {product.storage_variants && product.storage_variants.length > 0 && (
+                        {product.storageVariants && product.storageVariants.length > 0 && (
                             <div className="mb-5">
                                 <h3 className="text-sm font-bold text-gray-800 mb-3">Phiên bản bộ nhớ:</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {product.storage_variants.map((v: any, idx: number) => (
+                                    {product.storageVariants.map((v: StorageVariant, idx: number) => (
                                         <button 
                                             key={idx}
-                                            className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all
-                                                ${v.is_active ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                                            className="px-4 py-2 text-sm rounded-lg border font-medium transition-all border-gray-200 text-gray-600 hover:border-gray-400"
                                         >
-                                            {v.storage_name}
+                                            {v.storageName || v.name || v.value}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {/* Màu sắc (Color Variants) */}
-                        {product.color_variants && product.color_variants.length > 0 && (
+                        {product.colorVariants && product.colorVariants.length > 0 && (
                             <div className="mb-6">
                                 <h3 className="text-sm font-bold text-gray-800 mb-3">Chọn màu sắc:</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {product.color_variants.map((c: any, idx: number) => (
+                                    {product.colorVariants.map((c: ColorVariant, idx: number) => (
                                         <button 
                                             key={idx}
-                                            className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all
-                                                ${c.is_active ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                                            className="px-4 py-2 text-sm rounded-lg border font-medium transition-all border-gray-200 text-gray-600 hover:border-gray-400"
                                         >
-                                            {c.color_name}
+                                            {c.colorName || c.name || c.value}
                                         </button>
                                     ))}
                                 </div>
                             </div>
                         )}
 
-                        {/* Mô tả ngắn (Dịch chuyển lên trên Nút mua hàng) */}
-                        {product.short_description && (
+                        {product.shortDescription && (
                             <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 mb-6 mt-auto">
                                 <h3 className="text-sm font-bold text-blue-800 mb-2">Thông tin khuyến mãi:</h3>
                                 <p className="text-sm text-gray-700 leading-relaxed">
-                                    {product.short_description}
+                                    {product.shortDescription}
                                 </p>
                             </div>
                         )}
 
-                        {/* Nút hành động */}
                         <div className="flex gap-4">
                             <button className="flex-1 bg-[#EE4D2D] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm text-lg">
                                 CHỌN MUA
@@ -280,50 +398,42 @@ export default function ProductDetailPage() {
                 </div>
 
                 <div className="flex flex-col lg:flex-row gap-6 mb-6">
-                    {/* 3. SECTION CẤU HÌNH SẢN PHẨM (Cột trái) */}
                     <div className="w-full lg:w-4/12 bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-fit">
                         <h2 className="text-lg font-bold mb-5 text-gray-800 uppercase tracking-wide">Cấu hình nổi bật</h2>
                         <ul className="flex flex-col text-sm text-gray-700">
-                            {/* Chỉ lấy 8 thông số đầu tiên hiển thị rút gọn ngoài màn hình */}
-                            {product.detailed_specs && Object.entries(product.detailed_specs).slice(0, 8).map(([key, value], idx) => (
+                            {product.specs && Object.entries(product.specs).slice(0, 8).map(([key, value], idx) => (
                                 <li key={idx} className={`flex justify-between py-3 ${idx !== 0 ? 'border-t border-gray-100' : ''}`}>
                                     <span className="w-1/2 text-gray-500 pr-4">{key}</span>
                                     <span className="w-1/2 font-medium">{String(value)}</span>
                                 </li>
                             ))}
                         </ul>
-                        {/* Cập nhật onClick để mở bảng chi tiết đầy đủ */}
                         <button 
-                            onClick={() => setIsModalOpen(true)} // [!code ++]
+                            onClick={() => setIsModalOpen(true)} 
                             className="w-full mt-5 py-2.5 text-sm font-medium text-blue-600 border border-blue-600 rounded-full hover:bg-blue-50 transition-colors"
                         >
                             Xem cấu hình chi tiết
                         </button>
                     </div>
 
-                    {/* 4. SECTION BÀI VIẾT ĐÁNH GIÁ (Cột phải) */}
                     <div className="w-full lg:w-8/12 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                         <h2 className="text-lg font-bold mb-5 text-gray-800 uppercase tracking-wide">Đặc điểm nổi bật</h2>
                         
                         <div className="text-sm text-gray-700 leading-loose">
                             {isArticleExpanded ? (
-                                // --- TRẠNG THÁI MỞ RỘNG (HIỂN THỊ XEN KẼ CHỮ VÀ ẢNH) ---
                                 <div className="space-y-4 text-justify">
                                     {(() => {
-                                        if (!product.detailed_article) return <p>Đang cập nhật thông tin bài viết.</p>;
+                                        if (!product.description) return <p>Đang cập nhật thông tin bài viết.</p>;
 
-                                        // 1. TÁCH DÒNG: Phân rã bài viết thành các dòng văn bản đơn lẻ, lọc sạch khoảng trắng thừa
-                                        const lines = product.detailed_article.split('\n').map((l: string) => l.trim()).filter(Boolean);
-                                        const images = product.infographic_images || [];
+                                        const lines = product.description.split('\n').map((l: string) => l.trim()).filter(Boolean);
+                                        const images = product.images || [];
                                         
-                                        // 2. TÍNH TOÁN BỐ CỤC: Phân bổ ảnh nằm đều xen kẽ vào giữa các khối text
                                         const step = Math.max(1, Math.floor(lines.length / (images.length || 1)));
                                         let imgIndex = 0;
 
                                         return (
                                             <>
                                                 {lines.map((line: string, idx: number) => {
-                                                    // Nhận diện tiêu đề phụ (chuỗi ngắn, chứa dấu ?)
                                                     const isSubHeading = (line.length < 120 && line.includes('?')) || line.startsWith('Đặc điểm');
 
                                                     return (
@@ -334,12 +444,11 @@ export default function ProductDetailPage() {
                                                                 <p className="text-sm text-gray-600 leading-relaxed mb-3">{line}</p>
                                                             )}
 
-                                                            {/* Chèn ảnh xen kẽ đều đặn sau các khối text (Đã xóa padding p-2) */}
                                                             {idx > 0 && idx % step === 0 && imgIndex < images.length && (
                                                                 <div className="my-6 flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
                                                                     <img 
                                                                         src={images[imgIndex++]} 
-                                                                        alt={`${product.product_name} - Hình minh họa ${imgIndex}`} 
+                                                                        alt={`${product.name} - Hình minh họa ${imgIndex}`} 
                                                                         className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm"
                                                                         loading="lazy"
                                                                     />
@@ -349,14 +458,13 @@ export default function ProductDetailPage() {
                                                     );
                                                 })}
 
-                                                {/* Xả nốt những ảnh bổ sung nếu còn sót xuống cuối bài */}
                                                 {imgIndex < images.length && (
                                                     <div className="flex flex-col gap-4 mt-6">
                                                         {images.slice(imgIndex).map((imgUrl: string, idx: number) => (
                                                             <div key={idx} className="flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
                                                                 <img 
                                                                     src={imgUrl} 
-                                                                    alt={`${product.product_name} - Hình bổ sung ${idx + 1}`} 
+                                                                    alt={`${product.name} - Hình bổ sung ${idx + 1}`} 
                                                                     className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm"
                                                                     loading="lazy"
                                                                 />
@@ -369,18 +477,15 @@ export default function ProductDetailPage() {
                                     })()}
                                 </div>
                             ) : (
-                                // --- TRẠNG THÁI THU GỌN (CHỈ HIỂN THỊ SHORT DESCRIPTION) ---
                                 <div className="relative">
                                     <p className="text-justify text-sm text-gray-600 leading-relaxed">
-                                        {product.short_description || "Đang cập nhật thông tin."}
+                                        {product.shortDescription || "Đang cập nhật thông tin."}
                                     </p>
-                                    {/* Lớp mờ (Gradient) tạo cảm giác bài viết còn dài */}
                                     <div className="absolute bottom-0 left-0 w-full h-8 bg-gradient-to-t from-white to-transparent pointer-events-none"></div>
                                 </div>
                             )}
                         </div>
 
-                        {/* Nút Đọc thêm / Thu gọn bài viết */}
                         <div className="mt-6 flex justify-center border-t border-gray-100 pt-4">
                             <button 
                                 onClick={() => setIsArticleExpanded(!isArticleExpanded)}
@@ -398,35 +503,33 @@ export default function ProductDetailPage() {
                     </div>
                 </div>
 
-                {/* 5. SECTION ĐÁNH GIÁ TỪ KHÁCH HÀNG */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6">
                     <h2 className="text-lg font-bold mb-6 text-gray-800 uppercase tracking-wide flex items-center gap-2">
                         Đánh giá khách hàng <span className="text-sm font-normal text-gray-500 normal-case">({reviewCount} đánh giá)</span>
                     </h2>
-                    
-                    {product.customer_reviews && product.customer_reviews.length > 0 ? (
+                    {product.reviews && product.reviews.length > 0 ? (
                         <div className="flex flex-col gap-6">
-                            {product.customer_reviews.map((review: any, idx: number) => (
-                                <div key={idx} className={`pb-6 ${idx !== product.customer_reviews.length - 1 ? 'border-b border-gray-100' : ''}`}>
+                            {product.reviews.map((review: Review, idx: number) => (
+                                <div key={idx} className={`pb-6 ${idx !== reviewCount - 1 ? 'border-b border-gray-100' : ''}`}>
                                     <div className="flex items-center gap-3 mb-2">
                                         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center font-bold text-gray-500 uppercase">
-                                            {review.reviewer_name?.charAt(0)}
+                                            {review.reviewerName?.charAt(0) || "U"}
                                         </div>
                                         <div>
-                                            <p className="font-semibold text-sm text-gray-800">{review.reviewer_name}</p>
+                                            <p className="font-semibold text-sm text-gray-800">{review.reviewerName || "Giấu tên"}</p>
                                             <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                                                 <div className="flex text-[#FFD400]">
                                                     {[1,2,3,4,5].map(star => (
-                                                        <span key={star} className={star <= review.rating_stars ? "" : "text-gray-300"}>★</span>
+                                                        <span key={star} className={star <= (review.ratingStars || 5) ? "" : "text-gray-300"}>★</span>
                                                     ))}
                                                 </div>
                                                 <span>•</span>
-                                                <span>{review.publish_date?.split(':')[0]}</span>
+                                                <span>{review.publishDate?.split(':')[0] || "Gần đây"}</span>
                                             </div>
                                         </div>
                                     </div>
                                     <p className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl">
-                                        {review.review_content || "Người dùng không để lại bình luận."}
+                                        {review.reviewContent || "Người dùng không để lại bình luận."}
                                     </p>
                                 </div>
                             ))}
@@ -437,63 +540,53 @@ export default function ProductDetailPage() {
                         </div>
                     )}
                 </div>
-
+                <SimilarProducts productId={productId as string} />
             </main>
-            {/* === MODAL POPUP: BẢNG THÔNG SỐ KỸ THUẬT CHI TIẾT ĐẦY ĐỦ === */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-                        {/* Click ra ngoài vùng Modal để tự động đóng */}
-                        <div className="absolute inset-0" onClick={() => setIsModalOpen(false)}></div>
-                        
-                        {/* Nội dung chính của Modal */}
-                        <div className="bg-white rounded-2xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
-                            
-                            {/* Tiêu đề Modal */}
-                            <div className="flex justify-between items-center p-5 border-b border-gray-100">
-                                <h2 className="text-lg font-bold text-gray-900">Thông số kỹ thuật chi tiết</h2>
-                                <button 
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
-                                >
-                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
 
-                            {/* Danh sách thông số chi tiết (Có Scrollbar dọc khi vượt quá khung) */}
-                            <div className="overflow-y-auto p-6 space-y-1 custom-scrollbar">
-                                {product.detailed_specs ? (
-                                    Object.entries(product.detailed_specs).map(([key, value], idx) => (
-                                        <div 
-                                            key={idx} 
-                                            className={`flex py-3.5 px-3 text-sm items-start rounded-lg
-                                                ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
-                                        >
-                                            <span className="w-5/12 text-gray-500 font-medium pr-4 shrink-0">{key}</span>
-                                            {/* Thêm whitespace-pre-line để tự động xuống dòng đẹp mắt cho các chuỗi chứa \n */}
-                                            <span className="w-7/12 text-gray-800 font-semibold whitespace-pre-line text-left">
-                                                {String(value)}
-                                            </span>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-center text-gray-500 py-10">Không tìm thấy thông số kỹ thuật.</p>
-                                )}
-                            </div>
-
-                            {/* Nút đóng chân trang */}
-                            <div className="p-4 border-t border-gray-100 flex justify-end bg-gray-50 rounded-b-2xl">
-                                <button 
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="bg-gray-900 hover:bg-gray-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition-colors shadow-sm"
-                                >
-                                    Đóng lại
-                                </button>
-                            </div>
+            {isModalOpen && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="absolute inset-0" onClick={() => setIsModalOpen(false)}></div>
+                    <div className="bg-white rounded-2xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
+                        <div className="flex justify-between items-center p-5 border-b border-gray-100">
+                            <h2 className="text-lg font-bold text-gray-900">Thông số kỹ thuật chi tiết</h2>
+                            <button 
+                                onClick={() => setIsModalOpen(false)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+                            >
+                                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        <div className="overflow-y-auto p-6 space-y-1 custom-scrollbar">
+                            {product.specs ? (
+                                Object.entries(product.specs).map(([key, value], idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className={`flex py-3.5 px-3 text-sm items-start rounded-lg
+                                            ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+                                    >
+                                        <span className="w-5/12 text-gray-500 font-medium pr-4 shrink-0">{key}</span>
+                                        <span className="w-7/12 text-gray-800 font-semibold whitespace-pre-line text-left">
+                                            {String(value)}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-gray-500 py-10">Không tìm thấy thông số kỹ thuật.</p>
+                            )}
+                        </div>
+                        <div className="p-4 border-t border-gray-100 flex justify-end bg-gray-50 rounded-b-2xl">
+                            <button 
+                                onClick={() => setIsModalOpen(false)}
+                                className="bg-gray-900 hover:bg-gray-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition-colors shadow-sm"
+                            >
+                                Đóng lại
+                            </button>
                         </div>
                     </div>
-                )}
+                </div>
+            )}
         </div>
     );
 }

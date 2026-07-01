@@ -1,123 +1,108 @@
 import Link from 'next/link';
 import Header from "@/components/Header"; 
 
-// Import dữ liệu từ 3 file JSON
-import phoneData from '../data/data_phone.json'; 
-import tabletData from '../data/data_tablet.json'; 
-import laptopData from '../data/data_laptop.json';
-
 export default async function ProductsPage({
     searchParams,
 }: {
     searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
-    // 1. LẤY TỪ KHÓA VÀ THÔNG SỐ LỌC TỪ URL (Fix lỗi khoảng trắng bằng .trim())
+    // 1. LẤY CÁC THAM SỐ LỌC TỪ URL
     const resolvedParams = await searchParams;
     const queryName = typeof resolvedParams.name === 'string' ? resolvedParams.name.trim() : '';
-    const queryCategory = typeof resolvedParams.category === 'string' ? resolvedParams.category.split(',').map(s => s.trim()).filter(Boolean) : [];
-    const queryBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand.split(',').map(s => s.trim()).filter(Boolean) : [];
-    const queryStorage = typeof resolvedParams.storage === 'string' ? resolvedParams.storage.split(',').map(s => s.trim()).filter(Boolean) : [];
+    const queryCategory = typeof resolvedParams.category === 'string' ? resolvedParams.category.trim() : '';
+    const queryBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand.trim() : '';
+    
+    const currentPage = typeof resolvedParams.page === 'string' ? Math.max(parseInt(resolvedParams.page, 10) - 1, 0) : 0;
 
-    // 2. CHUYỂN ĐỔI DỮ LIỆU VÀ TỰ ĐỘNG GẮN DANH MỤC
-// 2. CHUYỂN ĐỔI DỮ LIỆU VÀ ÉP CỨNG TÊN DANH MỤC SANG TIẾNG VIỆT
-    const phones = (Array.isArray(phoneData) ? phoneData : [phoneData]).map(p => ({ ...p, category: 'Điện thoại' }));
-    const tablets = (Array.isArray(tabletData) ? tabletData : [tabletData]).map(p => ({ ...p, category: 'Máy tính bảng' }));
-    const laptops = (Array.isArray(laptopData) ? laptopData : [laptopData]).map(p => ({ ...p, category: 'Laptop' }));
-    // 3. GỘP 3 MẢNG LẠI VỚI NHAU
-    const allProducts: any[] = [...phones, ...tablets, ...laptops]; 
+    // 2. XÂY DỰNG URL GỌI BACKEND
+    const backendUrl = new URL('http://localhost:8080/api/products');
+    if (queryName) backendUrl.searchParams.set('keyword', queryName);
+    if (queryCategory) backendUrl.searchParams.set('category', queryCategory);
+    if (queryBrand) backendUrl.searchParams.set('brand', queryBrand);
+    
+    backendUrl.searchParams.set('page', String(currentPage));
+    backendUrl.searchParams.set('size', '9'); 
+    backendUrl.searchParams.set('sortBy', 'id');
+    backendUrl.searchParams.set('sortDir', 'asc');
 
-    // 4. QUÉT DỮ LIỆU ĐỂ TẠO DANH SÁCH BỘ LỌC ĐỘNG THEO CATEGORY
-    const categoryMap: Record<string, number> = {};
-    const brandMap: Record<string, number> = {};
-    const storageSet = new Set<string>();
-
-    // Đếm tổng số lượng cho Danh mục (Luôn quét toàn bộ sản phẩm)
-    allProducts.forEach(p => {
-        const cat = p.category;
-        if (cat) categoryMap[cat] = (categoryMap[cat] || 0) + 1;
-    });
-
-    // Lấy ra danh sách sản phẩm ĐÃ ĐƯỢC LỌC THEO CATEGORY để tính toán Hãng và Dung lượng phù hợp
-    const productsForFilters = queryCategory.length > 0 
-    ? allProducts.filter(p => queryCategory.includes(p.category)) 
-    : [];
-
-    productsForFilters.forEach((product: any) => {
-        // Quét Thương hiệu (Brand)
-        const brandName = product.brand?.[0]?.[0]?.trim(); // Fix lỗi chuỗi có khoảng trắng
-        if (brandName) {
-            brandMap[brandName] = (brandMap[brandName] || 0) + 1;
+    // 3. GỌI API
+    let filteredProducts: any[] = [];
+    let totalPages = 1;
+    
+    try {
+        const res = await fetch(backendUrl.toString(), { cache: 'no-store' });
+        if (res.ok) {
+            const pagedResponse = await res.json();
+            filteredProducts = pagedResponse.content || [];
+            totalPages = pagedResponse.totalPages || 1;
+        } else {
+            const errorDetail = await res.text(); 
+            console.log("❌ CHI TIẾT LỖI TỪ BACKEND TRẢ VỀ:", errorDetail);
         }
+    } catch (error) {
+        console.error("Lỗi kết nối tới Backend Spring Boot:", error);
+    }
 
-        // Quét Dung lượng (Storage)
-        if (product.storage_variants && Array.isArray(product.storage_variants)) {
-            product.storage_variants.forEach((v: any) => {
-                const storageName = v.storage_name?.trim();
-                if (storageName) storageSet.add(storageName);
-            });
-        }
-    });
+    // 4. MOCK BỘ LỌC SIDEBAR (ĐÃ ĐƯỢC CHUẨN HOÁ SLUG)
+    const dynamicCategories = [
+        ["Điện thoại", "phone"],
+        ["Máy tính bảng", "tablet"], // Sửa lại thành tablet
+        ["Laptop", "laptop"]         // Sửa lại thành laptop
+    ];
 
-    // Sắp xếp bộ lọc hiển thị cho đẹp
-    const dynamicCategories = Object.entries(categoryMap).sort((a, b) => b[1] - a[1]);
-    const dynamicBrands = Object.entries(brandMap).sort((a, b) => b[1] - a[1]); 
-    const dynamicStorages = Array.from(storageSet).sort(); 
+    // Kiểm tra queryCategory dựa trên slug ("laptop") thay vì tên tiếng Việt
+    const dynamicBrands = queryCategory === "laptop" 
+        ? [["Asus", "ASUS"], ["Macbook", "Apple"], ["Dell", "DELL"], ["HP", "HP"]]
+        : [["iPhone", "Apple"], ["Samsung", "Samsung"], ["Xiaomi", "Xiaomi"], ["Oppo", "Oppo"]];
 
-    // 5. LỌC SẢN PHẨM THỰC TẾ TRÊN GIAO DIỆN
-    const filteredProducts = allProducts.filter((product: any) => {
-        const matchName = queryName ? product.product_name?.toLowerCase().includes(queryName.toLowerCase()) : true;
-        
-        const matchCategory = queryCategory.length > 0 ? queryCategory.includes(product.category) : true;
+    const dynamicStorages = ["128GB", "256GB", "512GB", "1TB"];
 
-        const productBrand = product.brand?.[0]?.[0]?.trim();
-        const matchBrand = queryBrand.length > 0 ? queryBrand.includes(productBrand) : true;
-
-        const productStorages = product.storage_variants?.map((v: any) => v.storage_name?.trim()) || [];
-        const matchStorage = queryStorage.length > 0 ? queryStorage.some((s: string) => productStorages.includes(s)) : true;
-
-        return matchName && matchCategory && matchBrand && matchStorage;
-    });
-
-    // 6. HÀM HỖ TRỢ TẠO URL (Có tự động reset khi đổi category)
-    const createFilterUrl = (type: 'category' | 'brand' | 'storage', value: string) => {
+    // 5. HÀM TẠO URL (Đã xử lý truyền đúng slug vào parameter)
+    const createFilterUrl = (type: 'category' | 'brand' | 'storage' | 'page', value: string) => {
         const params = new URLSearchParams();
         if (queryName) params.set('name', queryName);
-        
-        let currentCategories = [...queryCategory];
+        if (queryCategory) params.set('category', queryCategory);
+        if (queryBrand) params.set('brand', queryBrand);
+        if (typeof resolvedParams.page === 'string') params.set('page', resolvedParams.page);
+
         if (type === 'category') {
-            if (currentCategories.includes(value)) currentCategories = currentCategories.filter(c => c !== value);
-            else currentCategories.push(value);
+            if (queryCategory === value) {
+                // Nếu đang ở danh mục này mà bấm lại -> Huỷ lọc (Toggle off)
+                params.delete('category'); 
+            } else {
+                params.set('category', value);
+            }
+            params.delete('brand'); 
+            params.delete('page');  
         }
-        if (currentCategories.length > 0) params.set('category', currentCategories.join(','));
-
-        let currentBrands = [...queryBrand];
         if (type === 'brand') {
-            if (currentBrands.includes(value)) currentBrands = currentBrands.filter(b => b !== value);
-            else currentBrands.push(value);
+            if (queryBrand === value) {
+                params.delete('brand');
+            } else {
+                params.set('brand', value);
+            }
+            params.delete('page');
         }
-        if (type === 'category') currentBrands = []; // Đổi category thì reset hãng cho an toàn
-        if (currentBrands.length > 0) params.set('brand', currentBrands.join(','));
-
-        let currentStorages = [...queryStorage];
-        if (type === 'storage') {
-            if (currentStorages.includes(value)) currentStorages = currentStorages.filter(s => s !== value);
-            else currentStorages.push(value);
+        if (type === 'page') {
+            params.set('page', value);
         }
-        if (type === 'category') currentStorages = []; // Đổi category thì reset dung lượng
-        if (currentStorages.length > 0) params.set('storage', currentStorages.join(','));
 
         return `?${params.toString()}`;
     };
 
+    const formatPrice = (price: number | string) => {
+        if (!price) return "Giá liên hệ";
+        const num = typeof price === 'string' ? parseInt(price.replace(/[^\d]/g, ''), 10) : price;
+        if (isNaN(num)) return "Giá liên hệ";
+        return num.toLocaleString('vi-VN') + '₫';
+    };
+
     return (
         <div className="min-h-screen bg-[#F4F6F8]">
-            {/* Header dùng chung */}
             <Header />
 
-            {/* Khung nội dung chính */}
             <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-
-                {/* Breadcrumb (Đường dẫn) */}
+                {/* Breadcrumb */}
                 <div className="mb-6 flex items-center text-sm font-medium text-gray-500">
                     <Link href="/" className="cursor-pointer transition-colors hover:text-[#EE4D2D]">Trang chủ</Link>
                     <span className="mx-2 text-gray-400">{'>'}</span>
@@ -125,14 +110,13 @@ export default async function ProductsPage({
                 </div>
 
                 <div className="flex gap-6">
-
-                    {/* === CỘT TRÁI: SIDEBAR (BỘ LỌC TÌM KIẾM) === */}
+                    {/* === CỘT TRÁI: SIDEBAR === */}
                     <aside className="hidden w-[260px] shrink-0 lg:block">
                         <div className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
                             <h2 className="mb-6 text-sm font-bold text-gray-800 uppercase tracking-wide flex items-center justify-between">
                                 Bộ lọc tìm kiếm
-                                {(queryCategory.length > 0 || queryBrand.length > 0 || queryStorage.length > 0) && (
-                                    <Link href={queryName ? `?name=${queryName}` : "/"} scroll={false} className="text-xs font-medium text-blue-500 hover:underline normal-case">
+                                {(queryCategory || queryBrand) && (
+                                    <Link href={queryName ? `?name=${queryName}` : "/products"} className="text-xs font-medium text-blue-500 hover:underline normal-case">
                                         Xóa lọc
                                     </Link>
                                 )}
@@ -142,10 +126,12 @@ export default async function ProductsPage({
                             <div className="mb-8">
                                 <h3 className="mb-4 text-xs font-bold text-gray-800">Danh mục</h3>
                                 <div className="flex flex-col gap-3 text-sm font-medium">
-                                    {dynamicCategories.map(([catName, count]) => {
-                                        const isChecked = queryCategory.includes(catName);
+                                    {dynamicCategories.map(([catName, value]) => {
+                                        // ĐÃ SỬA: So sánh queryCategory với slug (value) thay vì catName
+                                        const isChecked = queryCategory === value; 
                                         return (
-                                            <Link key={catName} href={createFilterUrl('category', catName)} scroll={false} className="block group">
+                                            // ĐÃ SỬA: Truyền 'value' vào hàm tạo URL
+                                            <Link key={value} href={createFilterUrl('category', value)} scroll={false} className="block group">
                                                 <label className="flex cursor-pointer items-center gap-3">
                                                     <div className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${isChecked ? 'bg-[#EE4D2D] border-[#EE4D2D]' : 'bg-white border-gray-300 group-hover:border-[#EE4D2D]'}`}>
                                                         {isChecked && (
@@ -153,7 +139,7 @@ export default async function ProductsPage({
                                                         )}
                                                     </div>
                                                     <span className={`${isChecked ? 'text-[#EE4D2D]' : 'text-gray-600 group-hover:text-[#EE4D2D]'} transition-colors`}>
-                                                        {catName} <span className="text-gray-400 text-xs">({count})</span>
+                                                        {catName}
                                                     </span>
                                                 </label>
                                             </Link>
@@ -163,194 +149,113 @@ export default async function ProductsPage({
                             </div>
 
                             {/* Lọc theo Thương hiệu */}
-                            {dynamicBrands.length > 0 && (
-                                <div className="mb-8">
-                                    <h3 className="mb-4 text-xs font-bold text-gray-800">Thương hiệu</h3>
-                                    <div className="flex flex-col gap-3 text-sm font-medium">
-                                        {dynamicBrands.map(([brandName, count]) => {
-                                            const isChecked = queryBrand.includes(brandName);
-                                            return (
-                                                <Link key={brandName} href={createFilterUrl('brand', brandName)} scroll={false} className="block group">
-                                                    <label className="flex cursor-pointer items-center gap-3">
-                                                        <div className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${isChecked ? 'bg-[#EE4D2D] border-[#EE4D2D]' : 'bg-white border-gray-300 group-hover:border-[#EE4D2D]'}`}>
-                                                            {isChecked && (
-                                                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                                                            )}
-                                                        </div>
-                                                        <span className={`${isChecked ? 'text-[#EE4D2D]' : 'text-gray-600 group-hover:text-[#EE4D2D]'} transition-colors`}>
-                                                            {brandName} <span className="text-gray-400 text-xs">({count})</span>
-                                                        </span>
-                                                    </label>
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Lọc theo Mức giá (Slider UI tĩnh) */}
                             <div className="mb-8">
-                                <h3 className="mb-2 text-xs font-bold text-gray-800">Mức giá</h3>
-                                <p className="mb-4 text-xs font-bold text-[#EE4D2D]">10.10M - 20M</p>
-                                <div className="relative flex h-1 w-full items-center rounded-full bg-gray-200">
-                                    <div className="absolute left-[20%] right-[30%] h-full bg-[#EE4D2D]"></div>
-                                    <div className="absolute left-[20%] h-3.5 w-3.5 -ml-1.5 rounded-full border-[2.5px] border-[#EE4D2D] bg-white shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
-                                    <div className="absolute right-[30%] h-3.5 w-3.5 -mr-1.5 rounded-full border-[2.5px] border-[#EE4D2D] bg-white shadow-sm cursor-pointer hover:scale-110 transition-transform"></div>
+                                <h3 className="mb-4 text-xs font-bold text-gray-800">Thương hiệu</h3>
+                                <div className="flex flex-col gap-3 text-sm font-medium">
+                                    {dynamicBrands.map(([brandName, value]) => {
+                                        // ĐÃ SỬA: So sánh và truyền 'value' (slug) cho Thương hiệu
+                                        const isChecked = queryBrand === value;
+                                        return (
+                                            <Link key={value} href={createFilterUrl('brand', value)} scroll={false} className="block group">
+                                                <label className="flex cursor-pointer items-center gap-3">
+                                                    <div className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${isChecked ? 'bg-[#EE4D2D] border-[#EE4D2D]' : 'bg-white border-gray-300 group-hover:border-[#EE4D2D]'}`}>
+                                                        {isChecked && (
+                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
+                                                        )}
+                                                    </div>
+                                                    <span className={`${isChecked ? 'text-[#EE4D2D]' : 'text-gray-600 group-hover:text-[#EE4D2D]'} transition-colors`}>
+                                                        {brandName}
+                                                    </span>
+                                                </label>
+                                            </Link>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
-                            {/* Lọc theo Dung lượng Bộ nhớ */}
-                            {dynamicStorages.length > 0 && (
-                                <div>
-                                    <h3 className="mb-4 text-xs font-bold text-gray-800">Phiên bản bộ nhớ</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {dynamicStorages.map((storageName) => {
-                                            const isChecked = queryStorage.includes(storageName);
-                                            return (
-                                                <Link key={storageName} href={createFilterUrl('storage', storageName)} scroll={false}>
-                                                    <button className={`rounded px-3 py-1.5 text-[11px] transition-colors ${
-                                                        isChecked 
-                                                        ? 'border border-[#EE4D2D] bg-orange-50 text-[#EE4D2D] font-bold shadow-sm' 
-                                                        : 'border border-gray-200 bg-white font-medium text-gray-600 hover:border-[#EE4D2D]/50 hover:text-[#EE4D2D] hover:bg-orange-50/30'
-                                                    }`}>
-                                                        {storageName}
-                                                    </button>
-                                                </Link>
-                                            );
-                                        })}
-                                    </div>
+                            {/* Bộ lọc dung lượng bộ nhớ */}
+                            <div>
+                                <h3 className="mb-4 text-xs font-bold text-gray-800">Phiên bản bộ nhớ</h3>
+                                <div className="flex flex-wrap gap-2">
+                                    {dynamicStorages.map((storageName) => (
+                                        <button key={storageName} className="rounded border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-600 hover:border-[#EE4D2D]/50 hover:text-[#EE4D2D] hover:bg-orange-50/30 transition-colors">
+                                            {storageName}
+                                        </button>
+                                    ))}
                                 </div>
-                            )}
-
+                            </div>
                         </div>
                     </aside>
 
-                    {/* === CỘT PHẢI: MAIN CONTENT (Sản phẩm) === */}
+                    {/* === CỘT PHẢI: DANH SÁCH SẢN PHẨM === */}
                     <div className="flex-1">
-
                         {/* Thanh Sắp xếp */}
                         <div className="mb-6 flex items-center gap-4 bg-white p-3 px-4 rounded-xl shadow-sm border border-gray-100">
                             <span className="text-sm font-medium text-gray-600">Sắp xếp theo</span>
                             <div className="flex gap-2 flex-wrap">
-                                <button className="rounded bg-[#EE4D2D] px-4 py-1.5 text-sm font-bold text-white shadow-sm transition hover:bg-orange-600">
-                                    Phổ biến
-                                </button>
-                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#EE4D2D] hover:border-[#EE4D2D]/30">
-                                    Mới nhất
-                                </button>
-                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#EE4D2D] hover:border-[#EE4D2D]/30">
-                                    Bán chạy
-                                </button>
-                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 hover:text-[#EE4D2D] hover:border-[#EE4D2D]/30">
-                                    Giá thấp - cao
-                                </button>
+                                <button className="rounded bg-[#EE4D2D] px-4 py-1.5 text-sm font-bold text-white shadow-sm">Phổ biến</button>
+                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:text-[#EE4D2D]">Mới nhất</button>
+                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:text-[#EE4D2D]">Bán chạy</button>
                             </div>
                         </div>
 
-                        {/* === LƯỚI SẢN PHẨM THỰC TẾ (TỪ JSON) === */}
+                        {/* LƯỚI SẢN PHẨM */}
                         {filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:gap-5">
                                 {filteredProducts.map((product: any, index) => {
-                                    // 1. Trích xuất CPU 
-                                    const cpu = product.detailed_specs?.["Chip xử lý (CPU)"] || 
-                                                product.detailed_specs?.["Vi xử lý (CPU)"] || 
-                                                product.detailed_specs?.["Công nghệ CPU"] || "Đang cập nhật CPU";
-                                                
-                                    // 2. Trích xuất Màn hình 
-                                    const screenTech = product.detailed_specs?.["Công nghệ màn hình"] || "";
-                                    const screenSize = product.detailed_specs?.["Màn hình rộng"] || 
-                                                       product.detailed_specs?.["Màn hình"] || 
-                                                       product.detailed_specs?.["Kích thước màn hình"] || "";
+                                    const cpu = product.specs?.["Chip xử lý (CPU)"] || product.specs?.["Vi xử lý (CPU)"] || "Đang cập nhật";
+                                    const screen = product.specs?.["Màn hình rộng"] || product.specs?.["Màn hình"] || "Đang cập nhật";
+                                    const ram = product.specs?.["RAM"] || "";
                                     
-                                    const cleanScreenSize = screenSize.split("-")[0].trim();
-                                    const screenInfo = [cleanScreenSize, screenTech].filter(Boolean).join(", ") || "Đang cập nhật màn hình";
-                                    
-                                    const ram = product.detailed_specs?.["RAM"] || "";
-                                    const storageOptions = product.storage_variants?.map((v: any) => v.storage_name) || [];
-
-                                    // --- XỬ LÝ GIÁ (Đã được đơn giản hóa nhờ data chuẩn) ---
-                                    let displayCurrentPrice = product.current_price || "Giá liên hệ";
-                                    let displayOriginalPrice = product.original_price || "";
                                     let discountPercent = 0;
-
-                                    // Tính % giảm giá nếu có cả giá hiện tại và giá gốc
-                                    if (displayCurrentPrice && displayOriginalPrice && displayCurrentPrice !== "Giá liên hệ" && displayCurrentPrice !== displayOriginalPrice) {
-                                        const currentStr = displayCurrentPrice.replace(/[^\d]/g, '');
-                                        const originalStr = displayOriginalPrice.replace(/[^\d]/g, '');
-                                        const currentNum = parseInt(currentStr, 10);
-                                        const originalNum = parseInt(originalStr, 10);
-
-                                        if (!isNaN(currentNum) && !isNaN(originalNum) && originalNum > 0 && originalNum > currentNum) {
-                                            discountPercent = Math.round(((originalNum - currentNum) / originalNum) * 100);
-                                        }
-                                    } else {
-                                        // Nếu giá bằng nhau thì không hiện giá gạch ngang
-                                        displayOriginalPrice = "";
+                                    if (product.price && product.oldPrice && product.oldPrice > product.price) {
+                                        discountPercent = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
                                     }
 
-                                    // --- XỬ LÝ ĐÁNH GIÁ ---
-                                    const reviewCount = product.customer_reviews ? product.customer_reviews.length : 0;
-                                    const avgRating = reviewCount > 0 
-                                        ? product.customer_reviews.reduce((acc: number, curr: any) => acc + (curr.rating_stars || 5), 0) / reviewCount 
-                                        : 0;
+                                    const reviewCount = product.reviews ? product.reviews.length : 0;
 
                                     return (
                                         <Link 
-                                            href={`/products/${product.sku}`} 
-                                            key={product.sku || index} 
+                                            href={`/products/${product.id}`}
+                                            key={product.id || index}
                                             className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[#EE4D2D]/30"
                                         >
-                                            {/* Ảnh sản phẩm */}
                                             <div className="aspect-square w-full bg-white relative overflow-hidden flex items-center justify-center p-4">
-                                                {product.infographic_images && product.infographic_images.length > 0 ? (
-                                                    <img 
-                                                        src={product.infographic_images[0]} 
-                                                        alt={product.product_name} 
-                                                        className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" // [!code ++] Đổi thành object-contain
-                                                    />
+                                                {product.mainThumbnail ? (
+                                                    <img src={product.mainThumbnail} alt={product.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
                                                 ) : (
-                                                    <span className="text-gray-300 text-sm font-medium">Không có ảnh</span>
+                                                    <span className="text-gray-300 text-sm">Hình sản phẩm</span>
                                                 )}
                                             </div>
 
-                                            {/* Thông tin sản phẩm */}
                                             <div className="flex flex-1 flex-col p-4 bg-white z-10 relative">
                                                 <h3 className="mb-2 line-clamp-2 text-[15px] font-medium text-gray-900 group-hover:text-[#EE4D2D] transition-colors leading-snug">
-                                                    {product.product_name}
+                                                    {product.name}
                                                 </h3>
 
-                                                {/* Cấu hình rút gọn */}
                                                 <div className="mt-1 mb-3 text-xs text-gray-500 space-y-1">
-                                                    <p className="truncate">Chip {cpu}</p>
-                                                    <p className="truncate">{screenInfo}</p>
+                                                    <p className="truncate">Chip: {cpu}</p>
+                                                    <p className="truncate">Màn hình: {screen}</p>
                                                 </div>
 
-                                                {/* RAM / ROM Tags */}
                                                 <div className="mb-3 flex flex-wrap gap-1.5">
                                                     {ram && (
                                                         <span className="inline-flex items-center rounded border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-600 bg-gray-50">
-                                                            {ram}
+                                                            RAM {ram}
                                                         </span>
                                                     )}
-                                                    {storageOptions.map((storage: string, idx: number) => (
-                                                        <span key={idx} className="inline-flex items-center rounded border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-600 bg-gray-50">
-                                                            {storage}
-                                                        </span>
-                                                    ))}
                                                 </div>
 
-                                                {/* Khu vực Giá & Đánh giá */}
                                                 <div className="flex flex-col mt-auto pt-2 border-t border-gray-100">
                                                     <span className="text-lg font-bold text-[#D0021C]">
-                                                        {displayCurrentPrice}
+                                                        {formatPrice(product.price)}
                                                     </span>
                                                     
-                                                    {/* Khu vực Giá gốc & Phần trăm giảm */}
                                                     <div className="flex items-center gap-2 mt-0.5 min-h-[20px]">
-                                                        {discountPercent > 0 && displayOriginalPrice && (
+                                                        {discountPercent > 0 && product.oldPrice && (
                                                             <>
                                                                 <span className="text-sm text-gray-400 line-through">
-                                                                    {displayOriginalPrice}
+                                                                    {formatPrice(product.oldPrice)}
                                                                 </span>
                                                                 <span className="text-xs font-medium text-[#D0021C] bg-[#FFF0F1] px-1 rounded">
                                                                     -{discountPercent}%
@@ -359,13 +264,8 @@ export default async function ProductsPage({
                                                         )}
                                                     </div>
 
-                                                    {/* Cụm đánh giá sao */}
                                                     <div className="flex items-center gap-1 mt-1.5 text-[12px] text-gray-400">
-                                                        <div className="flex text-[#FB6E2E]">
-                                                            {[1, 2, 3, 4, 5].map((star) => (
-                                                                <span key={star} className={star <= Math.round(avgRating) || reviewCount === 0 ? "text-[#FFD400]" : "text-gray-300"}>★</span>
-                                                            ))}
-                                                        </div>
+                                                        <div className="flex text-[#FFD400]">★★★★★</div>
                                                         <span>({reviewCount})</span>
                                                     </div>
                                                 </div>
@@ -380,42 +280,30 @@ export default async function ProductsPage({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <h3 className="text-sm font-bold text-gray-800">Không tìm thấy sản phẩm</h3>
-                                <p className="mt-1 text-sm text-gray-500">Xin lỗi, chúng tôi không tìm thấy sản phẩm nào phù hợp với từ khóa "{queryName}".</p>
+                                <p className="mt-1 text-sm text-gray-500">Xin lỗi, chúng tôi không tìm thấy sản phẩm nào phù hợp bộ lọc của bạn.</p>
                             </div>
                         )}
 
-                        {/* === PHÂN TRANG (Pagination) === */}
-                        {filteredProducts.length > 0 && (
+                        {/* === THANH PHÂN TRANG ĐỘNG === */}
+                        {totalPages > 1 && (
                             <div className="mt-10 flex items-center justify-center gap-2 pb-6">
-                                {/* Nút Prev */}
-                                <button className="flex h-8 w-8 items-center justify-center rounded border border-gray-200 bg-white text-gray-400 transition hover:bg-gray-50 hover:text-[#EE4D2D]">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-                                    </svg>
-                                </button>
-
-                                {/* Trang 1 (Active đỏ) */}
-                                <button className="flex h-8 w-8 items-center justify-center rounded bg-[#EE4D2D] text-sm font-bold text-white shadow-sm">
-                                    1
-                                </button>
-
-                                {/* Trang 2, 3 */}
-                                <button className="flex h-8 w-8 items-center justify-center rounded border border-gray-200 bg-white text-sm font-medium text-gray-600 transition hover:border-[#EE4D2D]/30 hover:text-[#EE4D2D]">
-                                    2
-                                </button>
-                                <button className="flex h-8 w-8 items-center justify-center rounded border border-gray-200 bg-white text-sm font-medium text-gray-600 transition hover:border-[#EE4D2D]/30 hover:text-[#EE4D2D]">
-                                    3
-                                </button>
-
-                                {/* Nút Next */}
-                                <button className="flex h-8 w-8 items-center justify-center rounded border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-[#EE4D2D]">
-                                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                                    </svg>
-                                </button>
+                                {Array.from({ length: totalPages }).map((_, pageIdx) => {
+                                    const pageNum = pageIdx + 1;
+                                    const isActive = currentPage === pageIdx;
+                                    return (
+                                        <Link key={pageNum} href={createFilterUrl('page', String(pageNum))} scroll={true}>
+                                            <button className={`flex h-8 w-8 items-center justify-center rounded text-sm font-bold transition-all ${
+                                                isActive 
+                                                ? 'bg-[#EE4D2D] text-white shadow-sm' 
+                                                : 'border border-gray-200 bg-white text-gray-600 hover:border-[#EE4D2D]/30 hover:text-[#EE4D2D]'
+                                            }`}>
+                                                {pageNum}
+                                            </button>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         )}
-
                     </div>
                 </div>
             </main>

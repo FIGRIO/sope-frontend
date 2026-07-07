@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from "@/components/Header";
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { addToCart } from '@/lib/shop';
 
 // --- ĐỊNH NGHĨA CÁC INTERFACE ĐỂ XÓA SẠCH LỖI ANY ---
 interface Review {
@@ -59,7 +61,6 @@ const formatPrice = (priceStr: string | number) => {
     const num = parseInt(numericString, 10);
     return num.toLocaleString('vi-VN') + '₫';
 };
-import Link from 'next/link';
 
 // --- COMPONENT GỢI Ý SẢN PHẨM TƯƠNG TỰ (CONTENT-BASED) ---
 const SimilarProducts = ({ productId }: { productId: string | number }) => {
@@ -166,6 +167,7 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
 };
 export default function ProductDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const productId = params?.id; 
     
     // 1. STATE QUẢN LÝ DỮ LIỆU TỪ API (Sử dụng Type chuẩn chỉnh thay vì any)
@@ -175,6 +177,8 @@ export default function ProductDetailPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [mainImage, setMainImage] = useState("");
     const [isArticleExpanded, setIsArticleExpanded] = useState(false);
+    const [isAddingToCart, setIsAddingToCart] = useState(false);
+    const [cartMessage, setCartMessage] = useState("");
 
     // 2. GỌI API TỪ SPRING BOOT
     useEffect(() => {
@@ -232,6 +236,29 @@ export default function ProductDetailPage() {
             </div>
         );
     }
+
+    const handleAddToCart = async (goToCart = false) => {
+        const id = Number(product.id);
+        if (!Number.isFinite(id)) return;
+
+        setIsAddingToCart(true);
+        setCartMessage("");
+        try {
+            await addToCart(id, 1);
+            setCartMessage("Da them san pham vao gio hang.");
+            if (goToCart) {
+                router.push("/cart");
+            }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : "Khong the them vao gio hang.";
+            setCartMessage(message);
+            if (message.toLowerCase().includes("dang nhap")) {
+                router.push("/login");
+            }
+        } finally {
+            setIsAddingToCart(false);
+        }
+    };
 
     // 3. ĐỒNG BỘ CÁC TRƯỜNG DỮ LIỆU VỚI BACKEND (CamelCase)
     const reviewCount = product.reviews?.length || 0;
@@ -385,15 +412,27 @@ export default function ProductDetailPage() {
                         )}
 
                         <div className="flex gap-4">
-                            <button className="flex-1 bg-[#EE4D2D] hover:bg-orange-600 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm text-lg">
+                            <button
+                                onClick={() => handleAddToCart(true)}
+                                disabled={isAddingToCart}
+                                className="flex-1 bg-[#EE4D2D] hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm text-lg"
+                            >
                                 CHỌN MUA
                             </button>
-                            <button className="w-14 h-14 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:border-[#EE4D2D] hover:text-[#EE4D2D] text-gray-500 transition-colors">
+                            <button
+                                onClick={() => handleAddToCart(false)}
+                                disabled={isAddingToCart}
+                                className="w-14 h-14 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:border-[#EE4D2D] hover:text-[#EE4D2D] disabled:cursor-not-allowed disabled:opacity-70 text-gray-500 transition-colors"
+                                aria-label="Them vao gio hang"
+                            >
                                 <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                             </button>
                         </div>
+                        {cartMessage && (
+                            <p className="mt-3 text-sm font-medium text-gray-600">{cartMessage}</p>
+                        )}
                     </div>
                 </div>
 

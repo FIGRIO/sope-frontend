@@ -1,153 +1,166 @@
-'use client'; // Bắt buộc vì có dùng useState và tương tác FE
+"use client";
 
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { getApiErrorMessage, login, saveAuth } from "@/lib/auth";
 import Link from "next/link";
-import { useState } from "react"; // 1. Import useState để làm logic Ẩn/Hiện
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 
 export default function LoginPage() {
-    // 2. Tạo state để lưu trạng thái mật khẩu (false = đang ẩn, true = đang hiện)
-    const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const router = useRouter();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-    // 3. Hàm xử lý khi bấm vào nút "Hiện/Ẩn"
-    const togglePasswordVisibility = () => {
-        setIsPasswordVisible(!isPasswordVisible);
-    };
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setErrorMessage("");
 
-    return (
-        <div className="flex min-h-screen items-center justify-center bg-[#F4F6F8] p-4">
-            {/* Khung Card chính */}
-            <div className="flex w-full max-w-5xl overflow-hidden rounded-3xl bg-white shadow-xl">
+    if (!username.trim() || !password) {
+      setErrorMessage("Vui lòng nhập tên đăng nhập/email và mật khẩu.");
+      return;
+    }
 
-                {/* === NỬA TRÁI: Banner Gradient chuẩn Figma === */}
-                <div className="relative hidden w-1/2 flex-col justify-center overflow-hidden bg-gradient-to-br from-[#EE4D2D] to-[#FFD400] p-12 text-white md:flex">
+    setIsSubmitting(true);
+    try {
+      const auth = await login(username.trim(), password);
+      saveAuth(auth);
+      router.push("/");
+      router.refresh();
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-                    {/* Nội dung chữ */}
-                    <div className="z-10 mb-10">
-                        <h1 className="mb-4 text-4xl font-bold">Mua sắm thông minh</h1>
-                        <p className="text-base font-medium text-white/90 leading-relaxed">
-                            Trải nghiệm mua sắm mượt mà cùng trợ lý AI và hệ thống gợi ý 24/7.
-                        </p>
-                    </div>
+  const handleGoogleSuccess = () => {
+    router.push("/");
+    router.refresh();
+  };
 
-                    {/* Hình minh họa (UI Skeleton) */}
-                    <div className="z-10 flex flex-col gap-5">
-                        <div className="w-4/5 rounded-2xl bg-white/20 p-5 shadow-lg backdrop-blur-sm border border-white/30">
-                            <div className="flex items-center gap-4">
-                                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-white shadow-sm">
-                                    <div className="h-4 w-4 rounded-full bg-[#EE4D2D]"></div>
-                                </div>
-                                <div className="flex w-full flex-col gap-3">
-                                    <div className="h-3 w-full rounded-full bg-white"></div>
-                                    <div className="h-3 w-1/2 rounded-full bg-white/60"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="ml-8 w-2/3 rounded-2xl bg-white/10 p-5 shadow-lg backdrop-blur-sm border border-white/20">
-                            <div className="flex flex-col gap-3">
-                                <div className="h-3 w-3/4 rounded-full bg-white/80"></div>
-                                <div className="h-3 w-1/2 rounded-full bg-white/40"></div>
-                            </div>
-                        </div>
-                    </div>
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-[#F4F6F8] p-4">
+      <div className="flex w-full max-w-5xl overflow-hidden rounded-lg bg-white shadow-xl">
+        <div className="hidden w-1/2 flex-col justify-center bg-gradient-to-br from-[#EE4D2D] to-[#FFD400] p-12 text-white md:flex">
+          <div className="mb-10">
+            <Link href="/" className="text-4xl font-extrabold tracking-tight">
+              SOPE
+            </Link>
+            <h1 className="mt-8 text-4xl font-bold">Chào mừng trở lại</h1>
+            <p className="mt-4 text-base font-medium leading-relaxed text-white/90">
+              Đăng nhập để tiếp tục mua sắm, theo dõi đơn hàng và sử dụng giỏ hàng của bạn.
+            </p>
+          </div>
 
-                    {/* Vòng tròn mờ trang trí */}
-                    <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-white/10 blur-3xl"></div>
-                    <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-white/10 blur-2xl"></div>
+          <div className="space-y-4">
+            <div className="rounded-lg border border-white/30 bg-white/15 p-5 shadow-lg backdrop-blur-sm">
+              <div className="flex items-center gap-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white text-lg font-black text-[#EE4D2D]">
+                  S
                 </div>
-
-                {/* === NỬA PHẢI: Form Đăng nhập === */}
-                <div className="flex w-full flex-col justify-center px-8 py-12 md:w-1/2 lg:px-12">
-
-                    {/* Header & Chuyển Tab */}
-                    <div className="mb-8 flex items-center gap-6 border-b border-gray-100 pb-1">
-                        <Link href="/login" className="border-b-2 border-[#EE4D2D] pb-3 -mb-[6px] text-2xl font-bold text-gray-800">
-                            Đăng nhập
-                        </Link>
-                        <Link href="/register" className="pb-3 text-2xl font-bold text-gray-400 transition hover:text-gray-600">
-                            Đăng ký
-                        </Link>
-                    </div>
-
-                    <form className="space-y-6">
-                        {/* Ô Email / SĐT */}
-                        <div>
-                            <label className="mb-2 block text-sm font-semibold text-gray-700">Email hoặc Số điện thoại</label>
-                            <input
-                                type="text"
-                                placeholder="Nhập email hoặc số điện thoại..."
-                                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
-                            />
-                        </div>
-
-                        {/* Ô Mật khẩu */}
-                        <div>
-                            <label className="mb-2 block text-sm font-semibold text-gray-700">Mật khẩu</label>
-                            <div className="relative">
-                                <input
-                                    // 4. LOGIC FE CHÍNH: Thay đổi 'type' dựa trên state 'isPasswordVisible'
-                                    type={isPasswordVisible ? "text" : "password"}
-                                    placeholder="••••••••"
-                                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
-                                />
-                                <button
-                                    // 5. Gắn hàm xử lý onClick vào nút
-                                    type="button"
-                                    onClick={togglePasswordVisibility}
-                                    className="absolute right-4 top-3 text-sm font-medium text-gray-500 hover:text-gray-800"
-                                >
-                                    {isPasswordVisible ? "Ẩn" : "Hiện"}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Quên mật khẩu */}
-                        <div className="flex justify-end">
-                            <Link href="/forgot-password" className="text-sm font-medium text-[#EE4D2D] hover:underline">
-                                Quên mật khẩu?
-                            </Link>
-                        </div>
-
-                        {/* Nút Đăng nhập */}
-                        <button
-                            type="submit"
-                            className="w-full rounded-lg bg-gradient-to-r from-[#EE4D2D] to-[#FF8C00] py-3.5 text-base font-bold text-white shadow-md transition hover:opacity-90"
-                        >
-                            ĐĂNG NHẬP
-                        </button>
-                    </form>
-
-                    {/* Đường kẻ chia cách "HOẶC" */}
-                    <div className="my-8 flex items-center">
-                        <div className="flex-1 border-t border-gray-200"></div>
-                        <span className="px-4 text-xs font-medium tracking-wider text-gray-400 uppercase">HOẶC</span>
-                        <div className="flex-1 border-t border-gray-200"></div>
-                    </div>
-
-                    {/* === Đăng nhập Mạng xã hội với ICON === */}
-                    <div className="flex gap-4">
-                        {/* Nút Google */}
-                        <button className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-gray-300 py-2.5 transition hover:bg-gray-50">
-                            {/* Icon Google SVG */}
-                            <svg width="18" height="18" viewBox="0 0 18 18">
-                                <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z" fill="#4285F4" />
-                                <path d="M9 18c2.43 0 4.467-.806 5.956-2.184L12.048 13.56c-.637.426-1.45.679-2.048.679-2.31 0-4.264-1.558-4.963-3.655H2.022v2.333C3.504 15.811 6.06 18 9 18z" fill="#34A853" />
-                                <path d="M4.037 10.526A5.402 5.402 0 0 1 3.75 9c0-.526.089-1.037.287-1.526V5.141H2.022A8.986 8.986 0 0 0 0 9c0 1.458.347 2.834.962 4.041l3.075-2.515z" fill="#FBBC05" />
-                                <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0a8.986 8.986 0 0 0-7.978 4.974L4.037 7.485c.699-2.097 2.653-3.905 4.963-3.905z" fill="#EA4335" />
-                            </svg>
-                            <span className="text-sm font-semibold text-gray-700">Google</span>
-                        </button>
-
-                        {/* Nút Facebook */}
-                        <button className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-gray-300 py-2.5 transition hover:bg-gray-50">
-                            {/* Icon Facebook SVG */}
-                            <svg width="20" height="20" viewBox="0 0 20 20">
-                                <path d="M20 10.002C20 4.478 15.523 0 10 0S0 4.478 0 10.002c0 4.99 3.656 9.126 8.437 9.879v-6.988h-2.54v-2.891h2.54V7.798c0-2.508 1.493-3.891 3.776-3.891 1.094 0 2.24.195 2.24.195v2.46h-1.26c-1.244 0-1.63.772-1.63 1.562v1.875h2.773l-.443 2.891h-2.33v6.988C16.343 19.128 20 4.992 20 10.002z" fill="#1877F2" />
-                            </svg>
-                            <span className="text-sm font-semibold text-gray-700">Facebook</span>
-                        </button>
-                    </div>
-
+                <div>
+                  <p className="text-sm font-bold">Tài khoản SOPE</p>
+                  <p className="mt-1 text-sm text-white/80">Một đăng nhập cho mọi đơn hàng.</p>
                 </div>
+              </div>
             </div>
+            <div className="ml-8 rounded-lg border border-white/20 bg-white/10 p-5">
+              <p className="text-sm font-semibold text-white/90">Hỗ trợ đăng nhập bằng Google hoặc email/tên đăng nhập.</p>
+            </div>
+          </div>
         </div>
-    );
+
+        <div className="flex w-full flex-col justify-center px-8 py-12 md:w-1/2 lg:px-12">
+          <div className="mb-8 flex items-center gap-6 border-b border-gray-100 pb-1">
+            <Link
+              href="/login"
+              className="-mb-[6px] border-b-2 border-[#EE4D2D] pb-3 text-2xl font-bold text-gray-800"
+            >
+              Đăng nhập
+            </Link>
+            <Link
+              href="/register"
+              className="pb-3 text-2xl font-bold text-gray-400 transition hover:text-gray-600"
+            >
+              Đăng ký
+            </Link>
+          </div>
+
+          <form className="space-y-6" onSubmit={handleSubmit}>
+            <div>
+              <label htmlFor="username" className="mb-2 block text-sm font-semibold text-gray-700">
+                Email hoặc tên đăng nhập
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="Nhập email hoặc tên đăng nhập"
+                autoComplete="username"
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="password" className="mb-2 block text-sm font-semibold text-gray-700">
+                Mật khẩu
+              </label>
+              <div className="relative">
+                <input
+                  id="password"
+                  name="password"
+                  type={isPasswordVisible ? "text" : "password"}
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  placeholder="Nhập mật khẩu"
+                  autoComplete="current-password"
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 pr-16 text-sm text-gray-900 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setIsPasswordVisible((current) => !current)}
+                  className="absolute right-4 top-3 text-sm font-medium text-gray-500 hover:text-gray-800"
+                >
+                  {isPasswordVisible ? "Ẩn" : "Hiện"}
+                </button>
+              </div>
+            </div>
+
+            {errorMessage && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {errorMessage}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-lg bg-gradient-to-r from-[#EE4D2D] to-[#FF8C00] py-3.5 text-base font-bold text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isSubmitting ? "Đang đăng nhập..." : "Đăng nhập"}
+            </button>
+          </form>
+
+          <div className="my-8 flex items-center">
+            <div className="flex-1 border-t border-gray-200" />
+            <span className="px-4 text-xs font-medium uppercase tracking-wider text-gray-400">
+              Hoặc
+            </span>
+            <div className="flex-1 border-t border-gray-200" />
+          </div>
+
+          <GoogleSignInButton
+            text="signin_with"
+            onSuccess={handleGoogleSuccess}
+            onError={setErrorMessage}
+          />
+        </div>
+      </div>
+    </div>
+  );
 }

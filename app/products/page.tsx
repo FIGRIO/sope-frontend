@@ -158,7 +158,7 @@ export default async function ProductsPage({
         return `?${params.toString()}`;
     };
 
-    const formatPrice = (price: number | string) => {
+    const formatPrice = (price?: number | string) => {
         if (!price) return "Giá liên hệ";
         const num = typeof price === 'string' ? parseInt(price.replace(/[^\d]/g, ''), 10) : price;
         if (isNaN(num)) return "Giá liên hệ";

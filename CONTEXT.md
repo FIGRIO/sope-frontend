@@ -433,3 +433,10 @@ Khi kiểm tra cần ghi rõ:
 - Thay doi: build brand option suy luan iPhone (Apple), iPad (Apple), MacBook (Apple) va cac hang pho bien tu ten san pham khi backend brand rong; input gia doi sang text va parse duoc 10, 10tr, 10.000.000 thanh VND.
 - Kiem tra: npx eslint app/products/page.tsx components/ProductFilterSidebar.tsx pass, con warning img cu.
 - Luu y: Filter hang phu thuoc backend moi da restart de brandContains fallback theo name.
+
+## 2026-07-08 - Forgot password frontend
+- Yeu cau: Them tinh nang quen mat khau o trang dang nhap.
+- Da sua: lib/auth.ts; app/(auth)/login/page.tsx; app/(auth)/forgot-password/page.tsx; app/(auth)/reset-password/page.tsx; app/products/page.tsx.
+- Thay doi: Them helper requestPasswordReset/resetPassword; login co link /forgot-password; them form nhap email va form dat mat khau moi tu token; formatPrice nhan undefined de build khong loi type.
+- Kiem tra: npx eslint "app/(auth)/login/page.tsx" "app/(auth)/forgot-password/page.tsx" "app/(auth)/reset-password/page.tsx" app/products/page.tsx lib/auth.ts pass voi 1 warning img cu; npm run build pass.
+- Luu y: Reset link hien do backend tra ve de test local vi chua co SMTP; sau nay neu co email thi co the an link nay tren UI.

@@ -14,6 +14,12 @@ export type RegisterPayload = {
   password: string;
 };
 
+export type PasswordResetResponse = {
+  message: string;
+  resetLink?: string;
+  expiresAt?: string;
+};
+
 const AUTH_STORAGE_KEY = "sope_auth";
 const TOKEN_STORAGE_KEY = "sope_token";
 
@@ -32,6 +38,14 @@ export async function register(payload: RegisterPayload) {
 
 export async function loginWithGoogle(credential: string) {
   return postJson<AuthResponse>("/api/auth/google", { credential });
+}
+
+export async function requestPasswordReset(email: string) {
+  return postJson<PasswordResetResponse>("/api/auth/forgot-password", { email });
+}
+
+export async function resetPassword(token: string, password: string, confirmPassword: string) {
+  return postText("/api/auth/reset-password", { token, password, confirmPassword });
 }
 
 export async function getGoogleClientId() {

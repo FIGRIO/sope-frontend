@@ -419,3 +419,17 @@ Khi kiểm tra cần ghi rõ:
 - Noi dung thay doi: sidebar filter la Client Component, option loc lay tu API products, co slider min/max price va storage; sort bar co Pho bien/Moi nhat dung URL query, Ban chay disabled do chua co du lieu.
 - Kiem tra: `npm run build` thanh cong. Build van log Dynamic server usage cu tu trang chu nhung exit code 0.
 - Luu y: filter storage can backend moi duoc restart; URL filter dung `category`, `brand`, `storage`, `minPrice`, `maxPrice`, `sort`, `sortBy`, `sortDir`.
+
+## 2026-07-08 - Product filter UI cleanup
+- Yeu cau: Bo filter dung luong, doi loc gia thanh 2 input min/max, reset filter sach, sap xep gia tang/giam va pho bien.
+- Da sua: app/products/page.tsx; components/ProductFilterSidebar.tsx; components/ProductSortBar.tsx.
+- Thay doi: Trang products khong doc/ghi query storage; sidebar khong render dung luong; xoa loc ve /products; loc gia nhap min/max; sort bar gui sortBy=price asc/desc hoac sortBy=ratingStars desc.
+- Kiem tra: npx eslint app/products/page.tsx components/ProductFilterSidebar.tsx components/ProductSortBar.tsx pass, con warning img cu.
+- Luu y: Neu sua tiep filter products, khong them lai storage filter khi chua co mapping on dinh tu backend.
+
+## 2026-07-08 - Fix product brand/price filters
+- Yeu cau: Sua loc hang iPhone/iPad va loc gia tren /products.
+- Da sua: app/products/page.tsx; components/ProductFilterSidebar.tsx.
+- Thay doi: build brand option suy luan iPhone (Apple), iPad (Apple), MacBook (Apple) va cac hang pho bien tu ten san pham khi backend brand rong; input gia doi sang text va parse duoc 10, 10tr, 10.000.000 thanh VND.
+- Kiem tra: npx eslint app/products/page.tsx components/ProductFilterSidebar.tsx pass, con warning img cu.
+- Luu y: Filter hang phu thuoc backend moi da restart de brandContains fallback theo name.

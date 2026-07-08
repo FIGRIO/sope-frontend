@@ -8,8 +8,9 @@ interface ProductSortBarProps {
 }
 
 const sortOptions = [
-  { key: "popular", label: "Pho bien", sortBy: "id", sortDir: "asc" },
-  { key: "newest", label: "Moi nhat", sortBy: "id", sortDir: "desc" },
+  { key: "price-asc", label: "Gia tang dan", sortBy: "price", sortDir: "asc" },
+  { key: "price-desc", label: "Gia giam dan", sortBy: "price", sortDir: "desc" },
+  { key: "popular", label: "Pho bien", sortBy: "ratingStars", sortDir: "desc" },
 ];
 
 export default function ProductSortBar({ currentSort, queryString }: ProductSortBarProps) {
@@ -45,14 +46,6 @@ export default function ProductSortBar({ currentSort, queryString }: ProductSort
             </button>
           );
         })}
-        <button
-          type="button"
-          disabled
-          title="Chua co du lieu doanh so/luot ban de sap xep ban chay."
-          className="cursor-not-allowed rounded border border-gray-200 bg-gray-50 px-4 py-1.5 text-sm font-medium text-gray-400"
-        >
-          Ban chay
-        </button>
       </div>
     </div>
   );

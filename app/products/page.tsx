@@ -10,7 +10,18 @@ type ProductSummary = {
     category?: string;
     brand?: string;
     price?: number;
-    storageVariants?: Array<{ storageName?: string; storage_name?: string }>;
+};
+
+type ProductCatalogItem = ProductSummary & {
+    oldPrice?: number;
+    mainThumbnail?: string;
+    specs?: Record<string, string>;
+    reviews?: Array<Record<string, unknown>>;
+};
+
+type ProductsApiResponse = {
+    content?: ProductCatalogItem[];
+    totalPages?: number;
 };
 
 type FilterOption = {
@@ -28,12 +39,12 @@ export default async function ProductsPage({
     const queryName = typeof resolvedParams.name === 'string' ? resolvedParams.name.trim() : '';
     const queryCategory = typeof resolvedParams.category === 'string' ? resolvedParams.category.trim() : '';
     const queryBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand.trim() : '';
-    const queryStorage = typeof resolvedParams.storage === 'string' ? resolvedParams.storage.trim() : '';
     const queryMinPrice = typeof resolvedParams.minPrice === 'string' ? parseInt(resolvedParams.minPrice, 10) || 0 : 0;
     const queryMaxPrice = typeof resolvedParams.maxPrice === 'string' ? parseInt(resolvedParams.maxPrice, 10) || 0 : 0;
-    const querySort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : 'popular';
-    const querySortBy = typeof resolvedParams.sortBy === 'string' ? resolvedParams.sortBy : 'id';
-    const querySortDir = typeof resolvedParams.sortDir === 'string' ? resolvedParams.sortDir : (querySort === 'newest' ? 'desc' : 'asc');
+    const rawSort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : 'popular';
+    const querySort = rawSort === 'price-asc' || rawSort === 'price-desc' || rawSort === 'popular' ? rawSort : 'popular';
+    const querySortBy = querySort === 'popular' ? 'ratingStars' : 'price';
+    const querySortDir = querySort === 'price-desc' || querySort === 'popular' ? 'desc' : 'asc';
     
     const currentPage = typeof resolvedParams.page === 'string' ? Math.max(parseInt(resolvedParams.page, 10) - 1, 0) : 0;
 
@@ -42,7 +53,6 @@ export default async function ProductsPage({
     if (queryName) backendUrl.searchParams.set('keyword', queryName);
     if (queryCategory) backendUrl.searchParams.set('category', queryCategory);
     if (queryBrand) backendUrl.searchParams.set('brand', queryBrand);
-    if (queryStorage) backendUrl.searchParams.set('storage', queryStorage);
     if (queryMinPrice) backendUrl.searchParams.set('minPrice', String(queryMinPrice));
     if (queryMaxPrice) backendUrl.searchParams.set('maxPrice', String(queryMaxPrice));
     
@@ -52,14 +62,14 @@ export default async function ProductsPage({
     backendUrl.searchParams.set('sortDir', querySortDir);
 
     // 3. GỌI API
-    let filteredProducts: any[] = [];
+    let filteredProducts: ProductCatalogItem[] = [];
     let totalPages = 1;
     let filterSourceProducts: ProductSummary[] = [];
     
     try {
         const res = await fetch(backendUrl.toString(), { cache: 'no-store' });
         if (res.ok) {
-            const pagedResponse = await res.json();
+            const pagedResponse = (await res.json()) as ProductsApiResponse;
             filteredProducts = pagedResponse.content || [];
             totalPages = pagedResponse.totalPages || 1;
         } else {
@@ -84,7 +94,7 @@ export default async function ProductsPage({
 
                 const res = await fetch(filterSourceUrl.toString(), { cache: 'no-store' });
                 if (!res.ok) return [];
-                const data = await res.json();
+                const data = (await res.json()) as ProductsApiResponse;
                 return data.content || [];
             })
         );
@@ -95,7 +105,6 @@ export default async function ProductsPage({
 
     const dynamicCategories = buildCategoryOptions(filterSourceProducts);
     const dynamicBrands = buildBrandOptions(filterSourceProducts);
-    const dynamicStorages = buildStorageOptions(filterSourceProducts);
     const prices = filterSourceProducts
         .map((product) => product.price ?? 0)
         .filter((price) => price > 0);
@@ -105,7 +114,6 @@ export default async function ProductsPage({
     if (queryName) currentUiParams.set('name', queryName);
     if (queryCategory) currentUiParams.set('category', queryCategory);
     if (queryBrand) currentUiParams.set('brand', queryBrand);
-    if (queryStorage) currentUiParams.set('storage', queryStorage);
     if (queryMinPrice) currentUiParams.set('minPrice', String(queryMinPrice));
     if (queryMaxPrice) currentUiParams.set('maxPrice', String(queryMaxPrice));
     if (querySort) currentUiParams.set('sort', querySort);
@@ -113,12 +121,11 @@ export default async function ProductsPage({
     if (querySortDir) currentUiParams.set('sortDir', querySortDir);
 
     // 5. HÀM TẠO URL (Đã xử lý truyền đúng slug vào parameter)
-    const createFilterUrl = (type: 'category' | 'brand' | 'storage' | 'page', value: string) => {
+    const createFilterUrl = (type: 'category' | 'brand' | 'page', value: string) => {
         const params = new URLSearchParams();
         if (queryName) params.set('name', queryName);
         if (queryCategory) params.set('category', queryCategory);
         if (queryBrand) params.set('brand', queryBrand);
-        if (queryStorage) params.set('storage', queryStorage);
         if (queryMinPrice) params.set('minPrice', String(queryMinPrice));
         if (queryMaxPrice) params.set('maxPrice', String(queryMaxPrice));
         if (querySort) params.set('sort', querySort);
@@ -176,10 +183,8 @@ export default async function ProductsPage({
                         <ProductFilterSidebar
                             categories={dynamicCategories}
                             brands={dynamicBrands}
-                            storages={dynamicStorages}
                             selectedCategory={queryCategory}
                             selectedBrand={queryBrand}
-                            selectedStorage={queryStorage}
                             selectedMinPrice={queryMinPrice}
                             selectedMaxPrice={queryMaxPrice}
                             priceMin={priceMin}
@@ -196,7 +201,7 @@ export default async function ProductsPage({
                         {/* LƯỚI SẢN PHẨM */}
                         {filteredProducts.length > 0 ? (
                             <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:gap-5">
-                                {filteredProducts.map((product: any, index) => {
+                                {filteredProducts.map((product, index) => {
                                     const cpu = product.specs?.["Chip xử lý (CPU)"] || product.specs?.["Vi xử lý (CPU)"] || "Đang cập nhật";
                                     const screen = product.specs?.["Màn hình rộng"] || product.specs?.["Màn hình"] || "Đang cập nhật";
                                     const ram = product.specs?.["RAM"] || "";
@@ -339,20 +344,6 @@ function buildBrandOptions(products: ProductSummary[]): FilterOption[] {
     ).slice(0, 12);
 }
 
-function buildStorageOptions(products: ProductSummary[]): FilterOption[] {
-    return uniqueOptions(
-        products.flatMap((product) =>
-            (product.storageVariants ?? [])
-                .map((storage) => storage.storageName || storage.storage_name || "")
-                .filter(Boolean)
-                .map((value) => ({
-                    value,
-                    label: value,
-                }))
-        )
-    ).sort((a, b) => storageWeight(a.value) - storageWeight(b.value));
-}
-
 function uniqueOptions(options: FilterOption[]) {
     const map = new Map<string, FilterOption>();
     options.forEach((option) => {
@@ -368,6 +359,27 @@ function normalizeBrand(brand?: string) {
 }
 
 function inferBrandFromName(name: string) {
+    const lowerName = name.toLowerCase();
+    if (lowerName.includes("iphone")) return "iPhone (Apple)";
+    if (lowerName.includes("ipad")) return "iPad (Apple)";
+    if (lowerName.includes("macbook")) return "MacBook (Apple)";
+
+    const knownBrand = [
+        "Samsung",
+        "OPPO",
+        "Vivo",
+        "Xiaomi",
+        "realme",
+        "HONOR",
+        "Motorola",
+        "Lenovo",
+        "ASUS",
+        "Acer",
+        "MSI",
+        "Dell",
+        "HP",
+    ].find((brand) => lowerName.includes(brand.toLowerCase()));
+    if (knownBrand) return knownBrand;
     const normalized = name
         .replace(/^Điện thoại\s+/i, "")
         .replace(/^Máy tính bảng\s+/i, "")
@@ -378,11 +390,4 @@ function inferBrandFromName(name: string) {
     if (!first || /^\d/.test(first)) return "";
     if (first.toLowerCase() === "ipad" || first.toLowerCase() === "iphone") return "Apple";
     return first.replace(/[(),]/g, "");
-}
-
-function storageWeight(value: string) {
-    const match = value.match(/(\d+(?:\.\d+)?)/);
-    if (!match) return Number.MAX_SAFE_INTEGER;
-    const amount = Number(match[1]);
-    return value.toLowerCase().includes("tb") ? amount * 1024 : amount;
 }

@@ -11,10 +11,8 @@ type FilterOption = {
 interface ProductFilterSidebarProps {
   categories: FilterOption[];
   brands: FilterOption[];
-  storages: FilterOption[];
   selectedCategory: string;
   selectedBrand: string;
-  selectedStorage: string;
   selectedMinPrice: number;
   selectedMaxPrice: number;
   priceMin: number;
@@ -31,10 +29,8 @@ const formatVndShort = (value: number) => {
 export default function ProductFilterSidebar({
   categories,
   brands,
-  storages,
   selectedCategory,
   selectedBrand,
-  selectedStorage,
   selectedMinPrice,
   selectedMaxPrice,
   priceMin,
@@ -42,29 +38,23 @@ export default function ProductFilterSidebar({
   queryName,
 }: ProductFilterSidebarProps) {
   const router = useRouter();
-  const [minPrice, setMinPrice] = useState(selectedMinPrice || priceMin);
-  const [maxPrice, setMaxPrice] = useState(selectedMaxPrice || priceMax);
-  const hasFilters = Boolean(
-    selectedCategory ||
-      selectedBrand ||
-      selectedStorage ||
-      queryName ||
-      selectedMinPrice ||
-      selectedMaxPrice
-  );
+  const [minPriceInput, setMinPriceInput] = useState(selectedMinPrice ? String(selectedMinPrice) : "");
+  const [maxPriceInput, setMaxPriceInput] = useState(selectedMaxPrice ? String(selectedMaxPrice) : "");
+  const hasFilters = Boolean(selectedCategory || selectedBrand || queryName || selectedMinPrice || selectedMaxPrice);
 
   const normalizedPrice = useMemo(() => {
-    const low = Math.min(minPrice, maxPrice);
-    const high = Math.max(minPrice, maxPrice);
+    const minPrice = parsePriceInput(minPriceInput);
+    const maxPrice = parsePriceInput(maxPriceInput);
+    const low = minPrice && maxPrice ? Math.min(minPrice, maxPrice) : minPrice;
+    const high = minPrice && maxPrice ? Math.max(minPrice, maxPrice) : maxPrice;
     return { low, high };
-  }, [minPrice, maxPrice]);
+  }, [minPriceInput, maxPriceInput]);
 
   const pushFilters = (updates: Record<string, string | number | null>) => {
     const params = new URLSearchParams();
     if (queryName) params.set("name", queryName);
     if (selectedCategory) params.set("category", selectedCategory);
     if (selectedBrand) params.set("brand", selectedBrand);
-    if (selectedStorage) params.set("storage", selectedStorage);
     if (selectedMinPrice) params.set("minPrice", String(selectedMinPrice));
     if (selectedMaxPrice) params.set("maxPrice", String(selectedMaxPrice));
 
@@ -87,7 +77,7 @@ export default function ProductFilterSidebar({
         {hasFilters && (
           <button
             type="button"
-            onClick={() => router.push(queryName ? `/products?name=${encodeURIComponent(queryName)}` : "/products")}
+            onClick={() => router.push("/products")}
             className="text-xs font-medium normal-case text-blue-500 hover:underline"
           >
             Xoa loc
@@ -103,7 +93,6 @@ export default function ProductFilterSidebar({
           pushFilters({
             category: selectedCategory === value ? null : value,
             brand: null,
-            storage: selectedStorage,
           })
         }
       />
@@ -120,34 +109,39 @@ export default function ProductFilterSidebar({
       <div className="mb-8">
         <h3 className="mb-4 text-xs font-bold text-gray-800">Muc gia</h3>
         <div className="space-y-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
-          <div className="flex items-center justify-between text-xs font-semibold text-gray-600">
-            <span>{formatVndShort(normalizedPrice.low)}</span>
-            <span>{formatVndShort(normalizedPrice.high)}</span>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="space-y-1 text-xs font-semibold text-gray-600">
+              <span>Gia tu</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder={priceMin ? formatVndShort(priceMin) : "0"}
+                value={minPriceInput}
+                onChange={(event) => setMinPriceInput(event.target.value)}
+                className="h-10 w-full rounded border border-gray-200 bg-white px-3 text-sm font-medium text-gray-800 outline-none transition focus:border-[#EE4D2D] focus:ring-2 focus:ring-orange-100"
+              />
+            </label>
+            <label className="space-y-1 text-xs font-semibold text-gray-600">
+              <span>Den</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder={priceMax ? formatVndShort(priceMax) : "50tr"}
+                value={maxPriceInput}
+                onChange={(event) => setMaxPriceInput(event.target.value)}
+                className="h-10 w-full rounded border border-gray-200 bg-white px-3 text-sm font-medium text-gray-800 outline-none transition focus:border-[#EE4D2D] focus:ring-2 focus:ring-orange-100"
+              />
+            </label>
           </div>
-          <input
-            type="range"
-            min={priceMin}
-            max={priceMax}
-            step={500000}
-            value={minPrice}
-            onChange={(event) => setMinPrice(Number(event.target.value))}
-            className="w-full accent-[#EE4D2D]"
-          />
-          <input
-            type="range"
-            min={priceMin}
-            max={priceMax}
-            step={500000}
-            value={maxPrice}
-            onChange={(event) => setMaxPrice(Number(event.target.value))}
-            className="w-full accent-[#EE4D2D]"
-          />
+          <p className="text-[11px] font-medium text-gray-500">
+            Goi y: {formatVndShort(priceMin)} - {formatVndShort(priceMax)}
+          </p>
           <button
             type="button"
             onClick={() =>
               pushFilters({
-                minPrice: normalizedPrice.low <= priceMin ? null : normalizedPrice.low,
-                maxPrice: normalizedPrice.high >= priceMax ? null : normalizedPrice.high,
+                minPrice: normalizedPrice.low || null,
+                maxPrice: normalizedPrice.high || null,
               })
             }
             className="w-full rounded bg-[#EE4D2D] px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-600"
@@ -156,33 +150,29 @@ export default function ProductFilterSidebar({
           </button>
         </div>
       </div>
-
-      {storages.length > 0 && (
-        <div>
-          <h3 className="mb-4 text-xs font-bold text-gray-800">Dung luong luu tru</h3>
-          <div className="flex flex-wrap gap-2">
-            {storages.map((option) => {
-              const isActive = selectedStorage === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  onClick={() => pushFilters({ storage: isActive ? null : option.value })}
-                  className={`rounded border px-3 py-1.5 text-[11px] font-medium transition-colors ${
-                    isActive
-                      ? "border-[#EE4D2D] bg-orange-50 text-[#EE4D2D]"
-                      : "border-gray-200 bg-white text-gray-600 hover:border-[#EE4D2D]/50 hover:bg-orange-50/30 hover:text-[#EE4D2D]"
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
+}
+
+function parsePriceInput(value: string) {
+  const normalized = value.trim().toLowerCase().replace(",", ".");
+  const millionMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(tr|trieu|triệu|m|million)/);
+  if (millionMatch) {
+    const amount = Number(millionMatch[1]);
+    return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 1_000_000) : 0;
+  }
+
+  const thousandMatch = normalized.match(/(\d+(?:\.\d+)?)\s*(k|nghin|nghìn)/);
+  if (thousandMatch) {
+    const amount = Number(thousandMatch[1]);
+    return Number.isFinite(amount) && amount > 0 ? Math.round(amount * 1_000) : 0;
+  }
+
+  const parsed = Number(normalized.replace(/[^\d]/g, ""));
+  if (Number.isFinite(parsed) && parsed > 0 && parsed < 1000) {
+    return parsed * 1_000_000;
+  }
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
 }
 
 function FilterGroup({

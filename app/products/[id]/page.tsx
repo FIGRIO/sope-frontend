@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Header from "@/components/Header";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { API_BASE_URL } from '@/lib/auth';
 import { addToCart } from '@/lib/shop';
 
 // --- ĐỊNH NGHĨA CÁC INTERFACE ĐỂ XÓA SẠCH LỖI ANY ---
@@ -79,10 +80,15 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
             
             try {
                 // Gọi sang API MỚI của Spring Boot: /content-similar/
-                const res = await fetch(`http://localhost:8080/api/recommendations/content-similar/${productId}`);
+                const res = await fetch(`${API_BASE_URL}/api/recommendations/content-similar/${productId}`);
                 
                 if (!res.ok) {
-                    throw new Error("Lỗi fetch dữ liệu");
+                    console.warn(`Khong tai duoc goi y CBF (${res.status}).`);
+                    if (isMounted) {
+                        setSimilar([]);
+                        setIsLoading(false);
+                    }
+                    return;
                 }
                 
                 const data = await res.json();
@@ -185,7 +191,7 @@ export default function ProductDetailPage() {
         if (!productId) return;
 
         // Gọi API đến Spring Boot Backend (Đảm bảo backend đang chạy ở port 8080)
-        fetch(`http://localhost:8080/api/products/${productId}`)
+        fetch(`${API_BASE_URL}/api/products/${productId}`)
             .then(res => {
                 if (!res.ok) throw new Error("Không tìm thấy sản phẩm");
                 return res.json();
@@ -193,12 +199,11 @@ export default function ProductDetailPage() {
             .then((data: Product) => {
                 setProduct(data);
                 
-                // TỐI ƯU HOÁ: Thiết lập ảnh hiển thị chính mặc định ngay tại đây để tránh cascading renders
-                // (Giữ nguyên vẹn logic: Ưu tiên dùng mảng images[0], nếu không có thì dùng mainThumbnail)
-                if (data.images && data.images.length > 0) {
-                    setMainImage(data.images[0]);
-                } else if (data.mainThumbnail) {
+                // Trang listing dùng mainThumbnail, nên chi tiết cũng ưu tiên ảnh này để tránh lệch ảnh theo category.
+                if (data.mainThumbnail) {
                     setMainImage(data.mainThumbnail);
+                } else if (data.images && data.images.length > 0) {
+                    setMainImage(data.images[0]);
                 }
                 
                 setIsLoading(false);
@@ -283,6 +288,17 @@ export default function ProductDetailPage() {
         displayOriginalPrice = "";
     }
 
+    const categoryHref = product.category
+        ? `/products?category=${encodeURIComponent(product.category)}`
+        : "/products";
+    const brandParams = new URLSearchParams();
+    if (product.category) brandParams.set("category", product.category);
+    if (product.brand) brandParams.set("brand", product.brand);
+    const brandHref = brandParams.toString() ? `/products?${brandParams.toString()}` : categoryHref;
+    const galleryImages = Array.from(
+        new Set([product.mainThumbnail, ...(product.images ?? [])].filter((image): image is string => Boolean(image)))
+    );
+
     return (
         <div className="bg-[#F4F6F8] min-h-screen pb-10">
             <Header />
@@ -291,11 +307,17 @@ export default function ProductDetailPage() {
 
                 {/* 1. BREADCRUMB */}
                 <nav className="text-sm font-medium text-gray-500 mb-6 flex items-center gap-2">
-                    <span className="cursor-pointer hover:text-[#EE4D2D] transition-colors">Trang chủ</span> 
+                    <Link href="/" className="hover:text-[#EE4D2D] transition-colors">Trang chủ</Link> 
                     <span>{'>'}</span> 
-                    <span className="cursor-pointer hover:text-[#EE4D2D] transition-colors capitalize">{product.category || "Sản phẩm"}</span> 
-                    <span>{'>'}</span> 
-                    <span className="cursor-pointer hover:text-[#EE4D2D] transition-colors">{product.brand}</span>
+                    <Link href={categoryHref} className="hover:text-[#EE4D2D] transition-colors capitalize">
+                        {product.category || "Sản phẩm"}
+                    </Link> 
+                    {product.brand && (
+                        <>
+                            <span>{'>'}</span> 
+                            <Link href={brandHref} className="hover:text-[#EE4D2D] transition-colors">{product.brand}</Link>
+                        </>
+                    )}
                     <span>{'>'}</span> 
                     <span className="text-[#EE4D2D] font-semibold">{product.name}</span>
                 </nav>
@@ -309,6 +331,14 @@ export default function ProductDetailPage() {
                                     src={mainImage} 
                                     alt={product.name} 
                                     className="w-full h-auto rounded-xl object-contain transition-transform duration-500 hover:scale-105" 
+                                    onError={(event) => {
+                                        event.currentTarget.onerror = null;
+                                        if (product.mainThumbnail && event.currentTarget.src !== product.mainThumbnail) {
+                                            setMainImage(product.mainThumbnail);
+                                        } else {
+                                            setMainImage("");
+                                        }
+                                    }}
                                 />
                             ) : (
                                 <div className="aspect-square w-full flex items-center justify-center bg-gray-50 rounded-xl">
@@ -317,7 +347,7 @@ export default function ProductDetailPage() {
                             )}
                         </div>
                         <div className="flex gap-3 overflow-x-auto w-full pb-2 scrollbar-hide">
-                            {product.images?.map((imgUrl: string, idx: number) => (
+                            {galleryImages.map((imgUrl: string, idx: number) => (
                                 <div 
                                     key={idx} 
                                     onClick={() => setMainImage(imgUrl)}
@@ -411,7 +441,7 @@ export default function ProductDetailPage() {
                             </div>
                         )}
 
-                        <div className="flex gap-4">
+                        <div className="flex flex-col gap-3 sm:flex-row">
                             <button
                                 onClick={() => handleAddToCart(true)}
                                 disabled={isAddingToCart}
@@ -422,12 +452,13 @@ export default function ProductDetailPage() {
                             <button
                                 onClick={() => handleAddToCart(false)}
                                 disabled={isAddingToCart}
-                                className="w-14 h-14 flex items-center justify-center border-2 border-gray-200 rounded-xl hover:border-[#EE4D2D] hover:text-[#EE4D2D] disabled:cursor-not-allowed disabled:opacity-70 text-gray-500 transition-colors"
+                                className="flex flex-1 items-center justify-center gap-2 border-2 border-[#EE4D2D] text-[#EE4D2D] hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-70 font-bold py-3.5 rounded-xl transition-colors text-base"
                                 aria-label="Them vao gio hang"
                             >
-                                <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
+                                {isAddingToCart ? "Dang them..." : "Them vao gio"}
                             </button>
                         </div>
                         {cartMessage && (

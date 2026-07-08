@@ -19,7 +19,6 @@ export default function CheckoutPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [recipientName, setRecipientName] = useState("");
   const [phone, setPhone] = useState("");
@@ -57,7 +56,6 @@ export default function CheckoutPage() {
 
     setIsSubmitting(true);
     setError("");
-    setSuccess("");
 
     try {
       const shippingAddress = [addressLine, district, city].filter(Boolean).join(", ");
@@ -71,7 +69,12 @@ export default function CheckoutPage() {
 
       if (paymentMethod === "COD") {
         setCart({ ...cart, items: [], totalItems: 0, totalAmount: 0 });
-        setSuccess(`Dat hang thanh cong. Ma don hang: ${order.orderCode}`);
+        const params = new URLSearchParams({
+          orderCode: order.orderCode,
+          method: paymentMethod,
+          total: String(order.totalAmount),
+        });
+        router.push(`/checkout/success?${params.toString()}`);
         return;
       }
 
@@ -83,11 +86,16 @@ export default function CheckoutPage() {
         orderInfo: `Thanh toan don hang ${order.orderCode}`,
       });
 
+      const params = new URLSearchParams({
+        orderCode: order.orderCode,
+        method: paymentMethod,
+        total: String(order.totalAmount),
+      });
+
       if (payment.paymentUrl) {
-        window.location.href = payment.paymentUrl;
-      } else {
-        setSuccess(`Da tao giao dich thanh toan cho don ${order.orderCode}.`);
+        params.set("paymentUrl", payment.paymentUrl);
       }
+      router.push(`/checkout/success?${params.toString()}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Khong the dat hang.");
     } finally {
@@ -106,11 +114,6 @@ export default function CheckoutPage() {
         {error && (
           <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
             {error}
-          </div>
-        )}
-        {success && (
-          <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
-            {success}
           </div>
         )}
 

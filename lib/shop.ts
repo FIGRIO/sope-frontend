@@ -1,5 +1,7 @@
 import { API_BASE_URL, getAccessToken } from "./auth";
 
+export const CART_UPDATED_EVENT = "sope:cart-updated";
+
 export type CartItem = {
   id: number;
   productId: number;
@@ -58,28 +60,40 @@ export function formatVnd(value?: number | null) {
   }).format(value);
 }
 
+export function notifyCartUpdated() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+  }
+}
+
 export async function getCart() {
   return requestJson<CartResponse>("/api/cart");
 }
 
 export async function addToCart(productId: number, quantity = 1) {
-  return requestJson<CartResponse>("/api/cart/items", {
+  const cart = await requestJson<CartResponse>("/api/cart/items", {
     method: "POST",
     body: JSON.stringify({ productId, quantity }),
   });
+  notifyCartUpdated();
+  return cart;
 }
 
 export async function updateCartItem(itemId: number, quantity: number) {
-  return requestJson<CartResponse>(`/api/cart/items/${itemId}`, {
+  const cart = await requestJson<CartResponse>(`/api/cart/items/${itemId}`, {
     method: "PUT",
     body: JSON.stringify({ quantity }),
   });
+  notifyCartUpdated();
+  return cart;
 }
 
 export async function removeCartItem(itemId: number) {
-  return requestJson<CartResponse>(`/api/cart/items/${itemId}`, {
+  const cart = await requestJson<CartResponse>(`/api/cart/items/${itemId}`, {
     method: "DELETE",
   });
+  notifyCartUpdated();
+  return cart;
 }
 
 export async function createOrder(payload: {
@@ -89,10 +103,12 @@ export async function createOrder(payload: {
   note?: string;
   paymentMethod: PaymentMethod;
 }) {
-  return requestJson<OrderResponse>("/api/orders", {
+  const order = await requestJson<OrderResponse>("/api/orders", {
     method: "POST",
     body: JSON.stringify(payload),
   });
+  notifyCartUpdated();
+  return order;
 }
 
 export async function createPayment(payload: {

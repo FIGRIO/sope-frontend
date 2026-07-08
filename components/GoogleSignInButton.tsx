@@ -16,6 +16,13 @@ type GoogleCredentialResponse = {
   select_by?: string;
 };
 
+let initializedGoogleClientId = "";
+let activeCredentialHandler: ((response: GoogleCredentialResponse) => void) | null = null;
+
+function dispatchGoogleCredential(response: GoogleCredentialResponse) {
+  activeCredentialHandler?.(response);
+}
+
 type GoogleButtonConfig = {
   type?: "standard" | "icon";
   theme?: "outline" | "filled_blue" | "filled_black";
@@ -60,15 +67,23 @@ export default function GoogleSignInButton({
   onError,
 }: Props) {
   const buttonRef = useRef<HTMLDivElement | null>(null);
+  const renderedButtonKeyRef = useRef("");
+  const onSuccessRef = useRef(onSuccess);
+  const onErrorRef = useRef(onError);
   const [clientId, setClientId] = useState(GOOGLE_CLIENT_ID);
   const [scriptReady, setScriptReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isConfigured = Boolean(clientId);
 
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+    onErrorRef.current = onError;
+  }, [onError, onSuccess]);
+
   const handleCredential = useCallback(
     async (response: GoogleCredentialResponse) => {
       if (!response.credential) {
-        onError("Không nhận được credential từ Google.");
+        onErrorRef.current("Không nhận được credential từ Google.");
         return;
       }
 
@@ -76,15 +91,24 @@ export default function GoogleSignInButton({
       try {
         const auth = await loginWithGoogle(response.credential);
         saveAuth(auth);
-        onSuccess(auth);
+        onSuccessRef.current(auth);
       } catch (error) {
-        onError(getApiErrorMessage(error));
+        onErrorRef.current(getApiErrorMessage(error));
       } finally {
         setIsLoading(false);
       }
     },
-    [onError, onSuccess]
+    []
   );
+
+  useEffect(() => {
+    activeCredentialHandler = handleCredential;
+    return () => {
+      if (activeCredentialHandler === handleCredential) {
+        activeCredentialHandler = null;
+      }
+    };
+  }, [handleCredential]);
 
   useEffect(() => {
     if (GOOGLE_CLIENT_ID) return;
@@ -116,12 +140,23 @@ export default function GoogleSignInButton({
       return;
     }
 
-    window.google.accounts.id.initialize({
-      client_id: clientId,
-      callback: handleCredential,
-      ux_mode: "popup",
-      use_fedcm_for_button: false,
-    });
+    activeCredentialHandler = handleCredential;
+
+    if (initializedGoogleClientId !== clientId) {
+      window.google.accounts.id.initialize({
+        client_id: clientId,
+        callback: dispatchGoogleCredential,
+        ux_mode: "popup",
+        use_fedcm_for_button: false,
+      });
+      initializedGoogleClientId = clientId;
+      renderedButtonKeyRef.current = "";
+    }
+
+    const buttonKey = `${clientId}:${text}`;
+    if (renderedButtonKeyRef.current === buttonKey) {
+      return;
+    }
 
     buttonRef.current.innerHTML = "";
     window.google.accounts.id.renderButton(buttonRef.current, {
@@ -132,6 +167,7 @@ export default function GoogleSignInButton({
       logo_alignment: "left",
       width: Math.min(buttonRef.current.offsetWidth || 360, 400),
     });
+    renderedButtonKeyRef.current = buttonKey;
   }, [clientId, handleCredential, scriptReady, text]);
 
   if (!isConfigured) {

@@ -1,5 +1,22 @@
 import Link from 'next/link';
 import Header from "@/components/Header"; 
+import ProductAddToCartButton from "@/components/ProductAddToCartButton";
+import ProductFilterSidebar from "@/components/ProductFilterSidebar";
+import ProductSortBar from "@/components/ProductSortBar";
+
+type ProductSummary = {
+    id: number;
+    name: string;
+    category?: string;
+    brand?: string;
+    price?: number;
+    storageVariants?: Array<{ storageName?: string; storage_name?: string }>;
+};
+
+type FilterOption = {
+    label: string;
+    value: string;
+};
 
 export default async function ProductsPage({
     searchParams,
@@ -11,6 +28,12 @@ export default async function ProductsPage({
     const queryName = typeof resolvedParams.name === 'string' ? resolvedParams.name.trim() : '';
     const queryCategory = typeof resolvedParams.category === 'string' ? resolvedParams.category.trim() : '';
     const queryBrand = typeof resolvedParams.brand === 'string' ? resolvedParams.brand.trim() : '';
+    const queryStorage = typeof resolvedParams.storage === 'string' ? resolvedParams.storage.trim() : '';
+    const queryMinPrice = typeof resolvedParams.minPrice === 'string' ? parseInt(resolvedParams.minPrice, 10) || 0 : 0;
+    const queryMaxPrice = typeof resolvedParams.maxPrice === 'string' ? parseInt(resolvedParams.maxPrice, 10) || 0 : 0;
+    const querySort = typeof resolvedParams.sort === 'string' ? resolvedParams.sort : 'popular';
+    const querySortBy = typeof resolvedParams.sortBy === 'string' ? resolvedParams.sortBy : 'id';
+    const querySortDir = typeof resolvedParams.sortDir === 'string' ? resolvedParams.sortDir : (querySort === 'newest' ? 'desc' : 'asc');
     
     const currentPage = typeof resolvedParams.page === 'string' ? Math.max(parseInt(resolvedParams.page, 10) - 1, 0) : 0;
 
@@ -19,15 +42,19 @@ export default async function ProductsPage({
     if (queryName) backendUrl.searchParams.set('keyword', queryName);
     if (queryCategory) backendUrl.searchParams.set('category', queryCategory);
     if (queryBrand) backendUrl.searchParams.set('brand', queryBrand);
+    if (queryStorage) backendUrl.searchParams.set('storage', queryStorage);
+    if (queryMinPrice) backendUrl.searchParams.set('minPrice', String(queryMinPrice));
+    if (queryMaxPrice) backendUrl.searchParams.set('maxPrice', String(queryMaxPrice));
     
     backendUrl.searchParams.set('page', String(currentPage));
     backendUrl.searchParams.set('size', '9'); 
-    backendUrl.searchParams.set('sortBy', 'id');
-    backendUrl.searchParams.set('sortDir', 'asc');
+    backendUrl.searchParams.set('sortBy', querySortBy);
+    backendUrl.searchParams.set('sortDir', querySortDir);
 
     // 3. GỌI API
     let filteredProducts: any[] = [];
     let totalPages = 1;
+    let filterSourceProducts: ProductSummary[] = [];
     
     try {
         const res = await fetch(backendUrl.toString(), { cache: 'no-store' });
@@ -44,18 +71,46 @@ export default async function ProductsPage({
     }
 
     // 4. MOCK BỘ LỌC SIDEBAR (ĐÃ ĐƯỢC CHUẨN HOÁ SLUG)
-    const dynamicCategories = [
-        ["Điện thoại", "phone"],
-        ["Máy tính bảng", "tablet"], // Sửa lại thành tablet
-        ["Laptop", "laptop"]         // Sửa lại thành laptop
-    ];
+    try {
+        const sourceCategories = queryCategory ? [queryCategory] : ["phone", "laptop", "tablet"];
+        const filterResponses = await Promise.all(
+            sourceCategories.map(async (category) => {
+                const filterSourceUrl = new URL('http://localhost:8080/api/products');
+                if (queryName) filterSourceUrl.searchParams.set('keyword', queryName);
+                filterSourceUrl.searchParams.set('category', category);
+                filterSourceUrl.searchParams.set('size', '100');
+                filterSourceUrl.searchParams.set('sortBy', 'id');
+                filterSourceUrl.searchParams.set('sortDir', 'asc');
 
-    // Kiểm tra queryCategory dựa trên slug ("laptop") thay vì tên tiếng Việt
-    const dynamicBrands = queryCategory === "laptop" 
-        ? [["Asus", "ASUS"], ["Macbook", "Apple"], ["Dell", "DELL"], ["HP", "HP"]]
-        : [["iPhone", "Apple"], ["Samsung", "Samsung"], ["Xiaomi", "Xiaomi"], ["Oppo", "Oppo"]];
+                const res = await fetch(filterSourceUrl.toString(), { cache: 'no-store' });
+                if (!res.ok) return [];
+                const data = await res.json();
+                return data.content || [];
+            })
+        );
+        filterSourceProducts = filterResponses.flat();
+    } catch (error) {
+        console.error("Khong the tai du lieu bo loc san pham:", error);
+    }
 
-    const dynamicStorages = ["128GB", "256GB", "512GB", "1TB"];
+    const dynamicCategories = buildCategoryOptions(filterSourceProducts);
+    const dynamicBrands = buildBrandOptions(filterSourceProducts);
+    const dynamicStorages = buildStorageOptions(filterSourceProducts);
+    const prices = filterSourceProducts
+        .map((product) => product.price ?? 0)
+        .filter((price) => price > 0);
+    const priceMin = prices.length ? Math.floor(Math.min(...prices) / 500000) * 500000 : 0;
+    const priceMax = prices.length ? Math.ceil(Math.max(...prices) / 500000) * 500000 : 50000000;
+    const currentUiParams = new URLSearchParams();
+    if (queryName) currentUiParams.set('name', queryName);
+    if (queryCategory) currentUiParams.set('category', queryCategory);
+    if (queryBrand) currentUiParams.set('brand', queryBrand);
+    if (queryStorage) currentUiParams.set('storage', queryStorage);
+    if (queryMinPrice) currentUiParams.set('minPrice', String(queryMinPrice));
+    if (queryMaxPrice) currentUiParams.set('maxPrice', String(queryMaxPrice));
+    if (querySort) currentUiParams.set('sort', querySort);
+    if (querySortBy) currentUiParams.set('sortBy', querySortBy);
+    if (querySortDir) currentUiParams.set('sortDir', querySortDir);
 
     // 5. HÀM TẠO URL (Đã xử lý truyền đúng slug vào parameter)
     const createFilterUrl = (type: 'category' | 'brand' | 'storage' | 'page', value: string) => {
@@ -63,6 +118,12 @@ export default async function ProductsPage({
         if (queryName) params.set('name', queryName);
         if (queryCategory) params.set('category', queryCategory);
         if (queryBrand) params.set('brand', queryBrand);
+        if (queryStorage) params.set('storage', queryStorage);
+        if (queryMinPrice) params.set('minPrice', String(queryMinPrice));
+        if (queryMaxPrice) params.set('maxPrice', String(queryMaxPrice));
+        if (querySort) params.set('sort', querySort);
+        if (querySortBy) params.set('sortBy', querySortBy);
+        if (querySortDir) params.set('sortDir', querySortDir);
         if (typeof resolvedParams.page === 'string') params.set('page', resolvedParams.page);
 
         if (type === 'category') {
@@ -112,92 +173,25 @@ export default async function ProductsPage({
                 <div className="flex gap-6">
                     {/* === CỘT TRÁI: SIDEBAR === */}
                     <aside className="hidden w-[260px] shrink-0 lg:block">
-                        <div className="rounded-xl bg-white p-5 shadow-sm border border-gray-100">
-                            <h2 className="mb-6 text-sm font-bold text-gray-800 uppercase tracking-wide flex items-center justify-between">
-                                Bộ lọc tìm kiếm
-                                {(queryCategory || queryBrand) && (
-                                    <Link href={queryName ? `?name=${queryName}` : "/products"} className="text-xs font-medium text-blue-500 hover:underline normal-case">
-                                        Xóa lọc
-                                    </Link>
-                                )}
-                            </h2>
-
-                            {/* Lọc theo Danh mục */}
-                            <div className="mb-8">
-                                <h3 className="mb-4 text-xs font-bold text-gray-800">Danh mục</h3>
-                                <div className="flex flex-col gap-3 text-sm font-medium">
-                                    {dynamicCategories.map(([catName, value]) => {
-                                        // ĐÃ SỬA: So sánh queryCategory với slug (value) thay vì catName
-                                        const isChecked = queryCategory === value; 
-                                        return (
-                                            // ĐÃ SỬA: Truyền 'value' vào hàm tạo URL
-                                            <Link key={value} href={createFilterUrl('category', value)} scroll={false} className="block group">
-                                                <label className="flex cursor-pointer items-center gap-3">
-                                                    <div className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${isChecked ? 'bg-[#EE4D2D] border-[#EE4D2D]' : 'bg-white border-gray-300 group-hover:border-[#EE4D2D]'}`}>
-                                                        {isChecked && (
-                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                                                        )}
-                                                    </div>
-                                                    <span className={`${isChecked ? 'text-[#EE4D2D]' : 'text-gray-600 group-hover:text-[#EE4D2D]'} transition-colors`}>
-                                                        {catName}
-                                                    </span>
-                                                </label>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Lọc theo Thương hiệu */}
-                            <div className="mb-8">
-                                <h3 className="mb-4 text-xs font-bold text-gray-800">Thương hiệu</h3>
-                                <div className="flex flex-col gap-3 text-sm font-medium">
-                                    {dynamicBrands.map(([brandName, value]) => {
-                                        // ĐÃ SỬA: So sánh và truyền 'value' (slug) cho Thương hiệu
-                                        const isChecked = queryBrand === value;
-                                        return (
-                                            <Link key={value} href={createFilterUrl('brand', value)} scroll={false} className="block group">
-                                                <label className="flex cursor-pointer items-center gap-3">
-                                                    <div className={`h-4 w-4 rounded flex items-center justify-center border transition-colors ${isChecked ? 'bg-[#EE4D2D] border-[#EE4D2D]' : 'bg-white border-gray-300 group-hover:border-[#EE4D2D]'}`}>
-                                                        {isChecked && (
-                                                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" /></svg>
-                                                        )}
-                                                    </div>
-                                                    <span className={`${isChecked ? 'text-[#EE4D2D]' : 'text-gray-600 group-hover:text-[#EE4D2D]'} transition-colors`}>
-                                                        {brandName}
-                                                    </span>
-                                                </label>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Bộ lọc dung lượng bộ nhớ */}
-                            <div>
-                                <h3 className="mb-4 text-xs font-bold text-gray-800">Phiên bản bộ nhớ</h3>
-                                <div className="flex flex-wrap gap-2">
-                                    {dynamicStorages.map((storageName) => (
-                                        <button key={storageName} className="rounded border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-medium text-gray-600 hover:border-[#EE4D2D]/50 hover:text-[#EE4D2D] hover:bg-orange-50/30 transition-colors">
-                                            {storageName}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
+                        <ProductFilterSidebar
+                            categories={dynamicCategories}
+                            brands={dynamicBrands}
+                            storages={dynamicStorages}
+                            selectedCategory={queryCategory}
+                            selectedBrand={queryBrand}
+                            selectedStorage={queryStorage}
+                            selectedMinPrice={queryMinPrice}
+                            selectedMaxPrice={queryMaxPrice}
+                            priceMin={priceMin}
+                            priceMax={priceMax}
+                            queryName={queryName}
+                        />
                     </aside>
 
                     {/* === CỘT PHẢI: DANH SÁCH SẢN PHẨM === */}
                     <div className="flex-1">
                         {/* Thanh Sắp xếp */}
-                        <div className="mb-6 flex items-center gap-4 bg-white p-3 px-4 rounded-xl shadow-sm border border-gray-100">
-                            <span className="text-sm font-medium text-gray-600">Sắp xếp theo</span>
-                            <div className="flex gap-2 flex-wrap">
-                                <button className="rounded bg-[#EE4D2D] px-4 py-1.5 text-sm font-bold text-white shadow-sm">Phổ biến</button>
-                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:text-[#EE4D2D]">Mới nhất</button>
-                                <button className="rounded border border-gray-200 bg-white px-4 py-1.5 text-sm font-medium text-gray-700 hover:text-[#EE4D2D]">Bán chạy</button>
-                            </div>
-                        </div>
+                        <ProductSortBar currentSort={querySort} queryString={currentUiParams.toString()} />
 
                         {/* LƯỚI SẢN PHẨM */}
                         {filteredProducts.length > 0 ? (
@@ -215,11 +209,11 @@ export default async function ProductsPage({
                                     const reviewCount = product.reviews ? product.reviews.length : 0;
 
                                     return (
-                                        <Link 
-                                            href={`/products/${product.id}`}
+                                        <div
                                             key={product.id || index}
                                             className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[#EE4D2D]/30"
                                         >
+                                            <Link href={`/products/${product.id}`} className="flex flex-1 flex-col">
                                             <div className="aspect-square w-full bg-white relative overflow-hidden flex items-center justify-center p-4">
                                                 {product.mainThumbnail ? (
                                                     <img src={product.mainThumbnail} alt={product.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
@@ -270,7 +264,11 @@ export default async function ProductsPage({
                                                     </div>
                                                 </div>
                                             </div>
-                                        </Link>
+                                            </Link>
+                                            <div className="bg-white px-4 pb-4">
+                                                <ProductAddToCartButton productId={product.id} />
+                                            </div>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -309,4 +307,82 @@ export default async function ProductsPage({
             </main>
         </div>
     );
+}
+
+function buildCategoryOptions(products: ProductSummary[]): FilterOption[] {
+    const labels: Record<string, string> = {
+        phone: "Dien thoai",
+        tablet: "May tinh bang",
+        laptop: "Laptop",
+    };
+
+    return uniqueOptions(
+        products
+            .map((product) => product.category?.trim())
+            .filter((value): value is string => Boolean(value))
+            .map((value) => ({
+                value,
+                label: labels[value] ?? value,
+            }))
+    );
+}
+
+function buildBrandOptions(products: ProductSummary[]): FilterOption[] {
+    return uniqueOptions(
+        products
+            .map((product) => normalizeBrand(product.brand) || inferBrandFromName(product.name))
+            .filter((value): value is string => Boolean(value))
+            .map((value) => ({
+                value,
+                label: value,
+            }))
+    ).slice(0, 12);
+}
+
+function buildStorageOptions(products: ProductSummary[]): FilterOption[] {
+    return uniqueOptions(
+        products.flatMap((product) =>
+            (product.storageVariants ?? [])
+                .map((storage) => storage.storageName || storage.storage_name || "")
+                .filter(Boolean)
+                .map((value) => ({
+                    value,
+                    label: value,
+                }))
+        )
+    ).sort((a, b) => storageWeight(a.value) - storageWeight(b.value));
+}
+
+function uniqueOptions(options: FilterOption[]) {
+    const map = new Map<string, FilterOption>();
+    options.forEach((option) => {
+        const key = option.value.toLowerCase();
+        if (!map.has(key)) map.set(key, option);
+    });
+    return Array.from(map.values());
+}
+
+function normalizeBrand(brand?: string) {
+    const trimmed = brand?.trim();
+    return trimmed || "";
+}
+
+function inferBrandFromName(name: string) {
+    const normalized = name
+        .replace(/^Điện thoại\s+/i, "")
+        .replace(/^Máy tính bảng\s+/i, "")
+        .replace(/^Laptop\s+/i, "")
+        .trim();
+    const first = normalized.split(/\s+/)[0] ?? "";
+
+    if (!first || /^\d/.test(first)) return "";
+    if (first.toLowerCase() === "ipad" || first.toLowerCase() === "iphone") return "Apple";
+    return first.replace(/[(),]/g, "");
+}
+
+function storageWeight(value: string) {
+    const match = value.match(/(\d+(?:\.\d+)?)/);
+    if (!match) return Number.MAX_SAFE_INTEGER;
+    const amount = Number(match[1]);
+    return value.toLowerCase().includes("tb") ? amount * 1024 : amount;
 }

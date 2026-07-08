@@ -45,6 +45,37 @@ const formatPrice = (priceStr: string | number) => {
   return num.toLocaleString('vi-VN') + '₫';
 };
 
+function CategoryIcon({ slug }: { slug: string }) {
+  if (slug === "phone") {
+    return (
+      <svg className="h-10 w-10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="7" y="2.5" width="10" height="19" rx="2.2" />
+        <path d="M10 5h4" />
+        <path d="M11.5 18.5h1" />
+      </svg>
+    );
+  }
+
+  if (slug === "laptop") {
+    return (
+      <svg className="h-11 w-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <rect x="4" y="4" width="16" height="11" rx="1.6" />
+        <path d="M2.5 19h19" />
+        <path d="M8 19l1.2-4" />
+        <path d="M16 19l-1.2-4" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="h-11 w-11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="5" y="3" width="14" height="18" rx="2.2" />
+      <path d="M9 6h6" />
+      <path d="M11.5 18h1" />
+    </svg>
+  );
+}
+
 // ==========================================
 // 3. COMPONENT TRANG CHỦ (Server Component)
 // ==========================================
@@ -83,8 +114,8 @@ export default async function HomePage() {
                 href={`/products?category=${cat.slug}`} // Đã chuyển sang gọi bằng slug (phone, laptop...)
                 className="group flex cursor-pointer flex-col items-center text-center w-[100px] sm:w-[120px]"
               >
-                <div className="mb-3 flex h-[88px] w-[88px] items-center justify-center rounded-full bg-gray-50 transition-all duration-300 group-hover:shadow-md border border-gray-100 group-hover:border-[#EE4D2D]/40">
-                  <span className="text-xs text-gray-400">Icon</span>
+                <div className="mb-3 flex h-[88px] w-[88px] items-center justify-center rounded-full border border-gray-100 bg-gray-50 text-gray-500 transition-all duration-300 group-hover:border-[#EE4D2D]/40 group-hover:text-[#EE4D2D] group-hover:shadow-md">
+                  <CategoryIcon slug={cat.slug} />
                 </div>
                 <span className="text-sm font-medium text-gray-700 transition-colors group-hover:text-[#EE4D2D] leading-tight">
                   {cat.name}

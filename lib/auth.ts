@@ -84,6 +84,10 @@ export function getAccessToken() {
   return window.localStorage.getItem(TOKEN_STORAGE_KEY);
 }
 
+export function isAdminAuth(auth?: AuthResponse | null) {
+  return auth?.role === "ROLE_ADMIN" || auth?.role === "ADMIN";
+}
+
 export function clearAuth() {
   if (typeof window === "undefined") return;
 
@@ -93,7 +97,7 @@ export function clearAuth() {
 
 export function getApiErrorMessage(error: unknown) {
   if (error instanceof Error) return error.message;
-  return "Da co loi xay ra. Vui long thu lai.";
+  return "Đã có lỗi xảy ra. Vui lòng thử lại.";
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {

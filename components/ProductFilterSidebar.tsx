@@ -73,20 +73,20 @@ export default function ProductFilterSidebar({
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-5 shadow-sm">
       <h2 className="mb-6 flex items-center justify-between text-sm font-bold uppercase tracking-wide text-gray-800">
-        Bo loc tim kiem
+        Bộ lọc tìm kiếm
         {hasFilters && (
           <button
             type="button"
             onClick={() => router.push("/products")}
             className="text-xs font-medium normal-case text-blue-500 hover:underline"
           >
-            Xoa loc
+            Xóa lọc
           </button>
         )}
       </h2>
 
       <FilterGroup
-        title="Loai thiet bi"
+        title="Loại thiết bị"
         options={categories}
         selectedValue={selectedCategory}
         onSelect={(value) =>
@@ -99,7 +99,7 @@ export default function ProductFilterSidebar({
 
       {brands.length > 0 && (
         <FilterGroup
-          title="Hang"
+          title="Hãng"
           options={brands}
           selectedValue={selectedBrand}
           onSelect={(value) => pushFilters({ brand: selectedBrand === value ? null : value })}
@@ -107,11 +107,11 @@ export default function ProductFilterSidebar({
       )}
 
       <div className="mb-8">
-        <h3 className="mb-4 text-xs font-bold text-gray-800">Muc gia</h3>
+        <h3 className="mb-4 text-xs font-bold text-gray-800">Mức giá</h3>
         <div className="space-y-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
           <div className="grid grid-cols-2 gap-3">
             <label className="space-y-1 text-xs font-semibold text-gray-600">
-              <span>Gia tu</span>
+              <span>Giá từ</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -122,7 +122,7 @@ export default function ProductFilterSidebar({
               />
             </label>
             <label className="space-y-1 text-xs font-semibold text-gray-600">
-              <span>Den</span>
+              <span>Đến</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -134,7 +134,7 @@ export default function ProductFilterSidebar({
             </label>
           </div>
           <p className="text-[11px] font-medium text-gray-500">
-            Goi y: {formatVndShort(priceMin)} - {formatVndShort(priceMax)}
+            Gợi ý: {formatVndShort(priceMin)} - {formatVndShort(priceMax)}
           </p>
           <button
             type="button"
@@ -146,7 +146,7 @@ export default function ProductFilterSidebar({
             }
             className="w-full rounded bg-[#EE4D2D] px-3 py-2 text-xs font-bold text-white transition hover:bg-orange-600"
           >
-            Ap dung khoang gia
+            Áp dụng khoảng giá
           </button>
         </div>
       </div>

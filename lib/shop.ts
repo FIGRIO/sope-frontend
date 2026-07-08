@@ -39,6 +39,7 @@ export type OrderResponse = {
     quantity: number;
     lineTotal: number;
   }>;
+  createdAt?: string | null;
 };
 
 export type PaymentResponse = {
@@ -50,10 +51,12 @@ export type PaymentResponse = {
   transactionId?: string | null;
   orderInfo?: string | null;
   paymentUrl?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
 export function formatVnd(value?: number | null) {
-  if (value == null) return "Gia lien he";
+  if (value == null) return "Giá liên hệ";
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -111,6 +114,10 @@ export async function createOrder(payload: {
   return order;
 }
 
+export async function getMyOrders() {
+  return requestJson<OrderResponse[]>("/api/orders");
+}
+
 export async function createPayment(payload: {
   orderId: string;
   amount: number;
@@ -123,10 +130,16 @@ export async function createPayment(payload: {
   });
 }
 
+export async function simulateBankTransfer(paymentId: number) {
+  return requestJson<PaymentResponse>(`/api/payment/${paymentId}/simulate-bank-transfer`, {
+    method: "POST",
+  });
+}
+
 async function requestJson<T>(path: string, init: RequestInit = {}) {
   const token = getAccessToken();
   if (!token) {
-    throw new Error("Ban can dang nhap de thuc hien thao tac nay.");
+    throw new Error("Bạn cần đăng nhập để thực hiện thao tác này.");
   }
 
   const headers = new Headers(init.headers);

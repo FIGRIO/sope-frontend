@@ -1,7 +1,7 @@
 "use client";
 
 import GoogleSignInButton from "@/components/GoogleSignInButton";
-import { getApiErrorMessage, login, saveAuth } from "@/lib/auth";
+import { getApiErrorMessage, isAdminAuth, login, saveAuth } from "@/lib/auth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
@@ -27,7 +27,7 @@ export default function LoginPage() {
     try {
       const auth = await login(username.trim(), password);
       saveAuth(auth);
-      router.push("/");
+      router.push(isAdminAuth(auth) ? "/admin" : "/");
       router.refresh();
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error));
@@ -133,7 +133,7 @@ export default function LoginPage() {
 
             <div className="text-right">
               <Link href="/forgot-password" className="text-xs font-semibold text-[#EE4D2D] hover:underline">
-                Quen mat khau?
+                Quên mật khẩu?
               </Link>
             </div>
 

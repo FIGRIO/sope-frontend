@@ -19,7 +19,7 @@ export default function ProductAddToCartButton({ productId }: ProductAddToCartBu
 
     const id = Number(productId);
     if (!Number.isFinite(id)) {
-      setMessage("Khong the them san pham nay.");
+      setMessage("Không thể thêm sản phẩm này.");
       return;
     }
 
@@ -27,9 +27,9 @@ export default function ProductAddToCartButton({ productId }: ProductAddToCartBu
     setMessage("");
     try {
       await addToCart(id, 1);
-      setMessage("Da them vao gio.");
+      setMessage("Đã thêm vào giỏ.");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Khong the them vao gio.";
+      const errorMessage = error instanceof Error ? error.message : "Không thể thêm vào giỏ.";
       setMessage(errorMessage);
       if (errorMessage.toLowerCase().includes("dang nhap")) {
         router.push("/login");
@@ -55,7 +55,7 @@ export default function ProductAddToCartButton({ productId }: ProductAddToCartBu
             d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
           />
         </svg>
-        {isAdding ? "Dang them..." : "Them vao gio"}
+        {isAdding ? "Đang thêm..." : "Thêm vào giỏ"}
       </button>
       <p className="mt-1 min-h-4 text-xs font-medium text-gray-500">{message}</p>
     </div>

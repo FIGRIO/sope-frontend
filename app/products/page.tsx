@@ -100,7 +100,7 @@ export default async function ProductsPage({
         );
         filterSourceProducts = filterResponses.flat();
     } catch (error) {
-        console.error("Khong the tai du lieu bo loc san pham:", error);
+        console.error("Không thể tải dữ liệu bộ lọc sản phẩm:", error);
     }
 
     const dynamicCategories = buildCategoryOptions(filterSourceProducts);

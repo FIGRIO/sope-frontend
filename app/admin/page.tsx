@@ -1,6 +1,17 @@
 'use client';
-import React, { useState } from 'react';
+import { API_BASE_URL, clearAuth, getStoredAuth, isAdminAuth, type AuthResponse } from '@/lib/auth';
+import { formatVnd } from '@/lib/shop';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+
+type AdminStatsResponse = {
+    totalUsers: number;
+    totalProducts: number;
+    totalOrders: number;
+    totalReviews: number;
+    totalRevenue: number;
+};
 
 // ==========================================
 // 1. MOCK DATA (Dành cho Backend map API sau này)
@@ -90,7 +101,7 @@ const Sidebar = () => (
 // ==========================================
 // 3. COMPONENT TOPBAR
 // ==========================================
-const TopBar = () => (
+const TopBar = ({ auth, onLogout }: { auth: AuthResponse | null; onLogout: () => void }) => (
     <header className="h-[80px] bg-white flex items-center justify-between px-8 border-b border-gray-200 sticky top-0 z-40">
         {/* Search */}
         <div className="w-[400px]">
@@ -110,11 +121,22 @@ const TopBar = () => (
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                 <span className="absolute top-1 right-2 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
             </button>
-            <div className="flex items-center gap-3 pl-6 border-l border-gray-200 cursor-pointer">
+            <div className="flex items-center gap-3 pl-6 border-l border-gray-200">
                 <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-white shadow-sm overflow-hidden">
-                    <img src="https://i.pravatar.cc/150?img=11" alt="Admin" className="w-full h-full object-cover" />
+                    {auth?.avatarUrl ? (
+                        <img src={auth.avatarUrl} alt={auth.fullName || auth.username || "Admin"} className="w-full h-full object-cover" />
+                    ) : (
+                        <div className="flex h-full w-full items-center justify-center bg-[#EE4D2D] text-sm font-black text-white">
+                            {(auth?.fullName || auth?.username || "A").slice(0, 1).toUpperCase()}
+                        </div>
+                    )}
                 </div>
-                <span className="text-sm font-bold text-gray-700">Admin</span>
+                <div className="flex flex-col">
+                    <span className="text-sm font-bold text-gray-700">{auth?.fullName || auth?.username || "Admin"}</span>
+                    <button type="button" onClick={onLogout} className="text-left text-xs font-semibold text-[#EE4D2D] hover:underline">
+                        Đăng xuất
+                    </button>
+                </div>
             </div>
         </div>
     </header>
@@ -124,12 +146,103 @@ const TopBar = () => (
 // 4. MAIN PAGE (TỔNG HỢP)
 // ==========================================
 export default function AdminDashboard() {
+    const router = useRouter();
+    const [auth, setAuth] = useState<AuthResponse | null>(null);
+    const [isChecking, setIsChecking] = useState(true);
+    const [stats, setStats] = useState<AdminStatsResponse | null>(null);
+    const [statsError, setStatsError] = useState("");
+    const [isStatsLoading, setIsStatsLoading] = useState(false);
+
+    useEffect(() => {
+        const loadStats = async (token: string) => {
+            setIsStatsLoading(true);
+            setStatsError("");
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/admin/stats`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+                if (!response.ok) {
+                    throw new Error(`Không thể tải thống kê admin (${response.status})`);
+                }
+                setStats((await response.json()) as AdminStatsResponse);
+            } catch (err) {
+                setStatsError(err instanceof Error ? err.message : "Không thể tải thống kê admin.");
+            } finally {
+                setIsStatsLoading(false);
+            }
+        };
+
+        const timer = window.setTimeout(() => {
+            const storedAuth = getStoredAuth();
+            if (!storedAuth?.accessToken) {
+                router.replace("/login");
+                return;
+            }
+            if (!isAdminAuth(storedAuth)) {
+                router.replace("/");
+                return;
+            }
+            setAuth(storedAuth);
+            setIsChecking(false);
+            void loadStats(storedAuth.accessToken);
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, [router]);
+
+    const handleLogout = () => {
+        clearAuth();
+        router.replace("/login");
+        router.refresh();
+    };
+
+    if (isChecking || !auth) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-[#F4F6F8] text-sm font-semibold text-gray-500">
+                Đang kiểm tra quyền admin...
+            </div>
+        );
+    }
+
+    const countFormatter = new Intl.NumberFormat("vi-VN");
+    const loadingValue = isStatsLoading ? "Đang tải" : "0";
+    const dashboardKpiData = auth ? [
+        {
+            title: "Tổng doanh thu",
+            value: stats ? formatVnd(stats.totalRevenue) : loadingValue,
+            change: "Từ đơn đã thanh toán",
+            isUp: true,
+            note: statsError ? "Lỗi API" : undefined,
+        },
+        {
+            title: "Tài khoản người dùng",
+            value: stats ? countFormatter.format(stats.totalUsers) : loadingValue,
+            change: "Dữ liệu hệ thống",
+            isUp: true,
+        },
+        {
+            title: "Số lượng sản phẩm",
+            value: stats ? countFormatter.format(stats.totalProducts) : loadingValue,
+            change: "Dữ liệu hệ thống",
+            isUp: true,
+        },
+        {
+            title: "Tổng đơn hàng",
+            value: stats ? countFormatter.format(stats.totalOrders) : loadingValue,
+            change: "Đã lưu trong hệ thống",
+            isUp: true,
+        },
+    ] : kpiData;
+    const todayText = new Intl.DateTimeFormat("vi-VN").format(new Date());
+
     return (
         <div className="min-h-screen bg-[#F4F6F8] font-sans">
             <Sidebar />
 
             <div className="ml-[260px] flex flex-col min-h-screen">
-                <TopBar />
+                <TopBar auth={auth} onLogout={handleLogout} />
 
                 {/* Nội dung trang Dashboard */}
                 <main className="flex-1 p-8">
@@ -138,7 +251,7 @@ export default function AdminDashboard() {
                     <div className="flex items-end justify-between mb-8">
                         <div>
                             <h2 className="text-2xl font-bold text-gray-900">Tổng quan Hệ thống</h2>
-                            <p className="text-sm text-gray-500 mt-1">Thống kê dữ liệu đến ngày <span className="font-semibold text-gray-700">05/07/2026</span></p>
+                            <p className="text-sm text-gray-500 mt-1">Thống kê dữ liệu đến ngày <span className="font-semibold text-gray-700">{todayText}</span></p>
                         </div>
                         <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-bold shadow-sm hover:bg-gray-50 transition-colors">
                             Xuất báo cáo
@@ -146,8 +259,14 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Lưới KPI Cards */}
+                    {statsError && (
+                        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+                            {statsError}
+                        </div>
+                    )}
+
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                        {kpiData.map((kpi, idx) => (
+                        {dashboardKpiData.map((kpi, idx) => (
                             <div key={idx} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-gray-50 to-gray-100 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
 

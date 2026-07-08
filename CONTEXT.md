@@ -440,3 +440,44 @@ Khi kiểm tra cần ghi rõ:
 - Thay doi: Them helper requestPasswordReset/resetPassword; login co link /forgot-password; them form nhap email va form dat mat khau moi tu token; formatPrice nhan undefined de build khong loi type.
 - Kiem tra: npx eslint "app/(auth)/login/page.tsx" "app/(auth)/forgot-password/page.tsx" "app/(auth)/reset-password/page.tsx" app/products/page.tsx lib/auth.ts pass voi 1 warning img cu; npm run build pass.
 - Luu y: Reset link hien do backend tra ve de test local vi chua co SMTP; sau nay neu co email thi co the an link nay tren UI.
+
+## 2026-07-08 - Admin login to dashboard
+- Yeu cau: Dang nhap tai khoan admin vao dashboard.
+- Da sua: lib/auth.ts; app/(auth)/login/page.tsx; app/admin/page.tsx; components/Header.tsx.
+- Thay doi: isAdminAuth nhan ROLE_ADMIN/ADMIN; login admin redirect /admin; dashboard /admin co guard localStorage auth + role; Header hien link Dashboard khi auth la admin.
+- Kiem tra: npx eslint "app/(auth)/login/page.tsx" app/admin/page.tsx components/Header.tsx lib/auth.ts pass voi warning img cu; npm run build pass.
+- Luu y: Neu vao /admin khi chua dang nhap se bi day ve /login; user thuong bi day ve /.
+
+## 2026-07-08 - Checkout chuyen khoan gia lap va doanh thu admin
+- Yeu cau: Sau khi chon VNPAY/MoMo phai co buoc chuyen khoan gia lap, luu lich su thanh toan va admin thay doanh thu that.
+- Route/khu vuc: /checkout, /checkout/success, /admin, lib/shop.ts.
+- Da sua: lib/shop.ts; app/(checkout)/checkout/page.tsx; app/(checkout)/checkout/success/page.tsx; app/admin/page.tsx.
+- API lien quan: POST /api/payment/create; POST /api/payment/{id}/simulate-bank-transfer; GET /api/admin/stats.
+- Thay doi: checkout truyen paymentId sang success; success hien thong tin chuyen khoan demo va nut TOI DA CHUYEN KHOAN goi backend; admin dashboard lay stats that de hien totalRevenue/totalOrders/users/products.
+- Kiem tra: npx eslint "app/(checkout)/checkout/page.tsx" "app/(checkout)/checkout/success/page.tsx" app/admin/page.tsx lib/shop.ts pass voi 2 warning img cu; npm run build pass.
+- Luu y: Can backend moi chay de nut simulate hoat dong; neu chua bam nut simulate thi don VNPAY/MoMo van PENDING va doanh thu chua tang.
+
+## 2026-07-08 - Sua mau chu input checkout
+- Yeu cau: O nhap thong tin thanh toan dang hien chu nhap mau xam, doi sang mau den.
+- Route/khu vuc: /checkout.
+- Da sua: app/(checkout)/checkout/page.tsx.
+- Thay doi: Them text-black cho cac input thong tin nguoi nhan/dia chi/ghi chu, placeholder van la gray.
+- Kiem tra: npx eslint "app/(checkout)/checkout/page.tsx" pass voi 1 warning img cu.
+- Luu y: Dung class mau chu truc tiep tren input checkout de tranh bi ke thua mau text xam tu parent.
+
+## 2026-07-09 - Lich su mua hang cua nguoi dung
+- Yeu cau: Nguoi dung co the xem lich su mua hang cua ban than.
+- Route/khu vuc: /orders, Header, lib/shop.ts.
+- Da sua: lib/shop.ts; app/orders/page.tsx; components/Header.tsx.
+- API lien quan: GET /api/orders.
+- Thay doi: Them getMyOrders; tao trang /orders co guard dang nhap, tong da thanh toan, danh sach don hang va item trong don; Header co link Don mua cho user da dang nhap.
+- Kiem tra: npx eslint app/orders/page.tsx components/Header.tsx lib/shop.ts pass voi 1 warning img cu; npm run build pass.
+- Luu y: Khong tao backend moi vi OrderController da co GET /api/orders tra lich su don cua user hien tai.
+
+## 2026-07-09 - Chuan hoa tieng Viet co dau tren giao dien
+- Yeu cau: Doi cac chu tieng Viet khong dau tren giao dien website sang tieng Viet co dau, giu nguyen logic.
+- Route/khu vuc: auth pages, cart, checkout, checkout success, orders, products, Header, admin dashboard, product filter/sort, lib message helpers.
+- Da sua: app/(auth)/forgot-password/page.tsx; app/(auth)/login/page.tsx; app/(auth)/reset-password/page.tsx; app/(checkout)/cart/page.tsx; app/(checkout)/checkout/page.tsx; app/(checkout)/checkout/success/page.tsx; app/admin/page.tsx; app/orders/page.tsx; app/products/page.tsx; app/products/[id]/page.tsx; components/Header.tsx; components/ProductAddToCartButton.tsx; components/ProductFilterSidebar.tsx; components/ProductSortBar.tsx; lib/auth.ts; lib/shop.ts.
+- Thay doi: Chuan hoa label/nut/thong bao/loading/mo ta sang tieng Viet co dau; doi mac dinh tinh thanh checkout tu Ho Chi Minh sang Ho Chi Minh co dau; khong doi API path, enum, query param hay logic redirect.
+- Kiem tra: npx eslint cac file da sua pass voi 11 warning img cu; npm run build pass. npm run lint toan bo van fail do loi cu trong hooks/useWebSocket.ts.
+- Luu y: Cac chuoi includes("dang nhap") la check logic voi thong bao backend nen de nguyen; khong sua app/data vi do la du lieu san pham/review mau.

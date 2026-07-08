@@ -1,6 +1,6 @@
 "use client";
 
-import { API_BASE_URL, clearAuth, getStoredAuth, type AuthResponse } from "@/lib/auth";
+import { API_BASE_URL, clearAuth, getStoredAuth, isAdminAuth, type AuthResponse } from "@/lib/auth";
 import { CART_UPDATED_EVENT, getCart } from "@/lib/shop";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -66,8 +66,6 @@ export default function Header() {
   useEffect(() => {
     const keyword = searchQuery.trim();
     if (keyword.length < 2) {
-      setSuggestions([]);
-      setIsSuggesting(false);
       return;
     }
 
@@ -172,6 +170,14 @@ export default function Header() {
                     </div>
                   )}
                   <span className="hidden max-w-[140px] truncate sm:inline">{displayName}</span>
+                  {isAdminAuth(auth) && (
+                    <Link href="/admin" className="shrink-0 transition hover:underline">
+                      Dashboard
+                    </Link>
+                  )}
+                  <Link href="/orders" className="shrink-0 transition hover:underline">
+                    Đơn mua
+                  </Link>
                   <button
                     type="button"
                     onClick={handleLogout}
@@ -208,7 +214,14 @@ export default function Header() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
+              onChange={(event) => {
+                const value = event.target.value;
+                setSearchQuery(value);
+                if (value.trim().length < 2) {
+                  setSuggestions([]);
+                  setIsSuggesting(false);
+                }
+              }}
               placeholder="Tìm kiếm sản phẩm, thương hiệu..."
               className="w-full rounded-full border-none bg-white px-6 py-2.5 pr-12 text-sm text-gray-800 shadow-inner outline-none focus:ring-2 focus:ring-orange-300"
             />
@@ -229,11 +242,11 @@ export default function Header() {
             {showSuggestions && searchQuery.trim().length >= 2 && (
               <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-lg border border-gray-100 bg-white text-gray-800 shadow-xl">
                 <div className="border-b border-gray-100 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Goi y tim kiem
+                  Gợi ý tìm kiếm
                 </div>
 
                 {isSuggesting ? (
-                  <div className="px-4 py-4 text-sm font-medium text-gray-500">Dang tim san pham phu hop...</div>
+                  <div className="px-4 py-4 text-sm font-medium text-gray-500">Đang tìm sản phẩm phù hợp...</div>
                 ) : suggestions.length > 0 ? (
                   <div className="max-h-[360px] overflow-y-auto">
                     {suggestions.map((product) => {
@@ -270,14 +283,14 @@ export default function Header() {
                     })}
                   </div>
                 ) : (
-                  <div className="px-4 py-4 text-sm font-medium text-gray-500">Chua tim thay san pham phu hop.</div>
+                  <div className="px-4 py-4 text-sm font-medium text-gray-500">Chưa tìm thấy sản phẩm phù hợp.</div>
                 )}
 
                 <button
                   type="submit"
                   className="flex w-full items-center justify-between border-t border-gray-100 px-4 py-3 text-left text-sm font-semibold text-[#EE4D2D] transition hover:bg-orange-50"
                 >
-                  <span>Xem tat ca ket qua cho "{searchQuery.trim()}"</span>
+                  <span>Xem tất cả kết quả cho &quot;{searchQuery.trim()}&quot;</span>
                   <span>{'>'}</span>
                 </button>
               </div>

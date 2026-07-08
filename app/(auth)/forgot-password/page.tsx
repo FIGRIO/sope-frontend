@@ -19,14 +19,14 @@ export default function ForgotPasswordPage() {
 
     const trimmedEmail = email.trim();
     if (!trimmedEmail) {
-      setErrorMessage("Vui long nhap email tai khoan.");
+      setErrorMessage("Vui lòng nhập email tài khoản.");
       return;
     }
 
     setIsSubmitting(true);
     try {
       const response = await requestPasswordReset(trimmedEmail);
-      setMessage("Neu email ton tai, lien ket dat lai mat khau da duoc tao.");
+      setMessage("Nếu email tồn tại, liên kết đặt lại mật khẩu đã được tạo.");
       setResetLink(response.resetLink ?? "");
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error));
@@ -42,17 +42,17 @@ export default function ForgotPasswordPage() {
           <Link href="/" className="text-4xl font-extrabold tracking-tight">
             SOPE
           </Link>
-          <h1 className="mt-8 text-4xl font-bold">Khoi phuc tai khoan</h1>
+          <h1 className="mt-8 text-4xl font-bold">Khôi phục tài khoản</h1>
           <p className="mt-4 text-base font-medium leading-relaxed text-white/90">
-            Nhap email da dang ky de tao lien ket dat lai mat khau cho tai khoan SOPE.
+            Nhập email đã đăng ký để tạo liên kết đặt lại mật khẩu cho tài khoản SOPE.
           </p>
         </div>
 
         <div className="flex w-full flex-col justify-center px-8 py-12 md:w-1/2 lg:px-12">
           <div className="mb-8 border-b border-gray-100 pb-4">
-            <h2 className="text-2xl font-bold text-gray-800">Quen mat khau</h2>
+            <h2 className="text-2xl font-bold text-gray-800">Quên mật khẩu</h2>
             <p className="mt-2 text-sm leading-6 text-gray-500">
-              Chung toi se tao lien ket dat lai mat khau neu email ton tai trong he thong.
+              Chúng tôi sẽ tạo liên kết đặt lại mật khẩu nếu email tồn tại trong hệ thống.
             </p>
           </div>
 
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
                 <p>{message}</p>
                 {resetLink && (
                   <Link href={resetLink} className="mt-2 block font-bold text-[#EE4D2D] hover:underline">
-                    Mo trang dat lai mat khau
+                    Mở trang đặt lại mật khẩu
                   </Link>
                 )}
               </div>
@@ -95,12 +95,12 @@ export default function ForgotPasswordPage() {
               disabled={isSubmitting}
               className="w-full rounded-lg bg-gradient-to-r from-[#EE4D2D] to-[#FF8C00] py-3.5 text-base font-bold text-white shadow-md transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {isSubmitting ? "Dang tao lien ket..." : "Tao lien ket dat lai mat khau"}
+              {isSubmitting ? "Đang tạo liên kết..." : "Tạo liên kết đặt lại mật khẩu"}
             </button>
           </form>
 
           <Link href="/login" className="mt-6 text-center text-sm font-semibold text-[#EE4D2D] hover:underline">
-            Quay lai dang nhap
+            Quay lại đăng nhập
           </Link>
         </div>
       </div>

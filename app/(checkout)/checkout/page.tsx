@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import CartHeader from "@/components/CartHeader";
 import {
@@ -22,22 +22,18 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
   const [recipientName, setRecipientName] = useState("");
   const [phone, setPhone] = useState("");
-  const [city, setCity] = useState("Ho Chi Minh");
+  const [city, setCity] = useState("Hồ Chí Minh");
   const [district, setDistrict] = useState("");
   const [addressLine, setAddressLine] = useState("");
   const [note, setNote] = useState("");
 
-  useEffect(() => {
-    loadCart();
-  }, []);
-
-  const loadCart = async () => {
+  const loadCart = useCallback(async () => {
     setIsLoading(true);
     setError("");
     try {
       setCart(await getCart());
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Khong the tai gio hang.";
+      const message = err instanceof Error ? err.message : "Không thể tải giỏ hàng.";
       setError(message);
       if (message.toLowerCase().includes("dang nhap")) {
         router.push("/login");
@@ -45,12 +41,20 @@ export default function CheckoutPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadCart();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, [loadCart]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!cart || cart.items.length === 0) {
-      setError("Gio hang dang trong.");
+      setError("Giỏ hàng đang trống.");
       return;
     }
 
@@ -83,21 +87,23 @@ export default function CheckoutPage() {
         orderId: order.orderCode,
         amount: order.totalAmount,
         provider,
-        orderInfo: `Thanh toan don hang ${order.orderCode}`,
+        orderInfo: `Thanh toán đơn hàng ${order.orderCode}`,
       });
 
       const params = new URLSearchParams({
         orderCode: order.orderCode,
         method: paymentMethod,
         total: String(order.totalAmount),
+        paymentId: String(payment.id),
       });
 
       if (payment.paymentUrl) {
         params.set("paymentUrl", payment.paymentUrl);
       }
+      setCart({ ...cart, items: [], totalItems: 0, totalAmount: 0 });
       router.push(`/checkout/success?${params.toString()}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Khong the dat hang.");
+      setError(err instanceof Error ? err.message : "Không thể đặt hàng.");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +114,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-[#F4F6F8] pb-20">
-      <CartHeader title="Thanh toan don hang" currentStep={2} />
+      <CartHeader title="Thanh toán đơn hàng" currentStep={2} />
 
       <main className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
         {error && (
@@ -119,78 +125,78 @@ export default function CheckoutPage() {
 
         {isLoading ? (
           <div className="rounded-xl bg-white p-10 text-center text-sm font-medium text-gray-500 shadow-sm">
-            Dang tai don hang...
+            Đang tải đơn hàng...
           </div>
         ) : items.length === 0 ? (
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
-            <h2 className="text-lg font-bold text-gray-800">Khong co san pham de thanh toan</h2>
+            <h2 className="text-lg font-bold text-gray-800">Không có sản phẩm để thanh toán</h2>
             <button
               onClick={() => router.push("/cart")}
               className="mt-6 rounded-lg bg-[#EE4D2D] px-6 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
             >
-              Quay lai gio hang
+              Quay lại giỏ hàng
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-6 lg:flex-row">
             <div className="flex-1 space-y-6">
               <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 className="mb-5 text-base font-bold text-gray-800">1. Thong tin nguoi nhan</h2>
+                <h2 className="mb-5 text-base font-bold text-gray-800">1. Thông tin người nhận</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <input
                     required
                     value={recipientName}
                     onChange={(event) => setRecipientName(event.target.value)}
                     type="text"
-                    placeholder="Ho va ten"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                    placeholder="Họ và tên"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                   />
                   <input
                     required
                     value={phone}
                     onChange={(event) => setPhone(event.target.value)}
                     type="tel"
-                    placeholder="So dien thoai"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                    placeholder="Số điện thoại"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                   />
                 </div>
               </section>
 
               <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 className="mb-5 text-base font-bold text-gray-800">2. Dia chi giao hang</h2>
+                <h2 className="mb-5 text-base font-bold text-gray-800">2. Địa chỉ giao hàng</h2>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <input
                     required
                     value={city}
                     onChange={(event) => setCity(event.target.value)}
-                    placeholder="Tinh / Thanh pho"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                    placeholder="Tỉnh / Thành phố"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                   />
                   <input
                     required
                     value={district}
                     onChange={(event) => setDistrict(event.target.value)}
-                    placeholder="Quan / Huyen"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
+                    placeholder="Quận / Huyện"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D]"
                   />
                   <input
                     required
                     value={addressLine}
                     onChange={(event) => setAddressLine(event.target.value)}
-                    placeholder="So nha, ten duong"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] sm:col-span-2"
+                    placeholder="Số nhà, tên đường"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] sm:col-span-2"
                   />
                   <input
                     value={note}
                     onChange={(event) => setNote(event.target.value)}
-                    placeholder="Ghi chu"
-                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] sm:col-span-2"
+                    placeholder="Ghi chú"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm text-black placeholder:text-gray-400 outline-none transition focus:border-[#EE4D2D] focus:ring-1 focus:ring-[#EE4D2D] sm:col-span-2"
                   />
                 </div>
               </section>
 
               <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                <h2 className="mb-5 text-base font-bold text-gray-800">3. Phuong thuc thanh toan</h2>
+                <h2 className="mb-5 text-base font-bold text-gray-800">3. Phương thức thanh toán</h2>
                 <div className="space-y-3">
                   {paymentOptions.map((option) => (
                     <label
@@ -220,7 +226,7 @@ export default function CheckoutPage() {
               <div className="sticky top-[100px] rounded-xl border border-gray-100 bg-white shadow-sm">
                 <div className="p-5">
                   <h2 className="mb-4 text-base font-bold text-gray-800">
-                    Don hang cua ban ({cart?.totalItems ?? 0} san pham)
+                    Đơn hàng của bạn ({cart?.totalItems ?? 0} sản phẩm)
                   </h2>
                   <div className="mb-5 space-y-4">
                     {items.map((item) => (
@@ -244,7 +250,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="my-4 border-t border-gray-200" />
                   <div className="flex items-end justify-between mb-6">
-                    <span className="text-sm font-bold text-gray-800">Tong cong:</span>
+                    <span className="text-sm font-bold text-gray-800">Tổng cộng:</span>
                     <span className="text-2xl font-extrabold leading-none text-[#EE4D2D]">
                       {formatVnd(totalAmount)}
                     </span>
@@ -254,7 +260,7 @@ export default function CheckoutPage() {
                     disabled={isSubmitting}
                     className="w-full rounded-lg bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] py-3.5 text-sm font-bold tracking-wide text-white shadow-md transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {isSubmitting ? "DANG XU LY..." : "XAC NHAN DAT HANG"}
+                    {isSubmitting ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT HÀNG"}
                   </button>
                 </div>
               </div>
@@ -267,7 +273,7 @@ export default function CheckoutPage() {
 }
 
 const paymentOptions: Array<{ value: PaymentMethod; label: string }> = [
-  { value: "COD", label: "Thanh toan khi nhan hang (COD)" },
-  { value: "VNPAY", label: "Thanh toan qua VNPAY" },
-  { value: "MOMO", label: "Thanh toan qua vi MoMo" },
+  { value: "COD", label: "Thanh toán khi nhận hàng (COD)" },
+  { value: "VNPAY", label: "Thanh toán qua VNPAY" },
+  { value: "MOMO", label: "Thanh toán qua ví MoMo" },
 ];

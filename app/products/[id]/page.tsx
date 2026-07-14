@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from "@/components/Header";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/auth';
 import { addToCart } from '@/lib/shop';
 
-// --- ĐỊNH NGHĨA CÁC INTERFACE ĐỂ XÓA SẠCH LỖI ANY ---
+// --- ĐỊNH NGHĨA CÁC INTERFACE ---
 interface Review {
     reviewerName?: string;
     ratingStars?: number;
@@ -28,6 +28,22 @@ interface ColorVariant {
     value?: string;
 }
 
+// Bổ sung interface cho ProductVariant từ Backend
+interface ProductVariant {
+    id: number;
+    sku: string;
+    colorName: string;
+    storageName: string;
+    price: number;
+    oldPrice?: number;
+    imageUrl?: string;
+    stockQuantity: number;
+    reservedQuantity: number;
+    availableQuantity: number;
+    active: boolean;
+    inStock: boolean;
+}
+
 interface Product {
     id: string | number;
     name: string;
@@ -44,21 +60,17 @@ interface Product {
     reviews?: Review[];
     storageVariants?: StorageVariant[];
     colorVariants?: ColorVariant[];
+    variants?: ProductVariant[]; // Bổ sung mảng variants
 }
 
 // Hàm hỗ trợ format tiền tệ thông minh
 const formatPrice = (priceStr: string | number) => {
     if (!priceStr || priceStr === "Giá liên hệ") return "Giá liên hệ";
-    
     let str = String(priceStr);
-
     if (str.endsWith('.0')) str = str.slice(0, -2);
     if (str.endsWith('.00')) str = str.slice(0, -3);
-
     const numericString = str.replace(/[^\d]/g, '');
-    
     if (!numericString) return str;
-
     const num = parseInt(numericString, 10);
     return num.toLocaleString('vi-VN') + '₫';
 };
@@ -66,36 +78,24 @@ const formatPrice = (priceStr: string | number) => {
 // --- COMPONENT GỢI Ý SẢN PHẨM TƯƠNG TỰ (CONTENT-BASED) ---
 const SimilarProducts = ({ productId }: { productId: string | number }) => {
     const [similar, setSimilar] = useState<Product[]>([]);
-    
-    // Khởi tạo mặc định là true, nên không cần gọi lại setIsLoading(true) trong useEffect nữa
-    const [isLoading, setIsLoading] = useState(true); 
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!productId) return;
-
-        let isMounted = true; // Cờ theo dõi trạng thái mount của component
+        let isMounted = true;
 
         const fetchRecommendations = async () => {
-            console.log("Đang tải gợi ý Content-Based cho Product ID:", productId);
-            
             try {
-                // Gọi sang API MỚI của Spring Boot: /content-similar/
                 const res = await fetch(`${API_BASE_URL}/api/recommendations/content-similar/${productId}`);
-                
                 if (!res.ok) {
-                    console.warn(`Không tải được gợi ý CBF (${res.status}).`);
                     if (isMounted) {
                         setSimilar([]);
                         setIsLoading(false);
                     }
                     return;
                 }
-                
                 const data = await res.json();
-                
-                // Chỉ cập nhật state nếu component vẫn đang hiển thị
                 if (isMounted) {
-                    console.log("Recommendation API (CBF):", data);
                     if (Array.isArray(data)) {
                         setSimilar(data);
                     }
@@ -110,15 +110,10 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
         };
 
         fetchRecommendations();
-
-        // Cleanup function: Hàm này chạy khi component unmount hoặc khi productId thay đổi
-        return () => {
-            isMounted = false;
-        };
+        return () => { isMounted = false; };
     }, [productId]);
 
     if (isLoading) {
-        // Skeleton loading hiển thị mượt mà hơn cho UI
         return (
             <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-6 mt-6">
                 <div className="h-6 w-1/3 bg-gray-200 animate-pulse rounded-md mb-6"></div>
@@ -138,10 +133,9 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
             <h2 className="text-lg font-bold mb-6 text-gray-800 uppercase tracking-wide flex items-center gap-2">
                 <span className="text-[#EE4D2D]">✨</span> Sản phẩm có cấu hình tương tự
             </h2>
-            
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
                 {similar.map((prod) => (
-                    <Link 
+                    <Link
                         href={`/products/${prod.id}`}
                         key={prod.id}
                         className="group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border border-gray-100 hover:border-[#EE4D2D]/50 hover:shadow-md bg-white transition-all duration-300 hover:-translate-y-1"
@@ -171,26 +165,30 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
         </div>
     );
 };
+
 export default function ProductDetailPage() {
     const params = useParams();
     const router = useRouter();
-    const productId = params?.id; 
-    
-    // 1. STATE QUẢN LÝ DỮ LIỆU TỪ API (Sử dụng Type chuẩn chỉnh thay vì any)
+    const productId = params?.id;
+
+    // --- 1. STATE QUẢN LÝ DỮ LIỆU ---
     const [product, setProduct] = useState<Product | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [mainImage, setMainImage] = useState("");
     const [isArticleExpanded, setIsArticleExpanded] = useState(false);
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [cartMessage, setCartMessage] = useState("");
 
-    // 2. GỌI API TỪ SPRING BOOT
+    // --- STATE QUẢN LÝ TASK B04 (VARIANT) ---
+    const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
+    const [selectedColor, setSelectedColor] = useState<string | null>(null);
+
+    // --- 2. GỌI API ---
     useEffect(() => {
         if (!productId) return;
 
-        // Gọi API đến Spring Boot Backend (Đảm bảo backend đang chạy ở port 8080)
         fetch(`${API_BASE_URL}/api/products/${productId}`)
             .then(res => {
                 if (!res.ok) throw new Error("Không tìm thấy sản phẩm");
@@ -198,14 +196,21 @@ export default function ProductDetailPage() {
             })
             .then((data: Product) => {
                 setProduct(data);
-                
-                // Trang listing dùng mainThumbnail, nên chi tiết cũng ưu tiên ảnh này để tránh lệch ảnh theo category.
+
                 if (data.mainThumbnail) {
                     setMainImage(data.mainThumbnail);
                 } else if (data.images && data.images.length > 0) {
                     setMainImage(data.images[0]);
                 }
-                
+
+                // Chọn mặc định option đầu tiên nếu có
+                if (data.storageVariants && data.storageVariants.length > 0) {
+                    setSelectedStorage(data.storageVariants[0].storageName || data.storageVariants[0].name || data.storageVariants[0].value || null);
+                }
+                if (data.colorVariants && data.colorVariants.length > 0) {
+                    setSelectedColor(data.colorVariants[0].colorName || data.colorVariants[0].name || data.colorVariants[0].value || null);
+                }
+
                 setIsLoading(false);
             })
             .catch(err => {
@@ -214,9 +219,25 @@ export default function ProductDetailPage() {
             });
     }, [productId]);
 
-    // HỦY BỎ: Đã xóa hoàn toàn useEffect phụ lắng nghe [product] cũ gây ra lỗi cascading renders.
+    // --- 3. TÌM VARIANT TƯƠNG ỨNG ---
+    const activeVariant = useMemo(() => {
+        if (!product || !product.variants) return null;
 
-    // HIỂN THỊ MÀN HÌNH LOADING
+        // Tìm variant khớp với storage và color đang chọn
+        return product.variants.find(v => {
+            const matchStorage = selectedStorage ? v.storageName === selectedStorage : true;
+            const matchColor = selectedColor ? v.colorName === selectedColor : true;
+            return matchStorage && matchColor;
+        });
+    }, [product, selectedStorage, selectedColor]);
+
+    // Khi activeVariant thay đổi ảnh thì cập nhật mainImage
+    useEffect(() => {
+        if (activeVariant?.imageUrl) {
+            setMainImage(activeVariant.imageUrl);
+        }
+    }, [activeVariant]);
+
     if (isLoading) {
         return (
             <div className="bg-[#F4F6F8] min-h-screen">
@@ -229,7 +250,6 @@ export default function ProductDetailPage() {
         );
     }
 
-    // XỬ LÝ NẾU KHÔNG TÌM THẤY SẢN PHẨM
     if (!product) {
         return (
             <div className="bg-[#F4F6F8] min-h-screen">
@@ -242,14 +262,30 @@ export default function ProductDetailPage() {
         );
     }
 
+    // --- 4. XỬ LÝ THÊM VÀO GIỎ HÀNG VỚI VARIANT ---
     const handleAddToCart = async (goToCart = false) => {
         const id = Number(product.id);
         if (!Number.isFinite(id)) return;
 
+        // Lấy variantId (nếu có)
+        const variantIdToAdd = activeVariant ? activeVariant.id : undefined;
+
+        // Nếu sản phẩm có biến thể mà chưa chọn hoặc chọn nhầm cái hết hàng
+        if (product.variants && product.variants.length > 0) {
+            if (!activeVariant) {
+                setCartMessage("Vui lòng chọn đầy đủ phân loại.");
+                return;
+            }
+            if (!activeVariant.inStock || activeVariant.availableQuantity <= 0) {
+                setCartMessage("Phiên bản này hiện đang hết hàng.");
+                return;
+            }
+        }
+
         setIsAddingToCart(true);
         setCartMessage("");
         try {
-            await addToCart(id, 1);
+            await addToCart(id, 1, variantIdToAdd); // Chú ý: Cần update hàm addToCart trong lib/shop.ts để nhận tham số thứ 3
             setCartMessage("Đã thêm sản phẩm vào giỏ hàng.");
             if (goToCart) {
                 router.push("/cart");
@@ -265,10 +301,9 @@ export default function ProductDetailPage() {
         }
     };
 
-    // 3. ĐỒNG BỘ CÁC TRƯỜNG DỮ LIỆU VỚI BACKEND (CamelCase)
     const reviewCount = product.reviews?.length || 0;
     const avgRating = reviewCount > 0 && product.reviews
-        ? product.reviews.reduce((acc: number, curr: Review) => acc + (curr.ratingStars || curr.rating || 5), 0) / reviewCount 
+        ? product.reviews.reduce((acc: number, curr: Review) => acc + (curr.ratingStars || curr.rating || 5), 0) / reviewCount
         : 0;
 
     const cpu = product.specs?.["Chip xử lý (CPU)"] || product.specs?.["Vi xử lý (CPU)"] || product.specs?.["Công nghệ CPU"] || "Đang cập nhật CPU";
@@ -277,13 +312,16 @@ export default function ProductDetailPage() {
     const cleanScreenSize = screenSize.split("-")[0].trim();
     const screenInfo = [cleanScreenSize, screenTech].filter(Boolean).join(", ") || "Đang cập nhật màn hình";
 
-    // Giá tiền (Logic đã được làm sạch đi rất nhiều do Java Database đã chuẩn hóa)
-    const displayCurrentPrice = formatPrice(product.price);
-    let displayOriginalPrice = formatPrice(product.oldPrice || 0);
-    
+    // --- HIỂN THỊ GIÁ DỰA TRÊN VARIANT ĐANG CHỌN ---
+    const currentDisplayPrice = activeVariant?.price || product.price;
+    const currentOldPrice = activeVariant?.oldPrice || product.oldPrice;
+
+    const displayCurrentPrice = formatPrice(currentDisplayPrice);
+    let displayOriginalPrice = formatPrice(currentOldPrice || 0);
+
     let discountPercent = 0;
-    if (product.price && product.oldPrice && product.oldPrice > product.price) {
-        discountPercent = Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100);
+    if (currentDisplayPrice && currentOldPrice && currentOldPrice > currentDisplayPrice) {
+        discountPercent = Math.round(((currentOldPrice - currentDisplayPrice) / currentOldPrice) * 100);
     } else {
         displayOriginalPrice = "";
     }
@@ -295,9 +333,20 @@ export default function ProductDetailPage() {
     if (product.category) brandParams.set("category", product.category);
     if (product.brand) brandParams.set("brand", product.brand);
     const brandHref = brandParams.toString() ? `/products?${brandParams.toString()}` : categoryHref;
+
+    // Gộp ảnh chính, ảnh variant, và ảnh phụ
     const galleryImages = Array.from(
-        new Set([product.mainThumbnail, ...(product.images ?? [])].filter((image): image is string => Boolean(image)))
+        new Set([
+            product.mainThumbnail,
+            activeVariant?.imageUrl,
+            ...(product.images ?? [])
+        ].filter((image): image is string => Boolean(image)))
     );
+
+    // Tính trạng thái kho hàng
+    const isOutOfStock = product.variants && product.variants.length > 0
+        ? (!activeVariant?.inStock || activeVariant.availableQuantity <= 0)
+        : false;
 
     return (
         <div className="bg-[#F4F6F8] min-h-screen pb-10">
@@ -307,18 +356,18 @@ export default function ProductDetailPage() {
 
                 {/* 1. BREADCRUMB */}
                 <nav className="text-sm font-medium text-gray-500 mb-6 flex items-center gap-2">
-                    <Link href="/" className="hover:text-[#EE4D2D] transition-colors">Trang chủ</Link> 
-                    <span>{'>'}</span> 
+                    <Link href="/" className="hover:text-[#EE4D2D] transition-colors">Trang chủ</Link>
+                    <span>{'>'}</span>
                     <Link href={categoryHref} className="hover:text-[#EE4D2D] transition-colors capitalize">
                         {product.category || "Sản phẩm"}
-                    </Link> 
+                    </Link>
                     {product.brand && (
                         <>
-                            <span>{'>'}</span> 
+                            <span>{'>'}</span>
                             <Link href={brandHref} className="hover:text-[#EE4D2D] transition-colors">{product.brand}</Link>
                         </>
                     )}
-                    <span>{'>'}</span> 
+                    <span>{'>'}</span>
                     <span className="text-[#EE4D2D] font-semibold">{product.name}</span>
                 </nav>
 
@@ -327,10 +376,10 @@ export default function ProductDetailPage() {
                     <div className="w-full md:w-5/12 flex flex-col items-center">
                         <div className="w-full bg-white border border-gray-100 rounded-xl mb-4 flex items-center justify-center overflow-hidden transition-all duration-300">
                             {mainImage ? (
-                                <img 
-                                    src={mainImage} 
-                                    alt={product.name} 
-                                    className="w-full h-auto rounded-xl object-contain transition-transform duration-500 hover:scale-105" 
+                                <img
+                                    src={mainImage}
+                                    alt={product.name}
+                                    className="w-full h-auto rounded-xl object-contain transition-transform duration-500 hover:scale-105"
                                     onError={(event) => {
                                         event.currentTarget.onerror = null;
                                         if (product.mainThumbnail && event.currentTarget.src !== product.mainThumbnail) {
@@ -348,8 +397,8 @@ export default function ProductDetailPage() {
                         </div>
                         <div className="flex gap-3 overflow-x-auto w-full pb-2 scrollbar-hide">
                             {galleryImages.map((imgUrl: string, idx: number) => (
-                                <div 
-                                    key={idx} 
+                                <div
+                                    key={idx}
                                     onClick={() => setMainImage(imgUrl)}
                                     className={`w-16 h-16 shrink-0 rounded-lg border-2 cursor-pointer overflow-hidden bg-white
                                         ${mainImage === imgUrl ? 'border-[#EE4D2D]' : 'border-gray-200 hover:border-gray-300'}`}
@@ -368,7 +417,7 @@ export default function ProductDetailPage() {
                         <div className="flex items-center gap-4 mb-4 text-sm text-gray-500 border-b border-gray-100 pb-4">
                             <span className="text-gray-600">Thương hiệu: <span className="font-semibold text-[#EE4D2D]">{product.brand}</span></span>
                             <span className="text-gray-300">|</span>
-                            <span>SKU: {product.sku}</span>
+                            <span>SKU: {activeVariant?.sku || product.sku}</span>
                             <span className="text-gray-300">|</span>
                             <div className="flex items-center gap-1">
                                 <span className="text-[#FFD400] text-sm">★</span>
@@ -393,6 +442,13 @@ export default function ProductDetailPage() {
                                     </>
                                 )}
                             </div>
+
+                            {/* Hiển thị Tồn kho nếu có activeVariant */}
+                            {activeVariant && (
+                                <p className={`text-sm mt-2 font-medium ${isOutOfStock ? 'text-red-500' : 'text-green-600'}`}>
+                                    {isOutOfStock ? "Đã hết hàng" : `Còn ${activeVariant.availableQuantity} sản phẩm`}
+                                </p>
+                            )}
                         </div>
 
                         <div className="flex flex-wrap gap-2 mb-5">
@@ -400,34 +456,52 @@ export default function ProductDetailPage() {
                             <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Màn hình: {screenInfo}</span>
                         </div>
 
+                        {/* CHỌN DUNG LƯỢNG */}
                         {product.storageVariants && product.storageVariants.length > 0 && (
                             <div className="mb-5">
                                 <h3 className="text-sm font-bold text-gray-800 mb-3">Phiên bản bộ nhớ:</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {product.storageVariants.map((v: StorageVariant, idx: number) => (
-                                        <button 
-                                            key={idx}
-                                            className="px-4 py-2 text-sm rounded-lg border font-medium transition-all border-gray-200 text-gray-600 hover:border-gray-400"
-                                        >
-                                            {v.storageName || v.name || v.value}
-                                        </button>
-                                    ))}
+                                    {product.storageVariants.map((v: StorageVariant, idx: number) => {
+                                        const val = v.storageName || v.name || v.value;
+                                        const isSelected = selectedStorage === val;
+                                        return (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setSelectedStorage(val || null)}
+                                                className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all 
+                                                    ${isSelected
+                                                        ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50'
+                                                        : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                                            >
+                                                {val}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
 
+                        {/* CHỌN MÀU SẮC */}
                         {product.colorVariants && product.colorVariants.length > 0 && (
                             <div className="mb-6">
                                 <h3 className="text-sm font-bold text-gray-800 mb-3">Chọn màu sắc:</h3>
                                 <div className="flex flex-wrap gap-3">
-                                    {product.colorVariants.map((c: ColorVariant, idx: number) => (
-                                        <button 
-                                            key={idx}
-                                            className="px-4 py-2 text-sm rounded-lg border font-medium transition-all border-gray-200 text-gray-600 hover:border-gray-400"
-                                        >
-                                            {c.colorName || c.name || c.value}
-                                        </button>
-                                    ))}
+                                    {product.colorVariants.map((c: ColorVariant, idx: number) => {
+                                        const val = c.colorName || c.name || c.value;
+                                        const isSelected = selectedColor === val;
+                                        return (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setSelectedColor(val || null)}
+                                                className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all 
+                                                    ${isSelected
+                                                        ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50'
+                                                        : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                                            >
+                                                {val}
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         )}
@@ -444,16 +518,18 @@ export default function ProductDetailPage() {
                         <div className="flex flex-col gap-3 sm:flex-row">
                             <button
                                 onClick={() => handleAddToCart(true)}
-                                disabled={isAddingToCart}
-                                className="flex-1 bg-[#EE4D2D] hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-70 text-white font-bold py-3.5 rounded-xl transition-colors shadow-sm text-lg"
+                                disabled={isAddingToCart || isOutOfStock}
+                                className={`flex-1 font-bold py-3.5 rounded-xl transition-colors shadow-sm text-lg text-white
+                                    ${isOutOfStock ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#EE4D2D] hover:bg-orange-600 disabled:opacity-70'}`}
                             >
                                 CHỌN MUA
                             </button>
                             <button
                                 onClick={() => handleAddToCart(false)}
-                                disabled={isAddingToCart}
-                                className="flex flex-1 items-center justify-center gap-2 border-2 border-[#EE4D2D] text-[#EE4D2D] hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-70 font-bold py-3.5 rounded-xl transition-colors text-base"
-                                aria-label="Thêm vào giỏ hang"
+                                disabled={isAddingToCart || isOutOfStock}
+                                className={`flex flex-1 items-center justify-center gap-2 border-2 font-bold py-3.5 rounded-xl transition-colors text-base
+                                    ${isOutOfStock ? 'border-gray-300 text-gray-400 cursor-not-allowed' : 'border-[#EE4D2D] text-[#EE4D2D] hover:bg-orange-50 disabled:opacity-70'}`}
+                                aria-label="Thêm vào giỏ hàng"
                             >
                                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -462,7 +538,9 @@ export default function ProductDetailPage() {
                             </button>
                         </div>
                         {cartMessage && (
-                            <p className="mt-3 text-sm font-medium text-gray-600">{cartMessage}</p>
+                            <p className={`mt-3 text-sm font-medium ${cartMessage.includes('hết hàng') || cartMessage.includes('Vui lòng') ? 'text-red-500' : 'text-green-600'}`}>
+                                {cartMessage}
+                            </p>
                         )}
                     </div>
                 </div>
@@ -478,8 +556,8 @@ export default function ProductDetailPage() {
                                 </li>
                             ))}
                         </ul>
-                        <button 
-                            onClick={() => setIsModalOpen(true)} 
+                        <button
+                            onClick={() => setIsModalOpen(true)}
                             className="w-full mt-5 py-2.5 text-sm font-medium text-blue-600 border border-blue-600 rounded-full hover:bg-blue-50 transition-colors"
                         >
                             Xem cấu hình chi tiết
@@ -488,7 +566,7 @@ export default function ProductDetailPage() {
 
                     <div className="w-full lg:w-8/12 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                         <h2 className="text-lg font-bold mb-5 text-gray-800 uppercase tracking-wide">Đặc điểm nổi bật</h2>
-                        
+
                         <div className="text-sm text-gray-700 leading-loose">
                             {isArticleExpanded ? (
                                 <div className="space-y-4 text-justify">
@@ -497,7 +575,7 @@ export default function ProductDetailPage() {
 
                                         const lines = product.description.split('\n').map((l: string) => l.trim()).filter(Boolean);
                                         const images = product.images || [];
-                                        
+
                                         const step = Math.max(1, Math.floor(lines.length / (images.length || 1)));
                                         let imgIndex = 0;
 
@@ -516,9 +594,9 @@ export default function ProductDetailPage() {
 
                                                             {idx > 0 && idx % step === 0 && imgIndex < images.length && (
                                                                 <div className="my-6 flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
-                                                                    <img 
-                                                                        src={images[imgIndex++]} 
-                                                                        alt={`${product.name} - Hình minh họa ${imgIndex}`} 
+                                                                    <img
+                                                                        src={images[imgIndex++]}
+                                                                        alt={`${product.name} - Hình minh họa ${imgIndex}`}
                                                                         className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm"
                                                                         loading="lazy"
                                                                     />
@@ -532,9 +610,9 @@ export default function ProductDetailPage() {
                                                     <div className="flex flex-col gap-4 mt-6">
                                                         {images.slice(imgIndex).map((imgUrl: string, idx: number) => (
                                                             <div key={idx} className="flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
-                                                                <img 
-                                                                    src={imgUrl} 
-                                                                    alt={`${product.name} - Hình bổ sung ${idx + 1}`} 
+                                                                <img
+                                                                    src={imgUrl}
+                                                                    alt={`${product.name} - Hình bổ sung ${idx + 1}`}
                                                                     className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm"
                                                                     loading="lazy"
                                                                 />
@@ -557,12 +635,12 @@ export default function ProductDetailPage() {
                         </div>
 
                         <div className="mt-6 flex justify-center border-t border-gray-100 pt-4">
-                            <button 
+                            <button
                                 onClick={() => setIsArticleExpanded(!isArticleExpanded)}
                                 className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors px-4 py-2 rounded-full hover:bg-blue-50"
                             >
                                 {isArticleExpanded ? "Thu gọn bài viết" : "Đọc thêm bài viết"}
-                                <svg 
+                                <svg
                                     width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                                     className={`transform transition-transform duration-300 ${isArticleExpanded ? 'rotate-180' : ''}`}
                                 >
@@ -589,7 +667,7 @@ export default function ProductDetailPage() {
                                             <p className="font-semibold text-sm text-gray-800">{review.reviewerName || "Giấu tên"}</p>
                                             <div className="flex items-center gap-2 text-xs text-gray-500 mt-0.5">
                                                 <div className="flex text-[#FFD400]">
-                                                    {[1,2,3,4,5].map(star => (
+                                                    {[1, 2, 3, 4, 5].map(star => (
                                                         <span key={star} className={star <= (review.ratingStars || 5) ? "" : "text-gray-300"}>★</span>
                                                     ))}
                                                 </div>
@@ -619,7 +697,7 @@ export default function ProductDetailPage() {
                     <div className="bg-white rounded-2xl max-w-xl w-full max-h-[85vh] flex flex-col shadow-2xl relative z-10 animate-in zoom-in-95 duration-200">
                         <div className="flex justify-between items-center p-5 border-b border-gray-100">
                             <h2 className="text-lg font-bold text-gray-900">Thông số kỹ thuật chi tiết</h2>
-                            <button 
+                            <button
                                 onClick={() => setIsModalOpen(false)}
                                 className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
                             >
@@ -631,8 +709,8 @@ export default function ProductDetailPage() {
                         <div className="overflow-y-auto p-6 space-y-1 custom-scrollbar">
                             {product.specs ? (
                                 Object.entries(product.specs).map(([key, value], idx) => (
-                                    <div 
-                                        key={idx} 
+                                    <div
+                                        key={idx}
                                         className={`flex py-3.5 px-3 text-sm items-start rounded-lg
                                             ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                                     >
@@ -647,7 +725,7 @@ export default function ProductDetailPage() {
                             )}
                         </div>
                         <div className="p-4 border-t border-gray-100 flex justify-end bg-gray-50 rounded-b-2xl">
-                            <button 
+                            <button
                                 onClick={() => setIsModalOpen(false)}
                                 className="bg-gray-900 hover:bg-gray-800 text-white font-bold px-6 py-2 rounded-xl text-sm transition-colors shadow-sm"
                             >

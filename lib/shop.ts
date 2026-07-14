@@ -73,10 +73,10 @@ export async function getCart() {
   return requestJson<CartResponse>("/api/cart");
 }
 
-export async function addToCart(productId: number, quantity = 1) {
+export async function addToCart(productId: number, quantity = 1, variantId?: number) {
   const cart = await requestJson<CartResponse>("/api/cart/items", {
     method: "POST",
-    body: JSON.stringify({ productId, quantity }),
+    body: JSON.stringify({ productId, quantity, variantId }),
   });
   notifyCartUpdated();
   return cart;

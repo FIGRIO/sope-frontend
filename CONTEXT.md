@@ -246,6 +246,12 @@ Không đặt secret key ở frontend.
 
 ## 7. Component, hook, lib quan trọng
 
+### PWA / Service Worker
+- Đã thêm component [components/PwaRegistration.tsx](components/PwaRegistration.tsx) để đăng ký service worker từ client-side.
+- Đã thêm [public/sw.js](public/sw.js) với cache versioning cho asset tĩnh và endpoint catalog public.
+- Các route nhạy cảm như auth/cart/orders/payment/admin/chat/ws được cấu hình bypass cache.
+- Người dùng sẽ nhận thông báo khi có bản cập nhật mới và có thể reload ngay.
+
 | Loại | Tên | Đường dẫn | Chức năng | Ghi chú |
 |---|---|---|---|---|
 | Component | Chưa cập nhật | Chưa cập nhật | Chưa cập nhật | Cần điền |

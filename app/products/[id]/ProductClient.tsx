@@ -205,7 +205,40 @@ export default function ProductClient() {
                 if (!res.ok) throw new Error("Không tìm thấy sản phẩm");
                 return res.json();
             })
-            .then((data: Product) => {
+            .then((rawData: any) => {
+                // Ánh xạ các trường snake_case từ API sang camelCase cho Frontend
+                const mappedStorageVariants = rawData.storageVariants?.map((sv: any) => ({
+                    ...sv,
+                    storageName: sv.storageName || sv.storage_name,
+                }));
+
+                const mappedColorVariants = rawData.colorVariants?.map((cv: any) => ({
+                    ...cv,
+                    colorName: cv.colorName || cv.color_name,
+                }));
+
+                const mappedVariants = rawData.variants?.map((v: any) => ({
+                    ...v,
+                    storageName: v.storageName || v.storage_name,
+                    colorName: v.colorName || v.color_name,
+                    oldPrice: v.oldPrice || v.old_price,
+                    imageUrl: v.imageUrl || v.image_url,
+                    stockQuantity: v.stockQuantity || v.stock_quantity,
+                    reservedQuantity: v.reservedQuantity || v.reserved_quantity,
+                    availableQuantity: v.availableQuantity || v.available_quantity,
+                    inStock: v.inStock !== undefined ? v.inStock : v.in_stock,
+                }));
+
+                const data: Product = {
+                    ...rawData,
+                    oldPrice: rawData.oldPrice || rawData.old_price,
+                    mainThumbnail: rawData.mainThumbnail || rawData.main_thumbnail,
+                    shortDescription: rawData.shortDescription || rawData.short_description,
+                    storageVariants: mappedStorageVariants,
+                    colorVariants: mappedColorVariants,
+                    variants: mappedVariants,
+                };
+
                 setProduct(data);
 
                 try {

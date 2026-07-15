@@ -24,7 +24,6 @@ export type CartResponse = {
   totalAmount: number;
 };
 
-// --- Bổ sung DTO cho Task D07 ---
 export type CouponPreviewResponse = {
   couponCode: string;
   subtotalAmount: number;
@@ -39,21 +38,27 @@ export type CouponPreviewResponse = {
     discountAmount: number;
   }>;
 };
-// ---------------------------------
 
 export type PaymentMethod = "COD" | "VNPAY" | "MOMO";
 export type PaymentProvider = "VNPAY" | "MOMO";
 
+// --- Cập nhật OrderResponse cho Task C09 ---
 export type OrderResponse = {
   id: number;
   orderCode: string;
   status: string;
   paymentMethod: PaymentMethod;
+  subtotalAmount: number;
+  shippingFee: number;
+  discountAmount: number;
   totalAmount: number;
   recipientName: string;
   phone: string;
   shippingAddress: string;
   note?: string | null;
+  shippingMethodCode?: string | null;
+  estimatedDeliveryDate?: string | null;
+  trackingNumber?: string | null;
   items: Array<{
     productId: number;
     productName: string;
@@ -63,6 +68,7 @@ export type OrderResponse = {
   }>;
   createdAt?: string | null;
 };
+// -------------------------------------------
 
 export type PaymentResponse = {
   id: number;
@@ -121,22 +127,20 @@ export async function removeCartItem(itemId: number) {
   return cart;
 }
 
-// --- Task D07: Thêm API Apply Coupon ---
 export async function applyCouponPreview(couponCode: string) {
   return requestJson<CouponPreviewResponse>("/api/coupons/apply-preview", {
     method: "POST",
     body: JSON.stringify({ couponCode }),
   });
 }
-// ----------------------------------------
 
 export async function createOrder(payload: {
   recipientName: string;
   phone: string;
   shippingAddress: string;
-  province?: string; // Task D07: Thêm province
-  shippingMethodCode?: string; // Task D07: Thêm shipping method
-  couponCode?: string; // Task D07: Thêm mã giảm giá
+  province?: string;
+  shippingMethodCode?: string;
+  couponCode?: string;
   note?: string;
   paymentMethod: PaymentMethod;
 }) {
@@ -151,6 +155,18 @@ export async function createOrder(payload: {
 export async function getMyOrders() {
   return requestJson<OrderResponse[]>("/api/orders");
 }
+
+// --- Thêm 2 hàm mới cho Task C09 ---
+export async function getOrderById(id: number) {
+  return requestJson<OrderResponse>(`/api/orders/${id}`);
+}
+
+export async function cancelOrder(id: number) {
+  return requestJson<OrderResponse>(`/api/orders/${id}/cancel`, {
+    method: "PUT",
+  });
+}
+// ------------------------------------
 
 export async function createPayment(payload: {
   orderId: string;

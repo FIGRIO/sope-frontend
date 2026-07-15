@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChatbotWidget from "@/components/ChatbotWidget";
 import PwaRegistration from "@/components/PwaRegistration";
+import PwaInstallPrompt from "@/components/PwaInstallPrompt";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
         {children}
         <ChatbotWidget />
         <PwaRegistration />
+        <PwaInstallPrompt />
       </body>
     </html>
   );

@@ -5,7 +5,8 @@ import Header from "@/components/Header";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/auth';
-import { addToCart, calculateDeliveryDate } from '@/lib/shop'; // Thêm calculateDeliveryDate
+import { addToCart, calculateDeliveryDate } from '@/lib/shop';
+import { checkIsInWishlist, toggleWishlist, WISHLIST_UPDATED_EVENT } from '@/lib/wishlist'; // Bổ sung cho L03
 
 // --- ĐỊNH NGHĨA CÁC INTERFACE ---
 interface Review {
@@ -28,7 +29,6 @@ interface ColorVariant {
     value?: string;
 }
 
-// Bổ sung interface cho ProductVariant từ Backend
 interface ProductVariant {
     id: number;
     sku: string;
@@ -60,10 +60,9 @@ interface Product {
     reviews?: Review[];
     storageVariants?: StorageVariant[];
     colorVariants?: ColorVariant[];
-    variants?: ProductVariant[]; // Bổ sung mảng variants
+    variants?: ProductVariant[];
 }
 
-// Hàm hỗ trợ format tiền tệ thông minh
 const formatPrice = (priceStr: string | number) => {
     if (!priceStr || priceStr === "Giá liên hệ") return "Giá liên hệ";
     let str = String(priceStr);
@@ -75,7 +74,6 @@ const formatPrice = (priceStr: string | number) => {
     return num.toLocaleString('vi-VN') + '₫';
 };
 
-// --- COMPONENT GỢI Ý SẢN PHẨM TƯƠNG TỰ (CONTENT-BASED) ---
 const SimilarProducts = ({ productId }: { productId: string | number }) => {
     const [similar, setSimilar] = useState<Product[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -103,7 +101,7 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
                 }
             } catch (err) {
                 if (isMounted) {
-                    console.error("Lỗi tải sản phẩm tương tự (CBF):", err);
+                    console.error("Lỗi tải sản phẩm tương tự:", err);
                     setIsLoading(false);
                 }
             }
@@ -171,7 +169,6 @@ export default function ProductDetailPage() {
     const router = useRouter();
     const productId = params?.id;
 
-    // --- 1. STATE QUẢN LÝ DỮ LIỆU ---
     const [product, setProduct] = useState<Product | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -181,11 +178,24 @@ export default function ProductDetailPage() {
     const [isAddingToCart, setIsAddingToCart] = useState(false);
     const [cartMessage, setCartMessage] = useState("");
 
-    // --- STATE QUẢN LÝ TASK B04 (VARIANT) ---
     const [selectedStorage, setSelectedStorage] = useState<string | null>(null);
     const [selectedColor, setSelectedColor] = useState<string | null>(null);
 
-    // --- 2. GỌI API ---
+    // --- STATE CHO TASK L03 (YÊU THÍCH) ---
+    const [isWishlisted, setIsWishlisted] = useState(false);
+
+    useEffect(() => {
+        if (!productId) return;
+        setIsWishlisted(checkIsInWishlist(productId as string));
+
+        const handleWishlistChange = () => {
+            setIsWishlisted(checkIsInWishlist(productId as string));
+        };
+        window.addEventListener(WISHLIST_UPDATED_EVENT, handleWishlistChange);
+        return () => window.removeEventListener(WISHLIST_UPDATED_EVENT, handleWishlistChange);
+    }, [productId]);
+    // ------------------------------------
+
     useEffect(() => {
         if (!productId) return;
 
@@ -197,25 +207,20 @@ export default function ProductDetailPage() {
             .then((data: Product) => {
                 setProduct(data);
 
-                // --- BỔ SUNG TASK I04: LƯU VÀO LOCAL STORAGE ---
                 try {
                     const stored = localStorage.getItem("sope_recently_viewed");
                     let list = stored ? JSON.parse(stored) : [];
-                    // Xóa nếu đã tồn tại để đưa lên đầu
                     list = list.filter((p: any) => p.id !== data.id);
-                    // Thêm vào đầu danh sách
                     list.unshift({
                         id: data.id,
                         name: data.name,
                         price: data.price,
                         image: data.mainThumbnail || (data.images && data.images[0]) || ""
                     });
-                    // Chỉ giữ lại 10 sản phẩm gần nhất
                     localStorage.setItem("sope_recently_viewed", JSON.stringify(list.slice(0, 10)));
                 } catch (e) {
                     console.error("Lỗi lưu lịch sử xem", e);
                 }
-                // ------------------------------------------------
 
                 if (data.mainThumbnail) {
                     setMainImage(data.mainThumbnail);
@@ -223,7 +228,6 @@ export default function ProductDetailPage() {
                     setMainImage(data.images[0]);
                 }
 
-                // Chọn mặc định option đầu tiên nếu có
                 if (data.storageVariants && data.storageVariants.length > 0) {
                     setSelectedStorage(data.storageVariants[0].storageName || data.storageVariants[0].name || data.storageVariants[0].value || null);
                 }
@@ -239,11 +243,8 @@ export default function ProductDetailPage() {
             });
     }, [productId]);
 
-    // --- 3. TÌM VARIANT TƯƠNG ỨNG ---
     const activeVariant = useMemo(() => {
         if (!product || !product.variants) return null;
-
-        // Tìm variant khớp với storage và color đang chọn
         return product.variants.find(v => {
             const matchStorage = selectedStorage ? v.storageName === selectedStorage : true;
             const matchColor = selectedColor ? v.colorName === selectedColor : true;
@@ -251,7 +252,6 @@ export default function ProductDetailPage() {
         });
     }, [product, selectedStorage, selectedColor]);
 
-    // Khi activeVariant thay đổi ảnh thì cập nhật mainImage
     useEffect(() => {
         if (activeVariant?.imageUrl) {
             setMainImage(activeVariant.imageUrl);
@@ -282,15 +282,12 @@ export default function ProductDetailPage() {
         );
     }
 
-    // --- 4. XỬ LÝ THÊM VÀO GIỎ HÀNG VỚI VARIANT ---
     const handleAddToCart = async (goToCart = false) => {
         const id = Number(product.id);
         if (!Number.isFinite(id)) return;
 
-        // Lấy variantId (nếu có)
         const variantIdToAdd = activeVariant ? activeVariant.id : undefined;
 
-        // Nếu sản phẩm có biến thể mà chưa chọn hoặc chọn nhầm cái hết hàng
         if (product.variants && product.variants.length > 0) {
             if (!activeVariant) {
                 setCartMessage("Vui lòng chọn đầy đủ phân loại.");
@@ -305,7 +302,7 @@ export default function ProductDetailPage() {
         setIsAddingToCart(true);
         setCartMessage("");
         try {
-            await addToCart(id, 1, variantIdToAdd); // Chú ý: Cần update hàm addToCart trong lib/shop.ts để nhận tham số thứ 3
+            await addToCart(id, 1, variantIdToAdd);
             setCartMessage("Đã thêm sản phẩm vào giỏ hàng.");
             if (goToCart) {
                 router.push("/cart");
@@ -321,6 +318,19 @@ export default function ProductDetailPage() {
         }
     };
 
+    // --- HÀM CHO TASK L03 (YÊU THÍCH) ---
+    const handleToggleWishlist = () => {
+        if (!product) return;
+        const result = toggleWishlist({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.mainThumbnail || (product.images && product.images[0]) || ""
+        });
+        setIsWishlisted(result);
+    };
+    // ------------------------------------
+
     const reviewCount = product.reviews?.length || 0;
     const avgRating = reviewCount > 0 && product.reviews
         ? product.reviews.reduce((acc: number, curr: Review) => acc + (curr.ratingStars || curr.rating || 5), 0) / reviewCount
@@ -332,10 +342,8 @@ export default function ProductDetailPage() {
     const cleanScreenSize = screenSize.split("-")[0].trim();
     const screenInfo = [cleanScreenSize, screenTech].filter(Boolean).join(", ") || "Đang cập nhật màn hình";
 
-    // --- HIỂN THỊ GIÁ DỰA TRÊN VARIANT ĐANG CHỌN ---
     const currentDisplayPrice = activeVariant?.price || product.price;
     const currentOldPrice = activeVariant?.oldPrice || product.oldPrice;
-
     const displayCurrentPrice = formatPrice(currentDisplayPrice);
     let displayOriginalPrice = formatPrice(currentOldPrice || 0);
 
@@ -346,15 +354,12 @@ export default function ProductDetailPage() {
         displayOriginalPrice = "";
     }
 
-    const categoryHref = product.category
-        ? `/products?category=${encodeURIComponent(product.category)}`
-        : "/products";
+    const categoryHref = product.category ? `/products?category=${encodeURIComponent(product.category)}` : "/products";
     const brandParams = new URLSearchParams();
     if (product.category) brandParams.set("category", product.category);
     if (product.brand) brandParams.set("brand", product.brand);
     const brandHref = brandParams.toString() ? `/products?${brandParams.toString()}` : categoryHref;
 
-    // Gộp ảnh chính, ảnh variant, và ảnh phụ
     const galleryImages = Array.from(
         new Set([
             product.mainThumbnail,
@@ -363,7 +368,6 @@ export default function ProductDetailPage() {
         ].filter((image): image is string => Boolean(image)))
     );
 
-    // Tính trạng thái kho hàng
     const isOutOfStock = product.variants && product.variants.length > 0
         ? (!activeVariant?.inStock || activeVariant.availableQuantity <= 0)
         : false;
@@ -373,14 +377,10 @@ export default function ProductDetailPage() {
             <Header />
 
             <main className="max-w-7xl mx-auto px-4 py-6">
-
-                {/* 1. BREADCRUMB */}
                 <nav className="text-sm font-medium text-gray-500 mb-6 flex items-center gap-2">
                     <Link href="/" className="hover:text-[#EE4D2D] transition-colors">Trang chủ</Link>
                     <span>{'>'}</span>
-                    <Link href={categoryHref} className="hover:text-[#EE4D2D] transition-colors capitalize">
-                        {product.category || "Sản phẩm"}
-                    </Link>
+                    <Link href={categoryHref} className="hover:text-[#EE4D2D] transition-colors capitalize">{product.category || "Sản phẩm"}</Link>
                     {product.brand && (
                         <>
                             <span>{'>'}</span>
@@ -391,7 +391,6 @@ export default function ProductDetailPage() {
                     <span className="text-[#EE4D2D] font-semibold">{product.name}</span>
                 </nav>
 
-                {/* 2. SECTION CHÍNH: ẢNH & THÔNG TIN SẢN PHẨM */}
                 <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row gap-10 mb-6">
                     <div className="w-full md:w-5/12 flex flex-col items-center">
                         <div className="w-full bg-white border border-gray-100 rounded-xl mb-4 flex items-center justify-center overflow-hidden transition-all duration-300">
@@ -430,9 +429,7 @@ export default function ProductDetailPage() {
                     </div>
 
                     <div className="w-full md:w-7/12 flex flex-col">
-                        <h1 className="text-2xl font-bold text-gray-800 mb-2 leading-snug">
-                            {product.name}
-                        </h1>
+                        <h1 className="text-2xl font-bold text-gray-800 mb-2 leading-snug">{product.name}</h1>
 
                         <div className="flex items-center gap-4 mb-4 text-sm text-gray-500 border-b border-gray-100 pb-4">
                             <span className="text-gray-600">Thương hiệu: <span className="font-semibold text-[#EE4D2D]">{product.brand}</span></span>
@@ -448,22 +445,14 @@ export default function ProductDetailPage() {
 
                         <div className="bg-gray-50 rounded-lg p-4 mb-6">
                             <div className="flex items-end gap-3">
-                                <span className="text-3xl font-extrabold text-[#D0021C]">
-                                    {displayCurrentPrice}
-                                </span>
+                                <span className="text-3xl font-extrabold text-[#D0021C]">{displayCurrentPrice}</span>
                                 {discountPercent > 0 && displayOriginalPrice && (
                                     <>
-                                        <span className="text-base text-gray-400 line-through mb-1 hover:text-gray-600">
-                                            {displayOriginalPrice}
-                                        </span>
-                                        <span className="text-xs font-bold text-white bg-[#D0021C] px-1.5 py-0.5 rounded mb-1.5">
-                                            -{discountPercent}%
-                                        </span>
+                                        <span className="text-base text-gray-400 line-through mb-1 hover:text-gray-600">{displayOriginalPrice}</span>
+                                        <span className="text-xs font-bold text-white bg-[#D0021C] px-1.5 py-0.5 rounded mb-1.5">-{discountPercent}%</span>
                                     </>
                                 )}
                             </div>
-
-                            {/* Hiển thị Tồn kho nếu có activeVariant */}
                             {activeVariant && (
                                 <p className={`text-sm mt-2 font-medium ${isOutOfStock ? 'text-red-500' : 'text-green-600'}`}>
                                     {isOutOfStock ? "Đã hết hàng" : `Còn ${activeVariant.availableQuantity} sản phẩm`}
@@ -476,7 +465,6 @@ export default function ProductDetailPage() {
                             <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">Màn hình: {screenInfo}</span>
                         </div>
 
-                        {/* CHỌN DUNG LƯỢNG */}
                         {product.storageVariants && product.storageVariants.length > 0 && (
                             <div className="mb-5">
                                 <h3 className="text-sm font-bold text-gray-800 mb-3">Phiên bản bộ nhớ:</h3>
@@ -488,10 +476,7 @@ export default function ProductDetailPage() {
                                             <button
                                                 key={idx}
                                                 onClick={() => setSelectedStorage(val || null)}
-                                                className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all 
-                                                    ${isSelected
-                                                        ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50'
-                                                        : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                                                className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all ${isSelected ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
                                             >
                                                 {val}
                                             </button>
@@ -501,7 +486,6 @@ export default function ProductDetailPage() {
                             </div>
                         )}
 
-                        {/* CHỌN MÀU SẮC */}
                         {product.colorVariants && product.colorVariants.length > 0 && (
                             <div className="mb-6">
                                 <h3 className="text-sm font-bold text-gray-800 mb-3">Chọn màu sắc:</h3>
@@ -513,10 +497,7 @@ export default function ProductDetailPage() {
                                             <button
                                                 key={idx}
                                                 onClick={() => setSelectedColor(val || null)}
-                                                className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all 
-                                                    ${isSelected
-                                                        ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50'
-                                                        : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
+                                                className={`px-4 py-2 text-sm rounded-lg border font-medium transition-all ${isSelected ? 'border-[#EE4D2D] text-[#EE4D2D] bg-orange-50' : 'border-gray-200 text-gray-600 hover:border-gray-400'}`}
                                             >
                                                 {val}
                                             </button>
@@ -529,12 +510,10 @@ export default function ProductDetailPage() {
                         {product.shortDescription && (
                             <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 mb-6 mt-auto">
                                 <h3 className="text-sm font-bold text-blue-800 mb-2">Thông tin khuyến mãi:</h3>
-                                <p className="text-sm text-gray-700 leading-relaxed">
-                                    {product.shortDescription}
-                                </p>
+                                <p className="text-sm text-gray-700 leading-relaxed">{product.shortDescription}</p>
                             </div>
                         )}
-                        {/* --- Task D07: Hiển thị Box mã giảm giá --- */}
+
                         <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6">
                             <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
@@ -557,7 +536,6 @@ export default function ProductDetailPage() {
                             </div>
                         </div>
 
-                        {/* --- Task C08: Box Ngày giao hàng --- */}
                         <div className="mb-5 flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/80 p-3 text-sm text-blue-800">
                             <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -566,8 +544,8 @@ export default function ProductDetailPage() {
                                 Dự kiến giao hàng: <strong className="font-bold">{isOutOfStock ? "Không thể giao (Hết hàng)" : calculateDeliveryDate()}</strong>
                             </span>
                         </div>
-                        {/* ---------------------------------- */}
 
+                        {/* --- NÚT BẤM (CÓ BỔ SUNG NÚT YÊU THÍCH) --- */}
                         <div className="flex flex-col gap-3 sm:flex-row">
                             <button
                                 onClick={() => handleAddToCart(true)}
@@ -580,16 +558,31 @@ export default function ProductDetailPage() {
                             <button
                                 onClick={() => handleAddToCart(false)}
                                 disabled={isAddingToCart || isOutOfStock}
-                                className={`flex flex-1 items-center justify-center gap-2 border-2 font-bold py-3.5 rounded-xl transition-colors text-base
+                                className={`flex-1 flex items-center justify-center gap-2 border-2 font-bold py-3.5 rounded-xl transition-colors text-base
                                     ${isOutOfStock ? 'border-gray-300 text-gray-400 cursor-not-allowed' : 'border-[#EE4D2D] text-[#EE4D2D] hover:bg-orange-50 disabled:opacity-70'}`}
-                                aria-label="Thêm vào giỏ hàng"
                             >
                                 <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                                 </svg>
                                 {isAddingToCart ? "Đang thêm..." : "Thêm vào giỏ"}
                             </button>
+
+                            {/* Nút Yêu Thích */}
+                            <button
+                                onClick={handleToggleWishlist}
+                                className={`w-14 shrink-0 flex items-center justify-center border-2 rounded-xl transition-colors ${isWishlisted
+                                        ? 'border-red-500 text-red-500 bg-red-50'
+                                        : 'border-gray-300 text-gray-400 hover:border-red-500 hover:text-red-500 hover:bg-red-50'
+                                    }`}
+                                aria-label="Yêu thích"
+                            >
+                                <svg width="24" height="24" fill={isWishlisted ? "currentColor" : "none"} stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                                </svg>
+                            </button>
                         </div>
+                        {/* -------------------------------------- */}
+
                         {cartMessage && (
                             <p className={`mt-3 text-sm font-medium ${cartMessage.includes('hết hàng') || cartMessage.includes('Vui lòng') ? 'text-red-500' : 'text-green-600'}`}>
                                 {cartMessage}
@@ -619,7 +612,6 @@ export default function ProductDetailPage() {
 
                     <div className="w-full lg:w-8/12 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
                         <h2 className="text-lg font-bold mb-5 text-gray-800 uppercase tracking-wide">Đặc điểm nổi bật</h2>
-
                         <div className="text-sm text-gray-700 leading-loose">
                             {isArticleExpanded ? (
                                 <div className="space-y-4 text-justify">
@@ -647,28 +639,17 @@ export default function ProductDetailPage() {
 
                                                             {idx > 0 && idx % step === 0 && imgIndex < images.length && (
                                                                 <div className="my-6 flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
-                                                                    <img
-                                                                        src={images[imgIndex++]}
-                                                                        alt={`${product.name} - Hình minh họa ${imgIndex}`}
-                                                                        className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm"
-                                                                        loading="lazy"
-                                                                    />
+                                                                    <img src={images[imgIndex++]} alt={`${product.name} - Hình minh họa ${imgIndex}`} className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm" loading="lazy" />
                                                                 </div>
                                                             )}
                                                         </React.Fragment>
                                                     );
                                                 })}
-
                                                 {imgIndex < images.length && (
                                                     <div className="flex flex-col gap-4 mt-6">
                                                         {images.slice(imgIndex).map((imgUrl: string, idx: number) => (
                                                             <div key={idx} className="flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
-                                                                <img
-                                                                    src={imgUrl}
-                                                                    alt={`${product.name} - Hình bổ sung ${idx + 1}`}
-                                                                    className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm"
-                                                                    loading="lazy"
-                                                                />
+                                                                <img src={imgUrl} alt={`${product.name} - Hình bổ sung ${idx + 1}`} className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm" loading="lazy" />
                                                             </div>
                                                         ))}
                                                     </div>
@@ -693,10 +674,7 @@ export default function ProductDetailPage() {
                                 className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1.5 transition-colors px-4 py-2 rounded-full hover:bg-blue-50"
                             >
                                 {isArticleExpanded ? "Thu gọn bài viết" : "Đọc thêm bài viết"}
-                                <svg
-                                    width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"
-                                    className={`transform transition-transform duration-300 ${isArticleExpanded ? 'rotate-180' : ''}`}
-                                >
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" className={`transform transition-transform duration-300 ${isArticleExpanded ? 'rotate-180' : ''}`}>
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
@@ -764,8 +742,7 @@ export default function ProductDetailPage() {
                                 Object.entries(product.specs).map(([key, value], idx) => (
                                     <div
                                         key={idx}
-                                        className={`flex py-3.5 px-3 text-sm items-start rounded-lg
-                                            ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
+                                        className={`flex py-3.5 px-3 text-sm items-start rounded-lg ${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'}`}
                                     >
                                         <span className="w-5/12 text-gray-500 font-medium pr-4 shrink-0">{key}</span>
                                         <span className="w-7/12 text-gray-800 font-semibold whitespace-pre-line text-left">

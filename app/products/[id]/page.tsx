@@ -197,6 +197,26 @@ export default function ProductDetailPage() {
             .then((data: Product) => {
                 setProduct(data);
 
+                // --- BỔ SUNG TASK I04: LƯU VÀO LOCAL STORAGE ---
+                try {
+                    const stored = localStorage.getItem("sope_recently_viewed");
+                    let list = stored ? JSON.parse(stored) : [];
+                    // Xóa nếu đã tồn tại để đưa lên đầu
+                    list = list.filter((p: any) => p.id !== data.id);
+                    // Thêm vào đầu danh sách
+                    list.unshift({
+                        id: data.id,
+                        name: data.name,
+                        price: data.price,
+                        image: data.mainThumbnail || (data.images && data.images[0]) || ""
+                    });
+                    // Chỉ giữ lại 10 sản phẩm gần nhất
+                    localStorage.setItem("sope_recently_viewed", JSON.stringify(list.slice(0, 10)));
+                } catch (e) {
+                    console.error("Lỗi lưu lịch sử xem", e);
+                }
+                // ------------------------------------------------
+
                 if (data.mainThumbnail) {
                     setMainImage(data.mainThumbnail);
                 } else if (data.images && data.images.length > 0) {
@@ -604,7 +624,7 @@ export default function ProductDetailPage() {
                             {isArticleExpanded ? (
                                 <div className="space-y-4 text-justify">
                                     {(() => {
-                                        if (!product.description) return <p>Đang cập nhật thông tin bài viết.</p>;
+                                        if (!product.description) return <p>Đang cập nhật thông bài viết.</p>;
 
                                         const lines = product.description.split('\n').map((l: string) => l.trim()).filter(Boolean);
                                         const images = product.images || [];

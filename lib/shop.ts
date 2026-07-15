@@ -178,3 +178,14 @@ async function readErrorMessage(response: Response) {
     return text;
   }
 }
+
+// --- Bổ sung cho Task C08 ---
+export function calculateDeliveryDate(baseDate: Date = new Date()): string {
+  const deliveryDate = new Date(baseDate);
+  deliveryDate.setDate(deliveryDate.getDate() + 3); // Giao hàng sau 3 ngày
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(deliveryDate);
+}

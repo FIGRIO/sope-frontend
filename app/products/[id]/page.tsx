@@ -5,7 +5,7 @@ import Header from "@/components/Header";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/auth';
-import { addToCart } from '@/lib/shop';
+import { addToCart, calculateDeliveryDate } from '@/lib/shop'; // Thêm calculateDeliveryDate
 
 // --- ĐỊNH NGHĨA CÁC INTERFACE ---
 interface Review {
@@ -514,6 +514,17 @@ export default function ProductDetailPage() {
                                 </p>
                             </div>
                         )}
+
+                        {/* --- Task C08: Box Ngày giao hàng --- */}
+                        <div className="mb-5 flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/80 p-3 text-sm text-blue-800">
+                            <svg className="h-5 w-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>
+                                Dự kiến giao hàng: <strong className="font-bold">{isOutOfStock ? "Không thể giao (Hết hàng)" : calculateDeliveryDate()}</strong>
+                            </span>
+                        </div>
+                        {/* ---------------------------------- */}
 
                         <div className="flex flex-col gap-3 sm:flex-row">
                             <button

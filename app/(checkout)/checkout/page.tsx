@@ -11,6 +11,7 @@ import {
   createPayment,
   formatVnd,
   getCart,
+  calculateDeliveryDate // Task C08
 } from "@/lib/shop";
 
 export default function CheckoutPage() {
@@ -112,6 +113,9 @@ export default function CheckoutPage() {
   const items = cart?.items ?? [];
   const totalAmount = cart?.totalAmount ?? 0;
 
+  // Task C08: Kiểm tra đã nhập đủ địa chỉ chưa
+  const hasValidAddress = Boolean(city.trim() && district.trim() && addressLine.trim());
+
   return (
     <div className="min-h-screen bg-[#F4F6F8] pb-20">
       <CartHeader title="Thanh toán đơn hàng" currentStep={2} />
@@ -201,11 +205,10 @@ export default function CheckoutPage() {
                   {paymentOptions.map((option) => (
                     <label
                       key={option.value}
-                      className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-all ${
-                        paymentMethod === option.value
+                      className={`flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-all ${paymentMethod === option.value
                           ? "border-[#EE4D2D] bg-orange-50/10 shadow-sm"
                           : "border-gray-200 hover:bg-gray-50"
-                      }`}
+                        }`}
                     >
                       <input
                         type="radio"
@@ -248,7 +251,18 @@ export default function CheckoutPage() {
                       </div>
                     ))}
                   </div>
+
                   <div className="my-4 border-t border-gray-200" />
+
+                  {/* --- Task C08: Hiển thị Ngày giao hàng --- */}
+                  <div className="flex items-center justify-between mb-4 text-sm text-gray-600">
+                    <span>Dự kiến giao hàng:</span>
+                    <span className={hasValidAddress ? "font-bold text-blue-600" : "font-medium text-amber-600"}>
+                      {hasValidAddress ? calculateDeliveryDate() : "Vui lòng nhập địa chỉ"}
+                    </span>
+                  </div>
+                  {/* --------------------------------------- */}
+
                   <div className="flex items-end justify-between mb-6">
                     <span className="text-sm font-bold text-gray-800">Tổng cộng:</span>
                     <span className="text-2xl font-extrabold leading-none text-[#EE4D2D]">
@@ -257,7 +271,7 @@ export default function CheckoutPage() {
                   </div>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !hasValidAddress}
                     className="w-full rounded-lg bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] py-3.5 text-sm font-bold tracking-wide text-white shadow-md transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {isSubmitting ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT HÀNG"}

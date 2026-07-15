@@ -10,6 +10,7 @@ import {
   getCart,
   removeCartItem,
   updateCartItem,
+  calculateDeliveryDate // Task C08
 } from "@/lib/shop";
 
 // ── B06 Helpers ─────────────────────────────────────────────────────────────────
@@ -189,14 +190,12 @@ export default function CartPage() {
                   return (
                     <div
                       key={item.id}
-                      className={`grid grid-cols-1 items-center gap-4 rounded-xl bg-white p-4 shadow-sm md:grid-cols-12 ${
-                        itemHasIssue ? "border-2 border-red-200 bg-red-50/30" : ""
-                      }`}
+                      className={`grid grid-cols-1 items-center gap-4 rounded-xl bg-white p-4 shadow-sm md:grid-cols-12 ${itemHasIssue ? "border-2 border-red-200 bg-red-50/30" : ""
+                        }`}
                     >
                       <div className="col-span-5 flex items-start gap-4 md:items-center">
-                        <div className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-gray-50 text-xs text-gray-400 ${
-                          itemHasIssue ? "border-red-200 opacity-60" : "border-gray-200"
-                        }`}>
+                        <div className={`flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-gray-50 text-xs text-gray-400 ${itemHasIssue ? "border-red-200 opacity-60" : "border-gray-200"
+                          }`}>
                           {item.imgUrl ? (
                             <img src={item.imgUrl} alt={item.name} className="h-full w-full object-contain p-1" />
                           ) : (
@@ -204,9 +203,8 @@ export default function CartPage() {
                           )}
                         </div>
                         <div className="flex min-w-0 flex-col justify-center">
-                          <h3 className={`line-clamp-2 text-sm font-medium leading-snug ${
-                            itemHasIssue ? "text-gray-400" : "text-gray-800"
-                          }`}>
+                          <h3 className={`line-clamp-2 text-sm font-medium leading-snug ${itemHasIssue ? "text-gray-400" : "text-gray-800"
+                            }`}>
                             {item.name}
                           </h3>
 
@@ -230,9 +228,8 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      <div className={`hidden col-span-2 text-center text-sm font-medium md:block ${
-                        itemHasIssue ? "text-gray-400" : "text-gray-600"
-                      }`}>
+                      <div className={`hidden col-span-2 text-center text-sm font-medium md:block ${itemHasIssue ? "text-gray-400" : "text-gray-600"
+                        }`}>
                         {formatVnd(item.price)}
                       </div>
 
@@ -260,9 +257,8 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      <div className={`col-span-2 text-center text-sm font-bold ${
-                        itemHasIssue ? "text-gray-400 line-through" : "text-[#EE4D2D]"
-                      }`}>
+                      <div className={`col-span-2 text-center text-sm font-bold ${itemHasIssue ? "text-gray-400 line-through" : "text-[#EE4D2D]"
+                        }`}>
                         {formatVnd(item.lineTotal)}
                       </div>
 
@@ -297,6 +293,14 @@ export default function CartPage() {
                       <span>Phí giao hàng</span>
                       <span className="font-medium text-gray-800">Tính khi đặt hàng</span>
                     </div>
+                    {/* --- Task C08: Hiển thị Ngày giao hàng --- */}
+                    <div className="flex justify-between pt-3 border-t border-gray-100">
+                      <span className="text-gray-500 font-medium">Dự kiến giao hàng</span>
+                      <span className={`font-semibold ${hasStockViolation ? "text-red-500" : "text-blue-600"}`}>
+                        {hasStockViolation ? "Không thể giao (Lỗi SP)" : calculateDeliveryDate()}
+                      </span>
+                    </div>
+                    {/* --------------------------------------- */}
                   </div>
                   <div className="my-4 border-t border-gray-200" />
                   <div className="flex items-end justify-between">
@@ -312,11 +316,10 @@ export default function CartPage() {
                   <button
                     onClick={() => router.push("/checkout")}
                     disabled={hasStockViolation}
-                    className={`w-full rounded-lg py-3.5 text-base font-bold text-white shadow-md transition active:scale-[0.98] ${
-                      hasStockViolation
+                    className={`w-full rounded-lg py-3.5 text-base font-bold text-white shadow-md transition active:scale-[0.98] ${hasStockViolation
                         ? "cursor-not-allowed bg-gray-400 opacity-70"
                         : "bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] hover:opacity-90"
-                    }`}
+                      }`}
                   >
                     {hasStockViolation ? "CẬP NHẬT GIỎ HÀNG ĐỂ TIẾP TỤC" : "MUA HÀNG"}
                   </button>

@@ -282,4 +282,82 @@ export async function toggleAdminCouponStatus(id: number, activate: boolean) {
   return requestJson<CouponResponse>(`/api/admin/coupons/${id}/${activate ? "activate" : "deactivate"}`, {
     method: "PUT",
   });
-} 
+}
+
+export type ShippingMethodRequest = {
+  code: string;
+  name: string;
+  active: boolean;
+};
+
+export type ShippingMethodResponse = ShippingMethodRequest & {
+  id: number;
+};
+
+export type ShippingZoneRequest = {
+  name: string;
+  provinces: string[];
+  priority: number;
+  active: boolean;
+};
+
+export type ShippingZoneResponse = ShippingZoneRequest & {
+  id: number;
+};
+
+export type ShippingRateRequest = {
+  zoneId: number;
+  methodId: number;
+  fee: number;
+  minDays: number;
+  maxDays: number;
+  active: boolean;
+};
+
+export type ShippingRateResponse = {
+  id: number;
+  zone: ShippingZoneResponse;
+  method: ShippingMethodResponse;
+  fee: number;
+  minDays: number;
+  maxDays: number;
+  active: boolean;
+};
+
+// --- API DỰ KIẾN (CÓ MOCK DATA ĐỂ DEMO VÌ BACKEND CHƯA CÓ API) ---
+
+export async function getAdminShippingMethods(): Promise<ShippingMethodResponse[]> {
+  try {
+    return await requestJson<ShippingMethodResponse[]>("/api/admin/shipping/methods");
+  } catch {
+    // Trả về Mock Data nếu Backend chưa viết API
+    return [
+      { id: 1, code: "STANDARD", name: "Giao hàng tiêu chuẩn", active: true },
+      { id: 2, code: "EXPRESS", name: "Giao hàng hỏa tốc", active: true },
+    ];
+  }
+}
+
+export async function getAdminShippingZones(): Promise<ShippingZoneResponse[]> {
+  try {
+    return await requestJson<ShippingZoneResponse[]>("/api/admin/shipping/zones");
+  } catch {
+    return [
+      { id: 1, name: "Nội thành TP.HCM", provinces: ["Hồ Chí Minh"], priority: 1, active: true },
+      { id: 2, name: "Miền Nam", provinces: ["Bình Dương", "Đồng Nai", "Long An"], priority: 2, active: true },
+    ];
+  }
+}
+
+export async function getAdminShippingRates(): Promise<ShippingRateResponse[]> {
+  try {
+    return await requestJson<ShippingRateResponse[]>("/api/admin/shipping/rates");
+  } catch {
+    const methods = await getAdminShippingMethods();
+    const zones = await getAdminShippingZones();
+    return [
+      { id: 1, zone: zones[0], method: methods[0], fee: 15000, minDays: 1, maxDays: 2, active: true },
+      { id: 2, zone: zones[0], method: methods[1], fee: 30000, minDays: 0, maxDays: 1, active: true },
+    ];
+  }
+}

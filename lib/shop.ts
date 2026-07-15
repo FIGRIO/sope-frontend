@@ -282,4 +282,4 @@ export async function toggleAdminCouponStatus(id: number, activate: boolean) {
   return requestJson<CouponResponse>(`/api/admin/coupons/${id}/${activate ? "activate" : "deactivate"}`, {
     method: "PUT",
   });
-}
+} 

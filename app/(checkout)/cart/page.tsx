@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import CartHeader from "@/components/CartHeader";
 import {
@@ -62,6 +62,12 @@ export default function CartPage() {
   const [couponError, setCouponError] = useState("");
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
 
+  // Ref giữ coupon code hiện tại để dùng trong loadCart mà không gây vòng lặp dependency
+  const appliedCouponCodeRef = useRef<string | null>(null);
+  useEffect(() => {
+    appliedCouponCodeRef.current = appliedCoupon?.couponCode ?? null;
+  }, [appliedCoupon]);
+
   const loadCart = useCallback(async () => {
     setIsLoading(true);
     setError("");
@@ -70,9 +76,10 @@ export default function CartPage() {
       setCart(cartData);
 
       // Nếu có mã đang áp dụng, tự động cập nhật lại giảm giá khi giỏ hàng đổi
-      if (appliedCoupon) {
+      const currentCouponCode = appliedCouponCodeRef.current;
+      if (currentCouponCode) {
         try {
-          const newPreview = await applyCouponPreview(appliedCoupon.couponCode);
+          const newPreview = await applyCouponPreview(currentCouponCode);
           setAppliedCoupon(newPreview);
         } catch {
           setAppliedCoupon(null);
@@ -87,7 +94,7 @@ export default function CartPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [router, appliedCoupon]);
+  }, [router]);
 
   useEffect(() => {
     void Promise.resolve().then(loadCart);
@@ -385,7 +392,7 @@ export default function CartPage() {
                 <div className="p-5 pt-0">
                   <button
                     onClick={handleCheckout}
-                    disabled={hasStockViolation}
+                    disabled={hasStockViolation || actionItemId !== null}
                     className={`w-full rounded-lg py-3.5 text-base font-bold text-white shadow-md transition active:scale-[0.98] ${hasStockViolation
                       ? "cursor-not-allowed bg-gray-400 opacity-70"
                       : "bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] hover:opacity-90"

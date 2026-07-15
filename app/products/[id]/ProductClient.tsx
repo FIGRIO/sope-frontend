@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Image from 'next/image';
 import Header from "@/components/Header";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -140,9 +141,9 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
                     >
                         <div className="aspect-square w-full bg-gray-50 relative overflow-hidden flex items-center justify-center p-4">
                             {prod.mainThumbnail ? (
-                                <img src={prod.mainThumbnail} alt={prod.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
+                                <Image src={prod.mainThumbnail} alt={prod.name} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-contain rounded-lg transition-transform duration-300 group-hover:scale-105" />
                             ) : prod.images && prod.images.length > 0 ? (
-                                <img src={prod.images[0]} alt={prod.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
+                                <Image src={prod.images[0]} alt={prod.name} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-contain rounded-lg transition-transform duration-300 group-hover:scale-105" />
                             ) : (
                                 <span className="text-gray-300 text-sm">Hình sản phẩm</span>
                             )}
@@ -395,19 +396,23 @@ export default function ProductClient() {
                     <div className="w-full md:w-5/12 flex flex-col items-center">
                         <div className="w-full bg-white border border-gray-100 rounded-xl mb-4 flex items-center justify-center overflow-hidden transition-all duration-300">
                             {mainImage ? (
-                                <img
-                                    src={mainImage}
-                                    alt={product.name}
-                                    className="w-full h-auto rounded-xl object-contain transition-transform duration-500 hover:scale-105"
-                                    onError={(event) => {
-                                        event.currentTarget.onerror = null;
-                                        if (product.mainThumbnail && event.currentTarget.src !== product.mainThumbnail) {
-                                            setMainImage(product.mainThumbnail);
-                                        } else {
-                                            setMainImage("");
-                                        }
-                                    }}
-                                />
+                                <div className="relative aspect-square w-full">
+                                    <Image
+                                        src={mainImage}
+                                        alt={product.name}
+                                        fill
+                                        priority
+                                        sizes="(max-width: 768px) 100vw, 40vw"
+                                        className="rounded-xl object-contain transition-transform duration-500 hover:scale-105"
+                                        onError={() => {
+                                            if (product.mainThumbnail && mainImage !== product.mainThumbnail) {
+                                                setMainImage(product.mainThumbnail);
+                                            } else {
+                                                setMainImage("");
+                                            }
+                                        }}
+                                    />
+                                </div>
                             ) : (
                                 <div className="aspect-square w-full flex items-center justify-center bg-gray-50 rounded-xl">
                                     <span className="text-gray-300 text-sm font-medium">Không có ảnh</span>
@@ -419,10 +424,10 @@ export default function ProductClient() {
                                 <div
                                     key={idx}
                                     onClick={() => setMainImage(imgUrl)}
-                                    className={`w-16 h-16 shrink-0 rounded-lg border-2 cursor-pointer overflow-hidden bg-white
+                                    className={`w-16 h-16 shrink-0 rounded-lg border-2 cursor-pointer overflow-hidden bg-white relative
                                         ${mainImage === imgUrl ? 'border-[#EE4D2D]' : 'border-gray-200 hover:border-gray-300'}`}
                                 >
-                                    <img src={imgUrl} alt={`Thumb ${idx}`} className="w-full h-full object-contain p-1" />
+                                    <Image src={imgUrl} alt={`Thumb ${idx}`} fill sizes="64px" className="object-contain p-1" />
                                 </div>
                             ))}
                         </div>
@@ -639,7 +644,7 @@ export default function ProductClient() {
 
                                                             {idx > 0 && idx % step === 0 && imgIndex < images.length && (
                                                                 <div className="my-6 flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
-                                                                    <img src={images[imgIndex++]} alt={`${product.name} - Hình minh họa ${imgIndex}`} className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm" loading="lazy" />
+                                                                    <Image src={images[imgIndex++]} alt={`${product.name} - Hình minh họa ${imgIndex}`} width={672} height={672} sizes="(max-width: 768px) 100vw, 672px" className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm" />
                                                                 </div>
                                                             )}
                                                         </React.Fragment>
@@ -649,7 +654,7 @@ export default function ProductClient() {
                                                     <div className="flex flex-col gap-4 mt-6">
                                                         {images.slice(imgIndex).map((imgUrl: string, idx: number) => (
                                                             <div key={idx} className="flex justify-center bg-gray-50/50 rounded-xl border border-gray-100 overflow-hidden">
-                                                                <img src={imgUrl} alt={`${product.name} - Hình bổ sung ${idx + 1}`} className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm" loading="lazy" />
+                                                                <Image src={imgUrl} alt={`${product.name} - Hình bổ sung ${idx + 1}`} width={672} height={672} sizes="(max-width: 768px) 100vw, 672px" className="w-full max-w-2xl h-auto rounded-lg object-contain shadow-sm" />
                                                             </div>
                                                         ))}
                                                     </div>

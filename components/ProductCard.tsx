@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import ProductAddToCartButton from '@/components/ProductAddToCartButton';
 
@@ -41,7 +42,13 @@ function ProductCard({ product, formatPrice }: ProductCardProps) {
             <Link href={`/products/${product.id}`} className="flex flex-1 flex-col">
             <div className="aspect-square w-full bg-white relative overflow-hidden flex items-center justify-center p-4">
                 {product.mainThumbnail ? (
-                    <img src={product.mainThumbnail} alt={product.name} className="object-contain h-full w-full rounded-lg transition-transform duration-300 group-hover:scale-105" />
+                    <Image
+                        src={product.mainThumbnail}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-contain rounded-lg transition-transform duration-300 group-hover:scale-105"
+                    />
                 ) : (
                     <span className="text-gray-300 text-sm">Hình sản phẩm</span>
                 )}

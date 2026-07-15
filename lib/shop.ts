@@ -10,6 +10,11 @@ export type CartItem = {
   price?: number | null;
   quantity: number;
   lineTotal?: number | null;
+  variantId?: number | null;
+  colorName?: string | null;
+  storageName?: string | null;
+  availableQuantity?: number | null;
+  inStock?: boolean | null;
 };
 
 export type CartResponse = {
@@ -17,6 +22,21 @@ export type CartResponse = {
   items: CartItem[];
   totalItems: number;
   totalAmount: number;
+};
+
+export type CouponPreviewResponse = {
+  couponCode: string;
+  subtotalAmount: number;
+  discountAmount: number;
+  totalBeforeShipping: number;
+  items: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+    discountAmount: number;
+  }>;
 };
 
 export type PaymentMethod = "COD" | "VNPAY" | "MOMO";
@@ -27,11 +47,17 @@ export type OrderResponse = {
   orderCode: string;
   status: string;
   paymentMethod: PaymentMethod;
+  subtotalAmount: number;
+  shippingFee: number;
+  discountAmount: number;
   totalAmount: number;
   recipientName: string;
   phone: string;
   shippingAddress: string;
   note?: string | null;
+  shippingMethodCode?: string | null;
+  estimatedDeliveryDate?: string | null;
+  trackingNumber?: string | null;
   items: Array<{
     productId: number;
     productName: string;
@@ -73,10 +99,10 @@ export async function getCart() {
   return requestJson<CartResponse>("/api/cart");
 }
 
-export async function addToCart(productId: number, quantity = 1) {
+export async function addToCart(productId: number, quantity = 1, variantId?: number) {
   const cart = await requestJson<CartResponse>("/api/cart/items", {
     method: "POST",
-    body: JSON.stringify({ productId, quantity }),
+    body: JSON.stringify({ productId, quantity, variantId }),
   });
   notifyCartUpdated();
   return cart;
@@ -99,10 +125,20 @@ export async function removeCartItem(itemId: number) {
   return cart;
 }
 
+export async function applyCouponPreview(couponCode: string) {
+  return requestJson<CouponPreviewResponse>("/api/coupons/apply-preview", {
+    method: "POST",
+    body: JSON.stringify({ couponCode }),
+  });
+}
+
 export async function createOrder(payload: {
   recipientName: string;
   phone: string;
   shippingAddress: string;
+  province?: string;
+  shippingMethodCode?: string;
+  couponCode?: string;
   note?: string;
   paymentMethod: PaymentMethod;
 }) {
@@ -116,6 +152,16 @@ export async function createOrder(payload: {
 
 export async function getMyOrders() {
   return requestJson<OrderResponse[]>("/api/orders");
+}
+
+export async function getOrderById(id: number) {
+  return requestJson<OrderResponse>(`/api/orders/${id}`);
+}
+
+export async function cancelOrder(id: number) {
+  return requestJson<OrderResponse>(`/api/orders/${id}/cancel`, {
+    method: "PUT",
+  });
 }
 
 export async function createPayment(payload: {
@@ -168,5 +214,150 @@ async function readErrorMessage(response: Response) {
     return payload.message || payload.error || fallback;
   } catch {
     return text;
+  }
+}
+
+export function calculateDeliveryDate(baseDate: Date = new Date()): string {
+  const deliveryDate = new Date(baseDate);
+  deliveryDate.setDate(deliveryDate.getDate() + 3);
+  return new Intl.DateTimeFormat("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric"
+  }).format(deliveryDate);
+}
+
+// ==========================================
+// --- BỔ SUNG CHO TASK H05 (ADMIN COUPON) ---
+// ==========================================
+
+export type CouponRequest = {
+  code: string;
+  description?: string;
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+  discountValue: number;
+  scope: "ALL_ORDER" | "SPECIFIC_PRODUCTS" | "SPECIFIC_CATEGORIES";
+  applicableProductIds?: number[];
+  applicableCategories?: string[];
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  usageLimit?: number;
+  usageLimitPerUser?: number;
+  startAt?: string;
+  endAt?: string;
+};
+
+export type CouponResponse = CouponRequest & {
+  id: number;
+  usedCount: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function getAdminCoupons(active?: boolean) {
+  const query = active !== undefined ? `?active=${active}` : "";
+  return requestJson<CouponResponse[]>(`/api/admin/coupons${query}`);
+}
+
+export async function getAdminCouponById(id: number) {
+  return requestJson<CouponResponse>(`/api/admin/coupons/${id}`);
+}
+
+export async function createAdminCoupon(data: CouponRequest) {
+  return requestJson<CouponResponse>("/api/admin/coupons", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAdminCoupon(id: number, data: CouponRequest) {
+  return requestJson<CouponResponse>(`/api/admin/coupons/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function toggleAdminCouponStatus(id: number, activate: boolean) {
+  return requestJson<CouponResponse>(`/api/admin/coupons/${id}/${activate ? "activate" : "deactivate"}`, {
+    method: "PUT",
+  });
+}
+
+export type ShippingMethodRequest = {
+  code: string;
+  name: string;
+  active: boolean;
+};
+
+export type ShippingMethodResponse = ShippingMethodRequest & {
+  id: number;
+};
+
+export type ShippingZoneRequest = {
+  name: string;
+  provinces: string[];
+  priority: number;
+  active: boolean;
+};
+
+export type ShippingZoneResponse = ShippingZoneRequest & {
+  id: number;
+};
+
+export type ShippingRateRequest = {
+  zoneId: number;
+  methodId: number;
+  fee: number;
+  minDays: number;
+  maxDays: number;
+  active: boolean;
+};
+
+export type ShippingRateResponse = {
+  id: number;
+  zone: ShippingZoneResponse;
+  method: ShippingMethodResponse;
+  fee: number;
+  minDays: number;
+  maxDays: number;
+  active: boolean;
+};
+
+// --- API DỰ KIẾN (CÓ MOCK DATA ĐỂ DEMO VÌ BACKEND CHƯA CÓ API) ---
+
+export async function getAdminShippingMethods(): Promise<ShippingMethodResponse[]> {
+  try {
+    return await requestJson<ShippingMethodResponse[]>("/api/admin/shipping/methods");
+  } catch {
+    // Trả về Mock Data nếu Backend chưa viết API
+    return [
+      { id: 1, code: "STANDARD", name: "Giao hàng tiêu chuẩn", active: true },
+      { id: 2, code: "EXPRESS", name: "Giao hàng hỏa tốc", active: true },
+    ];
+  }
+}
+
+export async function getAdminShippingZones(): Promise<ShippingZoneResponse[]> {
+  try {
+    return await requestJson<ShippingZoneResponse[]>("/api/admin/shipping/zones");
+  } catch {
+    return [
+      { id: 1, name: "Nội thành TP.HCM", provinces: ["Hồ Chí Minh"], priority: 1, active: true },
+      { id: 2, name: "Miền Nam", provinces: ["Bình Dương", "Đồng Nai", "Long An"], priority: 2, active: true },
+    ];
+  }
+}
+
+export async function getAdminShippingRates(): Promise<ShippingRateResponse[]> {
+  try {
+    return await requestJson<ShippingRateResponse[]>("/api/admin/shipping/rates");
+  } catch {
+    const methods = await getAdminShippingMethods();
+    const zones = await getAdminShippingZones();
+    return [
+      { id: 1, zone: zones[0], method: methods[0], fee: 15000, minDays: 1, maxDays: 2, active: true },
+      { id: 2, zone: zones[0], method: methods[1], fee: 30000, minDays: 0, maxDays: 1, active: true },
+    ];
   }
 }

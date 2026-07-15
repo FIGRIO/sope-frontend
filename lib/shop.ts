@@ -10,6 +10,14 @@ export type CartItem = {
   price?: number | null;
   quantity: number;
   lineTotal?: number | null;
+  /** B06 – Variant fields returned by Backend when a variant is selected. */
+  variantId?: number | null;
+  colorName?: string | null;
+  storageName?: string | null;
+  /** Số lượng thực sự có thể bán (stockQuantity - reservedQuantity). */
+  availableQuantity?: number | null;
+  /** true nếu variant/sản phẩm còn hàng và đang được bán. */
+  inStock?: boolean | null;
 };
 
 export type CartResponse = {

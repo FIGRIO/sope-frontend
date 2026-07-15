@@ -42,7 +42,6 @@ export type CouponPreviewResponse = {
 export type PaymentMethod = "COD" | "VNPAY" | "MOMO";
 export type PaymentProvider = "VNPAY" | "MOMO";
 
-// --- Cập nhật OrderResponse cho Task C09 ---
 export type OrderResponse = {
   id: number;
   orderCode: string;
@@ -68,7 +67,6 @@ export type OrderResponse = {
   }>;
   createdAt?: string | null;
 };
-// -------------------------------------------
 
 export type PaymentResponse = {
   id: number;
@@ -156,7 +154,6 @@ export async function getMyOrders() {
   return requestJson<OrderResponse[]>("/api/orders");
 }
 
-// --- Thêm 2 hàm mới cho Task C09 ---
 export async function getOrderById(id: number) {
   return requestJson<OrderResponse>(`/api/orders/${id}`);
 }
@@ -166,7 +163,6 @@ export async function cancelOrder(id: number) {
     method: "PUT",
   });
 }
-// ------------------------------------
 
 export async function createPayment(payload: {
   orderId: string;
@@ -229,4 +225,61 @@ export function calculateDeliveryDate(baseDate: Date = new Date()): string {
     month: "2-digit",
     year: "numeric"
   }).format(deliveryDate);
+}
+
+// ==========================================
+// --- BỔ SUNG CHO TASK H05 (ADMIN COUPON) ---
+// ==========================================
+
+export type CouponRequest = {
+  code: string;
+  description?: string;
+  discountType: "PERCENTAGE" | "FIXED_AMOUNT";
+  discountValue: number;
+  scope: "ALL_ORDER" | "SPECIFIC_PRODUCTS" | "SPECIFIC_CATEGORIES";
+  applicableProductIds?: number[];
+  applicableCategories?: string[];
+  minOrderAmount?: number;
+  maxDiscountAmount?: number;
+  usageLimit?: number;
+  usageLimitPerUser?: number;
+  startAt?: string;
+  endAt?: string;
+};
+
+export type CouponResponse = CouponRequest & {
+  id: number;
+  usedCount: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function getAdminCoupons(active?: boolean) {
+  const query = active !== undefined ? `?active=${active}` : "";
+  return requestJson<CouponResponse[]>(`/api/admin/coupons${query}`);
+}
+
+export async function getAdminCouponById(id: number) {
+  return requestJson<CouponResponse>(`/api/admin/coupons/${id}`);
+}
+
+export async function createAdminCoupon(data: CouponRequest) {
+  return requestJson<CouponResponse>("/api/admin/coupons", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAdminCoupon(id: number, data: CouponRequest) {
+  return requestJson<CouponResponse>(`/api/admin/coupons/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function toggleAdminCouponStatus(id: number, activate: boolean) {
+  return requestJson<CouponResponse>(`/api/admin/coupons/${id}/${activate ? "activate" : "deactivate"}`, {
+    method: "PUT",
+  });
 }

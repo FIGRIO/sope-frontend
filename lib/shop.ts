@@ -10,13 +10,10 @@ export type CartItem = {
   price?: number | null;
   quantity: number;
   lineTotal?: number | null;
-  /** B06 – Variant fields returned by Backend when a variant is selected. */
   variantId?: number | null;
   colorName?: string | null;
   storageName?: string | null;
-  /** Số lượng thực sự có thể bán (stockQuantity - reservedQuantity). */
   availableQuantity?: number | null;
-  /** true nếu variant/sản phẩm còn hàng và đang được bán. */
   inStock?: boolean | null;
 };
 
@@ -26,6 +23,23 @@ export type CartResponse = {
   totalItems: number;
   totalAmount: number;
 };
+
+// --- Bổ sung DTO cho Task D07 ---
+export type CouponPreviewResponse = {
+  couponCode: string;
+  subtotalAmount: number;
+  discountAmount: number;
+  totalBeforeShipping: number;
+  items: Array<{
+    productId: number;
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+    lineTotal: number;
+    discountAmount: number;
+  }>;
+};
+// ---------------------------------
 
 export type PaymentMethod = "COD" | "VNPAY" | "MOMO";
 export type PaymentProvider = "VNPAY" | "MOMO";
@@ -107,10 +121,22 @@ export async function removeCartItem(itemId: number) {
   return cart;
 }
 
+// --- Task D07: Thêm API Apply Coupon ---
+export async function applyCouponPreview(couponCode: string) {
+  return requestJson<CouponPreviewResponse>("/api/coupons/apply-preview", {
+    method: "POST",
+    body: JSON.stringify({ couponCode }),
+  });
+}
+// ----------------------------------------
+
 export async function createOrder(payload: {
   recipientName: string;
   phone: string;
   shippingAddress: string;
+  province?: string; // Task D07: Thêm province
+  shippingMethodCode?: string; // Task D07: Thêm shipping method
+  couponCode?: string; // Task D07: Thêm mã giảm giá
   note?: string;
   paymentMethod: PaymentMethod;
 }) {
@@ -179,10 +205,9 @@ async function readErrorMessage(response: Response) {
   }
 }
 
-// --- Bổ sung cho Task C08 ---
 export function calculateDeliveryDate(baseDate: Date = new Date()): string {
   const deliveryDate = new Date(baseDate);
-  deliveryDate.setDate(deliveryDate.getDate() + 3); // Giao hàng sau 3 ngày
+  deliveryDate.setDate(deliveryDate.getDate() + 3);
   return new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
     month: "2-digit",

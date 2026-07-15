@@ -514,6 +514,28 @@ export default function ProductDetailPage() {
                                 </p>
                             </div>
                         )}
+                        {/* --- Task D07: Hiển thị Box mã giảm giá --- */}
+                        <div className="bg-orange-50 border border-orange-100 rounded-xl p-4 mb-6">
+                            <h3 className="text-sm font-bold text-orange-800 mb-3 flex items-center gap-2">
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"></path></svg>
+                                Mã giảm giá dành cho bạn
+                            </h3>
+                            <div className="flex items-center justify-between bg-white p-3 rounded-lg border border-orange-200 border-dashed">
+                                <div>
+                                    <p className="text-sm font-bold text-[#EE4D2D]">VOUCHER10</p>
+                                    <p className="text-xs text-gray-500 mt-0.5">Nhập mã này ở bước thanh toán để nhận ưu đãi</p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        navigator.clipboard.writeText("VOUCHER10");
+                                        alert("Đã sao chép mã giảm giá: VOUCHER10");
+                                    }}
+                                    className="text-xs font-bold text-white bg-[#EE4D2D] px-3 py-1.5 rounded hover:bg-orange-600 transition"
+                                >
+                                    Sao chép
+                                </button>
+                            </div>
+                        </div>
 
                         {/* --- Task C08: Box Ngày giao hàng --- */}
                         <div className="mb-5 flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/80 p-3 text-sm text-blue-800">

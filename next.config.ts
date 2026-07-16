@@ -6,11 +6,16 @@ const withPWA = withPWAInit({
   fallbacks: {
     document: "/offline",
   },
-  disable: process.env.NODE_ENV === "development",
+  disable: process.env.NODE_ENV === "development", // Tắt PWA khi đang code local để tránh lỗi cache giao diện
+  register: true,
+  workboxOptions: {
+    skipWaiting: true,
+    clientsClaim: true,
+  },
 });
 
 const nextConfig: NextConfig = {
-  turbopack: {},
+  // turbopack: {},
   images: {
     remotePatterns: [
       {
@@ -22,4 +27,3 @@ const nextConfig: NextConfig = {
 };
 
 export default withPWA(nextConfig);
-

@@ -49,7 +49,7 @@ export default function AdminCouponsPage() {
     };
 
     useEffect(() => {
-        void fetchCoupons();
+        void Promise.resolve().then(fetchCoupons);
     }, []);
 
     const openCreateModal = () => {
@@ -227,7 +227,7 @@ export default function AdminCouponsPage() {
 
                                 <div>
                                     <label className="mb-1 block font-bold text-gray-700">Loại giảm giá</label>
-                                    <select value={formData.discountType} onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })} className="w-full rounded-lg border border-gray-300 p-2.5 outline-none focus:border-[#EE4D2D]">
+                                    <select value={formData.discountType} onChange={(e) => setFormData({ ...formData, discountType: e.target.value as CouponRequest["discountType"] })} className="w-full rounded-lg border border-gray-300 p-2.5 outline-none focus:border-[#EE4D2D]">
                                         <option value="PERCENTAGE">Giảm theo phần trăm (%)</option>
                                         <option value="FIXED_AMOUNT">Giảm số tiền cố định (VNĐ)</option>
                                     </select>

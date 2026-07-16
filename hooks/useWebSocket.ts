@@ -8,7 +8,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
 export interface UseWebSocketReturn {
   stompClient: Client | null;
   isConnected: boolean;
-  sendMessage: (destination: string, body: any) => void;
+  sendMessage: (destination: string, body: unknown) => void;
 }
 
 export const useWebSocket = (token: string, userId: string): UseWebSocketReturn => {
@@ -57,16 +57,17 @@ export const useWebSocket = (token: string, userId: string): UseWebSocketReturn 
     });
 
     client.activate();
-    setStompClient(client);
+    void Promise.resolve().then(() => setStompClient(client));
 
     return () => {
       client.deactivate();
+      setStompClient(null);
       setIsConnected(false);
     };
   }, [token, userId]);
 
   // Thêm type string cho destination và any (hoặc type cụ thể) cho body
-  const sendMessage = useCallback((destination: string, body: any) => {
+  const sendMessage = useCallback((destination: string, body: unknown) => {
     if (stompClient && stompClient.connected) {
       stompClient.publish({
         destination: destination,

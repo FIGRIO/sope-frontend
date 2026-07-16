@@ -11,7 +11,6 @@ import {
   getCart,
   removeCartItem,
   updateCartItem,
-  calculateDeliveryDate,
   applyCouponPreview // Task D07
 } from "@/lib/shop";
 
@@ -376,7 +375,7 @@ export default function CartPage() {
                     <div className="flex justify-between pt-3 border-t border-gray-100">
                       <span className="text-gray-500 font-medium">Dự kiến giao hàng</span>
                       <span className={`font-semibold ${hasStockViolation ? "text-red-500" : "text-blue-600"}`}>
-                        {hasStockViolation ? "Không thể giao (Lỗi SP)" : calculateDeliveryDate()}
+                        {hasStockViolation ? "Không thể giao (Lỗi SP)" : "Tính theo địa chỉ ở bước thanh toán"}
                       </span>
                     </div>
                   </div>

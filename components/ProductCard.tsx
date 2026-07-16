@@ -20,10 +20,9 @@ export type ProductCatalogItem = {
 
 type ProductCardProps = {
     product: ProductCatalogItem;
-    formatPrice: (price?: number | string) => string;
 };
 
-function ProductCard({ product, formatPrice }: ProductCardProps) {
+function ProductCard({ product }: ProductCardProps) {
     const cpu = product.specs?.["Chip xử lý (CPU)"] || product.specs?.["Vi xử lý (CPU)"] || "Đang cập nhật";
     const screen = product.specs?.["Màn hình rộng"] || product.specs?.["Màn hình"] || "Đang cập nhật";
     const ram = product.specs?.["RAM"] || "";
@@ -37,7 +36,7 @@ function ProductCard({ product, formatPrice }: ProductCardProps) {
 
     return (
         <div
-            className="group relative flex cursor-pointer flex-col overflow-hidden rounded-xl bg-white shadow-sm border border-gray-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-md hover:border-[#EE4D2D]/30"
+            className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-[#EE4D2D]/30 hover:shadow-md"
         >
             <Link href={`/products/${product.id}`} className="flex flex-1 flex-col">
             <div className="aspect-square w-full bg-white relative overflow-hidden flex items-center justify-center p-4">
@@ -55,16 +54,16 @@ function ProductCard({ product, formatPrice }: ProductCardProps) {
             </div>
 
             <div className="flex flex-1 flex-col p-4 bg-white z-10 relative">
-                <h3 className="mb-2 line-clamp-2 text-[15px] font-medium text-gray-900 group-hover:text-[#EE4D2D] transition-colors leading-snug">
+                <h3 className="mb-2 min-h-[42px] line-clamp-2 text-[15px] font-medium leading-snug text-gray-900 transition-colors group-hover:text-[#EE4D2D]">
                     {product.name}
                 </h3>
 
-                <div className="mt-1 mb-3 text-xs text-gray-500 space-y-1">
+                <div className="mb-3 mt-1 min-h-[36px] space-y-1 text-xs text-gray-500">
                     <p className="truncate">Chip: {cpu}</p>
                     <p className="truncate">Màn hình: {screen}</p>
                 </div>
 
-                <div className="mb-3 flex flex-wrap gap-1.5">
+                <div className="mb-3 flex min-h-[24px] flex-wrap items-start gap-1.5">
                     {ram && (
                         <span className="inline-flex items-center rounded border border-gray-200 px-2 py-0.5 text-[11px] font-medium text-gray-600 bg-gray-50">
                             RAM {ram}
@@ -102,6 +101,13 @@ function ProductCard({ product, formatPrice }: ProductCardProps) {
             </div>
         </div>
     );
+}
+
+function formatPrice(price?: number | string) {
+    if (!price) return "Giá liên hệ";
+    const value = typeof price === "string" ? Number(price.replace(/[^\d]/g, "")) : price;
+    if (!Number.isFinite(value)) return "Giá liên hệ";
+    return `${value.toLocaleString("vi-VN")}₫`;
 }
 
 export default React.memo(ProductCard);

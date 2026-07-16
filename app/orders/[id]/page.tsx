@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Header from "@/components/Header";
 import { getOrderById, cancelOrder, OrderResponse, formatVnd } from "@/lib/shop";
 import Link from "next/link";
@@ -30,7 +30,6 @@ function formatDateTime(value?: string | null) {
 
 export default function OrderDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const orderId = Number(params?.id);
 
     const [order, setOrder] = useState<OrderResponse | null>(null);
@@ -57,7 +56,7 @@ export default function OrderDetailPage() {
     }, [orderId]);
 
     useEffect(() => {
-        void fetchOrder();
+        void Promise.resolve().then(fetchOrder);
     }, [fetchOrder]);
 
     const handleCancelOrder = async () => {

@@ -487,3 +487,12 @@ Khi kiểm tra cần ghi rõ:
 - Thay doi: Chuan hoa label/nut/thong bao/loading/mo ta sang tieng Viet co dau; doi mac dinh tinh thanh checkout tu Ho Chi Minh sang Ho Chi Minh co dau; khong doi API path, enum, query param hay logic redirect.
 - Kiem tra: npx eslint cac file da sua pass voi 11 warning img cu; npm run build pass. npm run lint toan bo van fail do loi cu trong hooks/useWebSocket.ts.
 - Luu y: Cac chuoi includes("dang nhap") la check logic voi thong bao backend nen de nguyen; khong sua app/data vi do la du lieu san pham/review mau.
+
+## 2026-07-16 - Hoàn thiện tích hợp frontend
+
+- Yêu cầu: sửa catalog phone/tablet, C08, H06, cart contract, chatbot qua Backend, Next.js 16 và cấu hình deploy.
+- Đã sửa: các trang catalog/home/product detail/cart/checkout/admin shipping; `ChatbotWidget`, `ProductCard`, PWA/WebSocket hooks; `lib/auth.ts`, `lib/shop.ts`; `package.json`; thêm `.env.example`, `Dockerfile`.
+- Thay đổi: mọi dữ liệu catalog/giao hàng/admin shipping dùng API thật; hiển thị loading/empty/error; chatbot chỉ gọi `/api/chat` của Spring; cart đọc đủ variant và tồn kho; API URL lấy từ env.
+- Lỗi đã xử lý: `params` Next 16, `viewport`, Turbopack/PWA, truyền `formatPrice` qua Server–Client, type variant, response page và lỗi runtime `/products` 500.
+- Kiểm tra: `npm run lint` exit 0 (124 warning, chủ yếu ảnh và service-worker sinh tự động); `npm run build` pass; `/`, `/products`, `/products/11`, `/cart`, `/checkout`, `/admin/shipping` đều HTTP 200.
+- Việc tiếp theo: kiểm tra trực quan bằng browser khi có phiên browser; đăng nhập admin thật để thử toggle H06. Không đưa secret vào `NEXT_PUBLIC_*`.

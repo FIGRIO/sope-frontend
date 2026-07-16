@@ -6,7 +6,7 @@ import Header from "@/components/Header";
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { API_BASE_URL } from '@/lib/auth';
-import { addToCart, calculateDeliveryDate } from '@/lib/shop';
+import { addToCart } from '@/lib/shop';
 import { checkIsInWishlist, toggleWishlist, WISHLIST_UPDATED_EVENT } from '@/lib/wishlist'; // Bổ sung cho L03
 
 // --- ĐỊNH NGHĨA CÁC INTERFACE ---
@@ -62,6 +62,45 @@ interface Product {
     storageVariants?: StorageVariant[];
     colorVariants?: ColorVariant[];
     variants?: ProductVariant[];
+}
+
+interface ProductVariantApiResponse {
+    id: number;
+    sku: string;
+    colorName?: string;
+    storageName?: string;
+    price: number;
+    oldPrice?: number;
+    imageUrl?: string;
+    stockQuantity?: number;
+    reservedQuantity?: number;
+    availableQuantity?: number;
+    active?: boolean;
+    inStock?: boolean;
+    storage_name?: string;
+    color_name?: string;
+    old_price?: number;
+    image_url?: string;
+    stock_quantity?: number;
+    reserved_quantity?: number;
+    available_quantity?: number;
+    in_stock?: boolean;
+}
+
+interface ProductApiResponse extends Omit<Product, "variants"> {
+    old_price?: number;
+    main_thumbnail?: string;
+    short_description?: string;
+    storageVariants?: Array<StorageVariant & { storage_name?: string }>;
+    colorVariants?: Array<ColorVariant & { color_name?: string }>;
+    variants?: ProductVariantApiResponse[];
+}
+
+interface RecentlyViewedProduct {
+    id: string | number;
+    name: string;
+    price: number;
+    image: string;
 }
 
 const formatPrice = (priceStr: string | number) => {
@@ -187,7 +226,9 @@ export default function ProductClient() {
 
     useEffect(() => {
         if (!productId) return;
-        setIsWishlisted(checkIsInWishlist(productId as string));
+        void Promise.resolve().then(() => {
+            setIsWishlisted(checkIsInWishlist(productId as string));
+        });
 
         const handleWishlistChange = () => {
             setIsWishlisted(checkIsInWishlist(productId as string));
@@ -205,28 +246,29 @@ export default function ProductClient() {
                 if (!res.ok) throw new Error("Không tìm thấy sản phẩm");
                 return res.json();
             })
-            .then((rawData: any) => {
+            .then((rawData: ProductApiResponse) => {
                 // Ánh xạ các trường snake_case từ API sang camelCase cho Frontend
-                const mappedStorageVariants = rawData.storageVariants?.map((sv: any) => ({
+                const mappedStorageVariants = rawData.storageVariants?.map((sv) => ({
                     ...sv,
                     storageName: sv.storageName || sv.storage_name,
                 }));
 
-                const mappedColorVariants = rawData.colorVariants?.map((cv: any) => ({
+                const mappedColorVariants = rawData.colorVariants?.map((cv) => ({
                     ...cv,
                     colorName: cv.colorName || cv.color_name,
                 }));
 
-                const mappedVariants = rawData.variants?.map((v: any) => ({
+                const mappedVariants: ProductVariant[] | undefined = rawData.variants?.map((v) => ({
                     ...v,
-                    storageName: v.storageName || v.storage_name,
-                    colorName: v.colorName || v.color_name,
-                    oldPrice: v.oldPrice || v.old_price,
-                    imageUrl: v.imageUrl || v.image_url,
-                    stockQuantity: v.stockQuantity || v.stock_quantity,
-                    reservedQuantity: v.reservedQuantity || v.reserved_quantity,
-                    availableQuantity: v.availableQuantity || v.available_quantity,
-                    inStock: v.inStock !== undefined ? v.inStock : v.in_stock,
+                    storageName: v.storageName ?? v.storage_name ?? "",
+                    colorName: v.colorName ?? v.color_name ?? "",
+                    oldPrice: v.oldPrice ?? v.old_price,
+                    imageUrl: v.imageUrl ?? v.image_url,
+                    stockQuantity: v.stockQuantity ?? v.stock_quantity ?? 0,
+                    reservedQuantity: v.reservedQuantity ?? v.reserved_quantity ?? 0,
+                    availableQuantity: v.availableQuantity ?? v.available_quantity ?? 0,
+                    active: v.active ?? true,
+                    inStock: v.inStock ?? v.in_stock ?? false,
                 }));
 
                 const data: Product = {
@@ -243,8 +285,8 @@ export default function ProductClient() {
 
                 try {
                     const stored = localStorage.getItem("sope_recently_viewed");
-                    let list = stored ? JSON.parse(stored) : [];
-                    list = list.filter((p: any) => p.id !== data.id);
+                    let list = stored ? JSON.parse(stored) as RecentlyViewedProduct[] : [];
+                    list = list.filter((p) => p.id !== data.id);
                     list.unshift({
                         id: data.id,
                         name: data.name,
@@ -288,7 +330,7 @@ export default function ProductClient() {
 
     useEffect(() => {
         if (activeVariant?.imageUrl) {
-            setMainImage(activeVariant.imageUrl);
+            void Promise.resolve().then(() => setMainImage(activeVariant.imageUrl ?? ""));
         }
     }, [activeVariant]);
 
@@ -579,7 +621,7 @@ export default function ProductClient() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                             <span>
-                                Dự kiến giao hàng: <strong className="font-bold">{isOutOfStock ? "Không thể giao (Hết hàng)" : calculateDeliveryDate()}</strong>
+                                Dự kiến giao hàng: <strong className="font-bold">{isOutOfStock ? "Không thể giao (Hết hàng)" : "Tính theo địa chỉ ở bước thanh toán"}</strong>
                             </span>
                         </div>
 

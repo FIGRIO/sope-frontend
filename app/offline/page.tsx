@@ -15,15 +15,16 @@ export default function OfflinePage() {
     const [viewedProducts, setViewedProducts] = useState<ViewedProduct[]>([]);
 
     useEffect(() => {
-        // Đọc danh sách đã lưu từ LocalStorage
-        try {
-            const stored = localStorage.getItem("sope_recently_viewed");
-            if (stored) {
-                setViewedProducts(JSON.parse(stored));
+        void Promise.resolve().then(() => {
+            try {
+                const stored = localStorage.getItem("sope_recently_viewed");
+                if (stored) {
+                    setViewedProducts(JSON.parse(stored) as ViewedProduct[]);
+                }
+            } catch (e) {
+                console.error("Không thể đọc lịch sử xem", e);
             }
-        } catch (e) {
-            console.error("Không thể đọc lịch sử xem", e);
-        }
+        });
     }, []);
 
     const formatPrice = (price: number) => {

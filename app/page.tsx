@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import Link from 'next/link';
+import { API_BASE_URL } from "@/lib/auth";
 
 // ==========================================
 // 1. KHAI BÁO INTERFACE (Tránh lỗi any)
@@ -13,20 +14,26 @@ interface Product {
   images?: string[];
 }
 
+export const dynamic = 'force-dynamic';
+
 // ==========================================
 // 2. HÀM FETCH DỮ LIỆU TỪ SPRING BOOT
 // ==========================================
 async function getProductsByCategory(category: string): Promise<Product[]> {
   try {
     // Gọi API với size=5 để lấy đúng 5 sản phẩm nổi bật cho trang chủ
-    const res = await fetch(`http://localhost:8080/api/products?category=${category}&size=5`, { 
+    const url = new URL('/api/products', API_BASE_URL);
+    url.searchParams.set('category', category);
+    url.searchParams.set('size', '5');
+    const res = await fetch(url, {
       cache: 'no-store' // Đảm bảo luôn lấy dữ liệu mới nhất
     });
     
     if (!res.ok) return [];
     
     const data = await res.json();
-    return data.content || [];
+    const content = Array.isArray(data) ? data : data.content ?? data.data?.content ?? [];
+    return Array.isArray(content) ? content : [];
   } catch (error) {
     console.error(`Lỗi fetch data category ${category}:`, error);
     return [];

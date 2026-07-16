@@ -81,6 +81,16 @@ export type PaymentResponse = {
   updatedAt?: string | null;
 };
 
+export type DeliveryEstimateResponse = {
+  zoneName: string;
+  methodCode: string;
+  methodName: string;
+  fee: number;
+  estimatedMinDate: string;
+  estimatedMaxDate: string;
+  note?: string | null;
+};
+
 export function formatVnd(value?: number | null) {
   if (value == null) return "Giá liên hệ";
   return new Intl.NumberFormat("vi-VN", {
@@ -195,6 +205,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}) {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers,
+    credentials: "include",
   });
 
   if (!response.ok) {
@@ -217,14 +228,29 @@ async function readErrorMessage(response: Response) {
   }
 }
 
-export function calculateDeliveryDate(baseDate: Date = new Date()): string {
-  const deliveryDate = new Date(baseDate);
-  deliveryDate.setDate(deliveryDate.getDate() + 3);
-  return new Intl.DateTimeFormat("vi-VN", {
+export async function getDeliveryEstimate(payload: {
+  province: string;
+  methodCode?: string;
+  items?: Array<{ productId: number; quantity: number }>;
+}) {
+  const response = await fetch(`${API_BASE_URL}/api/delivery/estimate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  return response.json() as Promise<DeliveryEstimateResponse>;
+}
+
+export function formatDeliveryWindow(estimate: DeliveryEstimateResponse) {
+  const formatter = new Intl.DateTimeFormat("vi-VN", {
     day: "2-digit",
     month: "2-digit",
-    year: "numeric"
-  }).format(deliveryDate);
+    year: "numeric",
+  });
+  const min = formatter.format(new Date(`${estimate.estimatedMinDate}T00:00:00`));
+  const max = formatter.format(new Date(`${estimate.estimatedMaxDate}T00:00:00`));
+  return min === max ? min : `${min} - ${max}`;
 }
 
 // ==========================================
@@ -324,40 +350,24 @@ export type ShippingRateResponse = {
   active: boolean;
 };
 
-// --- API DỰ KIẾN (CÓ MOCK DATA ĐỂ DEMO VÌ BACKEND CHƯA CÓ API) ---
-
 export async function getAdminShippingMethods(): Promise<ShippingMethodResponse[]> {
-  try {
-    return await requestJson<ShippingMethodResponse[]>("/api/admin/shipping/methods");
-  } catch {
-    // Trả về Mock Data nếu Backend chưa viết API
-    return [
-      { id: 1, code: "STANDARD", name: "Giao hàng tiêu chuẩn", active: true },
-      { id: 2, code: "EXPRESS", name: "Giao hàng hỏa tốc", active: true },
-    ];
-  }
+  return requestJson<ShippingMethodResponse[]>("/api/admin/shipping/methods");
 }
 
 export async function getAdminShippingZones(): Promise<ShippingZoneResponse[]> {
-  try {
-    return await requestJson<ShippingZoneResponse[]>("/api/admin/shipping/zones");
-  } catch {
-    return [
-      { id: 1, name: "Nội thành TP.HCM", provinces: ["Hồ Chí Minh"], priority: 1, active: true },
-      { id: 2, name: "Miền Nam", provinces: ["Bình Dương", "Đồng Nai", "Long An"], priority: 2, active: true },
-    ];
-  }
+  return requestJson<ShippingZoneResponse[]>("/api/admin/shipping/zones");
 }
 
 export async function getAdminShippingRates(): Promise<ShippingRateResponse[]> {
-  try {
-    return await requestJson<ShippingRateResponse[]>("/api/admin/shipping/rates");
-  } catch {
-    const methods = await getAdminShippingMethods();
-    const zones = await getAdminShippingZones();
-    return [
-      { id: 1, zone: zones[0], method: methods[0], fee: 15000, minDays: 1, maxDays: 2, active: true },
-      { id: 2, zone: zones[0], method: methods[1], fee: 30000, minDays: 0, maxDays: 1, active: true },
-    ];
-  }
+  return requestJson<ShippingRateResponse[]>("/api/admin/shipping/rates");
+}
+
+export async function setAdminShippingActive(
+  type: "methods" | "zones" | "rates",
+  id: number,
+  active: boolean,
+) {
+  return requestJson(`/api/admin/shipping/${type}/${id}/active?active=${active}`, {
+    method: "PATCH",
+  });
 }

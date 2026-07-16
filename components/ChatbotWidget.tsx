@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL, getAccessToken } from '@/lib/auth';
 
 // Định nghĩa cấu trúc dữ liệu cho một tin nhắn
 interface Message {
@@ -53,20 +54,22 @@ export default function ChatbotWidget() {
         setIsLoading(true);
 
         try {
-            // 2. Gọi API đến FastAPI backend (main.py)
-            const response = await fetch('http://localhost:8000/api/chat', {
+            // 2. Gọi Backend Spring Boot; Backend chịu trách nhiệm gọi FastAPI.
+            const token = getAccessToken();
+            const response = await fetch(`${API_BASE_URL}/api/chat`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
                 },
+                credentials: 'include',
                 body: JSON.stringify({
-                    user_id: "khach_hang_test", // Khớp với model ChatRequest trong main.py
                     message: trimmedInput
                 }),
             });
 
             if (!response.ok) {
-                throw new Error('Lỗi kết nối đến server AI');
+                throw new Error('Lỗi kết nối đến dịch vụ chatbot');
             }
 
             const data = await response.json();
@@ -86,7 +89,7 @@ export default function ChatbotWidget() {
             setMessages(prev => [...prev, {
                 id: `error-${Date.now()}`,
                 sender: 'ai',
-                text: 'Hệ thống đang bận hoặc server FastAPI chưa được bật. Vui lòng thử lại sau!',
+                text: 'Hệ thống chatbot đang bận. Vui lòng thử lại sau!',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             }]);
         } finally {
@@ -150,7 +153,7 @@ export default function ChatbotWidget() {
 
     // UI khi widget mở
     return (
-        <div className="fixed bottom-6 right-6 w-[380px] h-[640px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-gray-100">
+        <div className="fixed bottom-4 left-4 right-4 h-[70vh] max-h-[640px] bg-white rounded-2xl shadow-2xl flex flex-col z-50 overflow-hidden border border-gray-100 sm:bottom-6 sm:left-auto sm:right-6 sm:w-[380px]">
             {/* Header */}
             <div className="h-[70px] bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] px-4 flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3">

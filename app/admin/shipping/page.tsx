@@ -8,6 +8,7 @@ import {
     ShippingMethodResponse,
     ShippingZoneResponse,
     ShippingRateResponse,
+    setAdminShippingActive,
     formatVnd
 } from "@/lib/shop";
 
@@ -16,6 +17,8 @@ type TabType = "METHODS" | "ZONES" | "RATES";
 export default function AdminShippingPage() {
     const [activeTab, setActiveTab] = useState<TabType>("RATES");
     const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [updatingKey, setUpdatingKey] = useState("");
 
     const [methods, setMethods] = useState<ShippingMethodResponse[]>([]);
     const [zones, setZones] = useState<ShippingZoneResponse[]>([]);
@@ -24,6 +27,7 @@ export default function AdminShippingPage() {
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
+            setError("");
             try {
                 const [methodsData, zonesData, ratesData] = await Promise.all([
                     getAdminShippingMethods(),
@@ -35,12 +39,29 @@ export default function AdminShippingPage() {
                 setRates(ratesData);
             } catch (error) {
                 console.error("Lỗi khi tải dữ liệu giao hàng", error);
+                setError(error instanceof Error ? error.message : "Không thể tải dữ liệu giao hàng.");
             } finally {
                 setIsLoading(false);
             }
         };
         void fetchData();
     }, []);
+
+    const toggleActive = async (type: "methods" | "zones" | "rates", id: number, active: boolean) => {
+        const key = `${type}-${id}`;
+        setUpdatingKey(key);
+        setError("");
+        try {
+            await setAdminShippingActive(type, id, active);
+            if (type === "methods") setMethods((items) => items.map((item) => item.id === id ? { ...item, active } : item));
+            if (type === "zones") setZones((items) => items.map((item) => item.id === id ? { ...item, active } : item));
+            if (type === "rates") setRates((items) => items.map((item) => item.id === id ? { ...item, active } : item));
+        } catch (err) {
+            setError(err instanceof Error ? err.message : "Không thể cập nhật trạng thái.");
+        } finally {
+            setUpdatingKey("");
+        }
+    };
 
     return (
         <div className="min-h-screen bg-gray-50 p-8">
@@ -54,6 +75,8 @@ export default function AdminShippingPage() {
                         + THÊM MỚI
                     </button>
                 </div>
+
+                {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
                 {/* Tabs */}
                 <div className="mb-6 flex gap-2 border-b border-gray-200">
@@ -96,6 +119,8 @@ export default function AdminShippingPage() {
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {isLoading ? (
                                             <tr><td colSpan={5} className="py-10 text-center text-gray-500">Đang tải...</td></tr>
+                                        ) : rates.length === 0 ? (
+                                            <tr><td colSpan={5} className="py-10 text-center text-gray-500">Chưa có bảng giá vận chuyển.</td></tr>
                                         ) : rates.map((rate) => (
                                             <tr key={rate.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 font-medium text-gray-900">{rate.zone.name}</td>
@@ -103,9 +128,13 @@ export default function AdminShippingPage() {
                                                 <td className="px-6 py-4 font-bold text-[#EE4D2D]">{formatVnd(rate.fee)}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-600">{rate.minDays} - {rate.maxDays} ngày</td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${rate.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <button
+                                                        onClick={() => void toggleActive("rates", rate.id, !rate.active)}
+                                                        disabled={updatingKey === `rates-${rate.id}`}
+                                                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold disabled:opacity-50 ${rate.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                                                    >
                                                         {rate.active ? "Kích hoạt" : "Vô hiệu hóa"}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -127,6 +156,8 @@ export default function AdminShippingPage() {
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {isLoading ? (
                                             <tr><td colSpan={4} className="py-10 text-center text-gray-500">Đang tải...</td></tr>
+                                        ) : zones.length === 0 ? (
+                                            <tr><td colSpan={4} className="py-10 text-center text-gray-500">Chưa có khu vực giao hàng.</td></tr>
                                         ) : zones.map((zone) => (
                                             <tr key={zone.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 font-bold text-gray-900">{zone.name}</td>
@@ -139,9 +170,13 @@ export default function AdminShippingPage() {
                                                 </td>
                                                 <td className="px-6 py-4 text-center text-sm font-medium">{zone.priority}</td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${zone.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <button
+                                                        onClick={() => void toggleActive("zones", zone.id, !zone.active)}
+                                                        disabled={updatingKey === `zones-${zone.id}`}
+                                                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold disabled:opacity-50 ${zone.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                                                    >
                                                         {zone.active ? "Kích hoạt" : "Vô hiệu hóa"}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -162,14 +197,20 @@ export default function AdminShippingPage() {
                                     <tbody className="divide-y divide-gray-200 bg-white">
                                         {isLoading ? (
                                             <tr><td colSpan={3} className="py-10 text-center text-gray-500">Đang tải...</td></tr>
+                                        ) : methods.length === 0 ? (
+                                            <tr><td colSpan={3} className="py-10 text-center text-gray-500">Chưa có phương thức giao hàng.</td></tr>
                                         ) : methods.map((method) => (
                                             <tr key={method.id} className="hover:bg-gray-50">
                                                 <td className="px-6 py-4 font-bold text-gray-900">{method.code}</td>
                                                 <td className="px-6 py-4 text-sm text-gray-600">{method.name}</td>
                                                 <td className="px-6 py-4 text-center">
-                                                    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${method.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+                                                    <button
+                                                        onClick={() => void toggleActive("methods", method.id, !method.active)}
+                                                        disabled={updatingKey === `methods-${method.id}`}
+                                                        className={`inline-flex rounded-full px-3 py-1 text-xs font-bold disabled:opacity-50 ${method.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                                                    >
                                                         {method.active ? "Kích hoạt" : "Vô hiệu hóa"}
-                                                    </span>
+                                                    </button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -179,7 +220,7 @@ export default function AdminShippingPage() {
                         </table>
                     </div>
                     <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 text-xs text-gray-500 italic text-center">
-                        * Lưu ý: Hiện tại Backend chưa mở API Thêm/Sửa/Xóa cho phân hệ này. Dữ liệu trên đang ở chế độ xem trước (Preview Mode).
+                        * Dữ liệu lấy trực tiếp từ Backend/MySQL. Bấm trạng thái để kích hoạt hoặc vô hiệu hóa.
                     </div>
                 </div>
             </div>

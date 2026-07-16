@@ -4,6 +4,7 @@ import ProductCard from "@/components/ProductCard";
 import type { ProductCatalogItem } from "@/components/ProductCard";
 import ProductFilterSidebar from "@/components/ProductFilterSidebar";
 import ProductSortBar from "@/components/ProductSortBar";
+import { API_BASE_URL } from "@/lib/auth";
 
 type ProductSummary = {
     id: number;
@@ -45,7 +46,7 @@ export default async function ProductsPage({
     const currentPage = typeof resolvedParams.page === 'string' ? Math.max(parseInt(resolvedParams.page, 10) - 1, 0) : 0;
 
     // 2. XÂY DỰNG URL GỌI BACKEND
-    const backendUrl = new URL('http://localhost:8080/api/products');
+    const backendUrl = new URL('/api/products', API_BASE_URL);
     if (queryName) backendUrl.searchParams.set('keyword', queryName);
     if (queryCategory) backendUrl.searchParams.set('category', queryCategory);
     if (queryBrand) backendUrl.searchParams.set('brand', queryBrand);
@@ -61,6 +62,7 @@ export default async function ProductsPage({
     let filteredProducts: ProductCatalogItem[] = [];
     let totalPages = 1;
     let filterSourceProducts: ProductSummary[] = [];
+    let catalogError = "";
     
     try {
         const res = await fetch(backendUrl.toString(), { cache: 'no-store' });
@@ -71,17 +73,19 @@ export default async function ProductsPage({
         } else {
             const errorDetail = await res.text(); 
             console.log("❌ CHI TIẾT LỖI TỪ BACKEND TRẢ VỀ:", errorDetail);
+            catalogError = "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.";
         }
     } catch (error) {
         console.error("Lỗi kết nối tới Backend Spring Boot:", error);
+        catalogError = "Không thể kết nối dịch vụ sản phẩm. Vui lòng kiểm tra Backend.";
     }
 
-    // 4. MOCK BỘ LỌC SIDEBAR (ĐÃ ĐƯỢC CHUẨN HOÁ SLUG)
+    // 4. Tải dữ liệu thật để dựng bộ lọc sidebar
     try {
         const sourceCategories = queryCategory ? [queryCategory] : ["phone", "laptop", "tablet"];
         const filterResponses = await Promise.all(
             sourceCategories.map(async (category) => {
-                const filterSourceUrl = new URL('http://localhost:8080/api/products');
+                const filterSourceUrl = new URL('/api/products', API_BASE_URL);
                 if (queryName) filterSourceUrl.searchParams.set('keyword', queryName);
                 filterSourceUrl.searchParams.set('category', category);
                 filterSourceUrl.searchParams.set('size', '100');
@@ -154,13 +158,6 @@ export default async function ProductsPage({
         return `?${params.toString()}`;
     };
 
-    const formatPrice = (price?: number | string) => {
-        if (!price) return "Giá liên hệ";
-        const num = typeof price === 'string' ? parseInt(price.replace(/[^\d]/g, ''), 10) : price;
-        if (isNaN(num)) return "Giá liên hệ";
-        return num.toLocaleString('vi-VN') + '₫';
-    };
-
     return (
         <div className="min-h-screen bg-[#F4F6F8]">
             <Header />
@@ -190,18 +187,21 @@ export default async function ProductsPage({
                     </aside>
 
                     {/* === CỘT PHẢI: DANH SÁCH SẢN PHẨM === */}
-                    <div className="flex-1">
+                    <div className="min-w-0 flex-1">
                         {/* Thanh Sắp xếp */}
                         <ProductSortBar currentSort={querySort} queryString={currentUiParams.toString()} />
 
                         {/* LƯỚI SẢN PHẨM */}
-                        {filteredProducts.length > 0 ? (
-                            <div className="grid grid-cols-2 gap-4 lg:grid-cols-3 xl:gap-5">
+                        {catalogError ? (
+                            <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-8 text-center text-sm font-medium text-red-700">
+                                {catalogError}
+                            </div>
+                        ) : filteredProducts.length > 0 ? (
+                            <div className="grid auto-rows-fr grid-cols-2 items-stretch gap-4 lg:grid-cols-3 xl:gap-5">
                                 {filteredProducts.map((product) => (
                                     <ProductCard
                                         key={product.id}
                                         product={product}
-                                        formatPrice={formatPrice}
                                     />
                                 ))}
                             </div>
@@ -244,8 +244,8 @@ export default async function ProductsPage({
 
 function buildCategoryOptions(products: ProductSummary[]): FilterOption[] {
     const labels: Record<string, string> = {
-        phone: "Dien thoai",
-        tablet: "May tinh bang",
+        phone: "Điện thoại",
+        tablet: "Máy tính bảng",
         laptop: "Laptop",
     };
 

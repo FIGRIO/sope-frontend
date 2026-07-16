@@ -12,7 +12,9 @@ import {
   createPayment,
   formatVnd,
   getCart,
-  calculateDeliveryDate,
+  getDeliveryEstimate,
+  formatDeliveryWindow,
+  type DeliveryEstimateResponse,
   applyCouponPreview // D07
 } from "@/lib/shop";
 
@@ -36,6 +38,9 @@ function CheckoutContent() {
   const [district, setDistrict] = useState("");
   const [addressLine, setAddressLine] = useState("");
   const [note, setNote] = useState("");
+  const [deliveryEstimate, setDeliveryEstimate] = useState<DeliveryEstimateResponse | null>(null);
+  const [deliveryError, setDeliveryError] = useState("");
+  const hasValidAddress = Boolean(city.trim() && district.trim() && addressLine.trim());
 
   const loadCartAndCoupon = useCallback(async () => {
     setIsLoading(true);
@@ -65,8 +70,31 @@ function CheckoutContent() {
   }, [router, initialCoupon]);
 
   useEffect(() => {
-    void loadCartAndCoupon();
+    void Promise.resolve().then(loadCartAndCoupon);
   }, [loadCartAndCoupon]);
+
+  useEffect(() => {
+    if (!hasValidAddress || !cart?.items.length) {
+      return;
+    }
+    let cancelled = false;
+    void getDeliveryEstimate({
+      province: city,
+      methodCode: "STANDARD",
+      items: cart.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+    }).then((estimate) => {
+      if (!cancelled) {
+        setDeliveryEstimate(estimate);
+        setDeliveryError("");
+      }
+    }).catch((err: unknown) => {
+      if (!cancelled) {
+        setDeliveryEstimate(null);
+        setDeliveryError(err instanceof Error ? err.message : "Không thể tính ngày giao hàng.");
+      }
+    });
+    return () => { cancelled = true; };
+  }, [cart, city, hasValidAddress]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -133,8 +161,8 @@ function CheckoutContent() {
 
   const items = cart?.items ?? [];
   const totalAmount = cart?.totalAmount ?? 0;
-  const finalTotal = appliedCoupon ? appliedCoupon.totalBeforeShipping : totalAmount;
-  const hasValidAddress = Boolean(city.trim() && district.trim() && addressLine.trim());
+  const totalBeforeShipping = appliedCoupon ? appliedCoupon.totalBeforeShipping : totalAmount;
+  const finalTotal = totalBeforeShipping + (deliveryEstimate?.fee ?? 0);
 
   return (
     <main className="mx-auto mt-8 max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -287,14 +315,20 @@ function CheckoutContent() {
 
                   <div className="flex justify-between text-sm text-gray-600">
                     <span>Phí giao hàng</span>
-                    <span className="font-medium text-gray-800">Miễn phí</span>
+                    <span className="font-medium text-gray-800">
+                      {deliveryEstimate ? formatVnd(deliveryEstimate.fee) : "Đang tính"}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between mb-4 text-sm text-gray-600 border-t border-gray-100 pt-4">
                   <span>Dự kiến giao hàng:</span>
-                  <span className={hasValidAddress ? "font-bold text-blue-600" : "font-medium text-amber-600"}>
-                    {hasValidAddress ? calculateDeliveryDate() : "Vui lòng nhập địa chỉ"}
+                  <span className={deliveryEstimate ? "font-bold text-blue-600" : "font-medium text-amber-600"}>
+                    {!hasValidAddress
+                      ? "Vui lòng nhập địa chỉ"
+                      : deliveryEstimate
+                        ? formatDeliveryWindow(deliveryEstimate)
+                        : deliveryError || "Đang tính..."}
                   </span>
                 </div>
 

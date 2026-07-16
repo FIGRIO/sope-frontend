@@ -2,13 +2,19 @@
 
 import React, { useEffect, useState } from 'react';
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 export default function PwaInstallPrompt() {
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [showPrompt, setShowPrompt] = useState(false);
 
     useEffect(() => {
         // Lắng nghe sự kiện trình duyệt báo rằng PWA đã sẵn sàng để cài đặt
-        const handler = (e: Event) => {
+        const handler = (event: Event) => {
+            const e = event as BeforeInstallPromptEvent;
             // Ngăn chặn trình duyệt hiển thị thanh cài đặt mặc định (để mình tự làm cho đẹp)
             e.preventDefault();
             // Lưu lại event để gọi hộp thoại cài đặt khi người dùng bấm nút

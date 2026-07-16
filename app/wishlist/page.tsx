@@ -10,8 +10,10 @@ export default function WishlistPage() {
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setItems(getWishlist());
-        setMounted(true);
+        void Promise.resolve().then(() => {
+            setItems(getWishlist());
+            setMounted(true);
+        });
 
         const handleUpdate = () => {
             setItems(getWishlist());

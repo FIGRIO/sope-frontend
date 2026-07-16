@@ -12,7 +12,7 @@ import {
   createPayment,
   formatVnd,
   getCart,
-  getDeliveryEstimate,
+  getDeliveryOptions,
   formatDeliveryWindow,
   type DeliveryEstimateResponse,
   applyCouponPreview // D07
@@ -38,6 +38,8 @@ function CheckoutContent() {
   const [district, setDistrict] = useState("");
   const [addressLine, setAddressLine] = useState("");
   const [note, setNote] = useState("");
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryEstimateResponse[]>([]);
+  const [shippingMethodCode, setShippingMethodCode] = useState("");
   const [deliveryEstimate, setDeliveryEstimate] = useState<DeliveryEstimateResponse | null>(null);
   const [deliveryError, setDeliveryError] = useState("");
   const hasValidAddress = Boolean(city.trim() && district.trim() && addressLine.trim());
@@ -75,31 +77,46 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (!hasValidAddress || !cart?.items.length) {
+      setDeliveryOptions([]);
+      setShippingMethodCode("");
+      setDeliveryEstimate(null);
       return;
     }
+
     let cancelled = false;
-    void getDeliveryEstimate({
+    setDeliveryError("");
+    void getDeliveryOptions({
       province: city,
-      methodCode: "STANDARD",
       items: cart.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
-    }).then((estimate) => {
-      if (!cancelled) {
-        setDeliveryEstimate(estimate);
-        setDeliveryError("");
-      }
+    }).then((options) => {
+      if (cancelled) return;
+      setDeliveryOptions(options);
+      const selected = options[0] ?? null;
+      setShippingMethodCode(selected?.methodCode ?? "");
+      setDeliveryEstimate(selected);
     }).catch((err: unknown) => {
-      if (!cancelled) {
-        setDeliveryEstimate(null);
-        setDeliveryError(err instanceof Error ? err.message : "Không thể tính ngày giao hàng.");
-      }
+      if (cancelled) return;
+      setDeliveryOptions([]);
+      setShippingMethodCode("");
+      setDeliveryEstimate(null);
+      setDeliveryError(err instanceof Error ? err.message : "Không thể tải phương thức giao hàng.");
     });
     return () => { cancelled = true; };
   }, [cart, city, hasValidAddress]);
+
+  useEffect(() => {
+    const selected = deliveryOptions.find((option) => option.methodCode === shippingMethodCode) ?? null;
+    setDeliveryEstimate(selected);
+  }, [deliveryOptions, shippingMethodCode]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!cart || cart.items.length === 0) {
       setError("Giỏ hàng đang trống.");
+      return;
+    }
+    if (!shippingMethodCode || !deliveryEstimate) {
+      setError("Hãy chọn phương thức giao hàng hợp lệ.");
       return;
     }
 
@@ -115,7 +132,7 @@ function CheckoutContent() {
         phone,
         shippingAddress,
         province: city,
-        shippingMethodCode: "STANDARD",
+        shippingMethodCode,
         couponCode: appliedCoupon?.couponCode,
         note,
         paymentMethod,
@@ -245,7 +262,34 @@ function CheckoutContent() {
             </section>
 
             <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-              <h2 className="mb-5 text-base font-bold text-gray-800">3. Phương thức thanh toán</h2>
+              <h2 className="mb-5 text-base font-bold text-gray-800">3. Phương thức giao hàng</h2>
+              {!hasValidAddress ? (
+                <p className="rounded-lg bg-amber-50 px-4 py-3 text-sm font-medium text-amber-700">Nhập đầy đủ địa chỉ để xem phương thức giao hàng.</p>
+              ) : deliveryError ? (
+                <p className="rounded-lg bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{deliveryError}</p>
+              ) : deliveryOptions.length === 0 ? (
+                <p className="rounded-lg bg-gray-50 px-4 py-3 text-sm text-gray-500">Đang tải phương thức giao hàng...</p>
+              ) : (
+                <div className="space-y-3">
+                  {deliveryOptions.map((option) => (
+                    <label key={option.methodCode} className={`flex cursor-pointer items-start justify-between gap-4 rounded-xl border p-4 transition ${shippingMethodCode === option.methodCode ? "border-[#EE4D2D] bg-orange-50/40 shadow-sm" : "border-gray-200 hover:bg-gray-50"}`}>
+                      <span className="flex items-start gap-3">
+                        <input type="radio" name="shippingMethod" value={option.methodCode} checked={shippingMethodCode === option.methodCode} onChange={() => setShippingMethodCode(option.methodCode)} className="mt-1 h-4 w-4 text-[#EE4D2D] focus:ring-[#EE4D2D]" />
+                        <span>
+                          <span className="block text-sm font-bold text-gray-800">{option.methodName}</span>
+                          <span className="mt-1 block text-xs text-gray-500">Dự kiến {formatDeliveryWindow(option)} · {option.zoneName}</span>
+                          {option.note && <span className="mt-1 block text-xs font-medium text-amber-600">{option.note}</span>}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-extrabold text-[#EE4D2D]">{formatVnd(option.fee)}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+              <h2 className="mb-5 text-base font-bold text-gray-800">4. Phương thức thanh toán</h2>
               <div className="space-y-3">
                 {paymentOptions.map((option) => (
                   <label
@@ -340,7 +384,7 @@ function CheckoutContent() {
                 </div>
                 <button
                   type="submit"
-                  disabled={isSubmitting || !hasValidAddress}
+                  disabled={isSubmitting || !hasValidAddress || !deliveryEstimate}
                   className="w-full rounded-lg bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] py-3.5 text-sm font-bold tracking-wide text-white shadow-md transition hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
                 >
                   {isSubmitting ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT HÀNG"}

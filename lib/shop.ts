@@ -215,6 +215,28 @@ async function requestJson<T>(path: string, init: RequestInit = {}) {
   return response.json() as Promise<T>;
 }
 
+async function requestVoid(path: string, init: RequestInit = {}) {
+  const token = getAccessToken();
+  if (!token) {
+    throw new Error("Bạn cần đăng nhập để thực hiện thao tác này.");
+  }
+
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  if (init.body && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error(await readErrorMessage(response));
+  }
+}
+
 async function readErrorMessage(response: Response) {
   const fallback = `Request failed with status ${response.status}`;
   const text = await response.text();
@@ -240,6 +262,19 @@ export async function getDeliveryEstimate(payload: {
   });
   if (!response.ok) throw new Error(await readErrorMessage(response));
   return response.json() as Promise<DeliveryEstimateResponse>;
+}
+
+export async function getDeliveryOptions(payload: {
+  province: string;
+  items?: Array<{ productId: number; quantity: number }>;
+}) {
+  const response = await fetch(`${API_BASE_URL}/api/delivery/options`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) throw new Error(await readErrorMessage(response));
+  return response.json() as Promise<DeliveryEstimateResponse[]>;
 }
 
 export function formatDeliveryWindow(estimate: DeliveryEstimateResponse) {
@@ -310,6 +345,10 @@ export async function toggleAdminCouponStatus(id: number, activate: boolean) {
   });
 }
 
+export async function deleteAdminCoupon(id: number) {
+  return requestVoid(`/api/admin/coupons/${id}`, { method: "DELETE" });
+}
+
 export type ShippingMethodRequest = {
   code: string;
   name: string;
@@ -354,12 +393,66 @@ export async function getAdminShippingMethods(): Promise<ShippingMethodResponse[
   return requestJson<ShippingMethodResponse[]>("/api/admin/shipping/methods");
 }
 
+export async function createAdminShippingMethod(payload: ShippingMethodRequest) {
+  return requestJson<ShippingMethodResponse>("/api/admin/shipping/methods", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminShippingMethod(id: number, payload: ShippingMethodRequest) {
+  return requestJson<ShippingMethodResponse>(`/api/admin/shipping/methods/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminShippingMethod(id: number) {
+  return requestVoid(`/api/admin/shipping/methods/${id}`, { method: "DELETE" });
+}
+
 export async function getAdminShippingZones(): Promise<ShippingZoneResponse[]> {
   return requestJson<ShippingZoneResponse[]>("/api/admin/shipping/zones");
 }
 
+export async function createAdminShippingZone(payload: ShippingZoneRequest) {
+  return requestJson<ShippingZoneResponse>("/api/admin/shipping/zones", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminShippingZone(id: number, payload: ShippingZoneRequest) {
+  return requestJson<ShippingZoneResponse>(`/api/admin/shipping/zones/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminShippingZone(id: number) {
+  return requestVoid(`/api/admin/shipping/zones/${id}`, { method: "DELETE" });
+}
+
 export async function getAdminShippingRates(): Promise<ShippingRateResponse[]> {
   return requestJson<ShippingRateResponse[]>("/api/admin/shipping/rates");
+}
+
+export async function createAdminShippingRate(payload: ShippingRateRequest) {
+  return requestJson<ShippingRateResponse>("/api/admin/shipping/rates", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function updateAdminShippingRate(id: number, payload: ShippingRateRequest) {
+  return requestJson<ShippingRateResponse>(`/api/admin/shipping/rates/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteAdminShippingRate(id: number) {
+  return requestVoid(`/api/admin/shipping/rates/${id}`, { method: "DELETE" });
 }
 
 export async function setAdminShippingActive(

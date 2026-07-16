@@ -52,14 +52,20 @@ export default function AdminSidebar({
         }`}
       >
         <div className="flex h-[80px] shrink-0 items-center justify-between border-b border-gray-800 px-8">
-          <div className="flex flex-col justify-center">
-            <h1 className="text-2xl font-extrabold tracking-widest text-white">
+          <Link
+            href="/"
+            onClick={onClose}
+            className="group flex flex-col justify-center rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-[#EE4D2D]"
+            aria-label="Trở về trang chủ SOPE"
+            title="Trở về trang chủ"
+          >
+            <h1 className="text-2xl font-extrabold tracking-widest text-white transition-colors group-hover:text-[#FFD400]">
               SOPE
             </h1>
-            <span className="text-[10px] font-medium tracking-widest text-gray-400">
+            <span className="text-[10px] font-medium tracking-widest text-gray-400 transition-colors group-hover:text-gray-200">
               ADMIN PORTAL
             </span>
-          </div>
+          </Link>
 
           <button
             type="button"
@@ -106,7 +112,6 @@ export default function AdminSidebar({
                         )}
                         {item.label}
                       </div>
-
                     </Link>
                   </li>
                 );

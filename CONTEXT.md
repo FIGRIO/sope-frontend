@@ -496,3 +496,13 @@ Khi kiểm tra cần ghi rõ:
 - Lỗi đã xử lý: `params` Next 16, `viewport`, Turbopack/PWA, truyền `formatPrice` qua Server–Client, type variant, response page và lỗi runtime `/products` 500.
 - Kiểm tra: `npm run lint` exit 0 (124 warning, chủ yếu ảnh và service-worker sinh tự động); `npm run build` pass; `/`, `/products`, `/products/11`, `/cart`, `/checkout`, `/admin/shipping` đều HTTP 200.
 - Việc tiếp theo: kiểm tra trực quan bằng browser khi có phiên browser; đăng nhập admin thật để thử toggle H06. Không đưa secret vào `NEXT_PUBLIC_*`.
+
+## 2026-07-17 - Checkout VNPAY/MoMo Sandbox thật
+
+- Yêu cầu: bỏ chuyển khoản giả lập, đồng bộ payment contract mới và result lấy dữ liệu backend.
+- Đã sửa: `app/(checkout)/checkout/page.tsx`, `app/(checkout)/checkout/success/page.tsx`, `lib/shop.ts`; sửa cơ học các effect cũ và root viewport để lint/build toàn dự án sạch lỗi.
+- Checkout: COD giữ luồng cũ; VNPAY có tự chọn/VNPAYQR/VNBANK/INTCARD; online payment không gửi amount, chống double-click và dùng `window.location.assign` khi có payUrl.
+- Result: chỉ tin `paymentId` hoặc `orderId`, gọi backend/polling 3 giây; hiển thị trạng thái/metadata/chữ ký, MoMo deeplink/QR URL thật, payUrl fallback và retry; không còn dữ liệu total/status/paymentUrl từ query làm nguồn thật.
+- API: `createPayment({orderId, provider, channel})`, `getPayment`, `retryPayment`; đã xóa helper simulate.
+- Kiểm tra: lint toàn dự án 0 error; `npm run build` pass. Còn warning `<img>` cũ trong lint; build không còn warning metadata viewport sau khi chuyển sang export `viewport`.
+- Tiếp theo: smoke test trình duyệt với backend, credential Sandbox và Ngrok; không đưa secret vào frontend env.

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState, Suspense } from "react";
+import React, { useCallback, useEffect, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import CartHeader from "@/components/CartHeader";
 import {
@@ -32,6 +32,8 @@ function CheckoutContent() {
   const [appliedCoupon, setAppliedCoupon] = useState<CouponPreviewResponse | null>(null);
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("COD");
+  const [vnpayChannel, setVnpayChannel] = useState<"" | "VNPAYQR" | "VNBANK" | "INTCARD">("");
+  const submitLock = useRef(false);
   const [recipientName, setRecipientName] = useState("");
   const [phone, setPhone] = useState("");
   const [city, setCity] = useState("Hồ Chí Minh");
@@ -40,9 +42,9 @@ function CheckoutContent() {
   const [note, setNote] = useState("");
   const [deliveryOptions, setDeliveryOptions] = useState<DeliveryEstimateResponse[]>([]);
   const [shippingMethodCode, setShippingMethodCode] = useState("");
-  const [deliveryEstimate, setDeliveryEstimate] = useState<DeliveryEstimateResponse | null>(null);
   const [deliveryError, setDeliveryError] = useState("");
   const hasValidAddress = Boolean(city.trim() && district.trim() && addressLine.trim());
+  const deliveryEstimate = deliveryOptions.find((option) => option.methodCode === shippingMethodCode) ?? null;
 
   const loadCartAndCoupon = useCallback(async () => {
     setIsLoading(true);
@@ -77,40 +79,37 @@ function CheckoutContent() {
 
   useEffect(() => {
     if (!hasValidAddress || !cart?.items.length) {
-      setDeliveryOptions([]);
-      setShippingMethodCode("");
-      setDeliveryEstimate(null);
+      void Promise.resolve().then(() => {
+        setDeliveryOptions([]);
+        setShippingMethodCode("");
+      });
       return;
     }
 
     let cancelled = false;
-    setDeliveryError("");
-    void getDeliveryOptions({
-      province: city,
-      items: cart.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+    void Promise.resolve().then(() => {
+      setDeliveryError("");
+      return getDeliveryOptions({
+        province: city,
+        items: cart.items.map((item) => ({ productId: item.productId, quantity: item.quantity })),
+      });
     }).then((options) => {
       if (cancelled) return;
       setDeliveryOptions(options);
       const selected = options[0] ?? null;
       setShippingMethodCode(selected?.methodCode ?? "");
-      setDeliveryEstimate(selected);
     }).catch((err: unknown) => {
       if (cancelled) return;
       setDeliveryOptions([]);
       setShippingMethodCode("");
-      setDeliveryEstimate(null);
       setDeliveryError(err instanceof Error ? err.message : "Không thể tải phương thức giao hàng.");
     });
     return () => { cancelled = true; };
   }, [cart, city, hasValidAddress]);
 
-  useEffect(() => {
-    const selected = deliveryOptions.find((option) => option.methodCode === shippingMethodCode) ?? null;
-    setDeliveryEstimate(selected);
-  }, [deliveryOptions, shippingMethodCode]);
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitLock.current) return;
     if (!cart || cart.items.length === 0) {
       setError("Giỏ hàng đang trống.");
       return;
@@ -120,6 +119,7 @@ function CheckoutContent() {
       return;
     }
 
+    submitLock.current = true;
     setIsSubmitting(true);
     setError("");
 
@@ -141,9 +141,7 @@ function CheckoutContent() {
       if (paymentMethod === "COD") {
         setCart({ ...cart, items: [], totalItems: 0, totalAmount: 0 });
         const params = new URLSearchParams({
-          orderCode: order.orderCode,
-          method: paymentMethod,
-          total: String(order.totalAmount),
+          orderId: String(order.id),
         });
         router.push(`/checkout/success?${params.toString()}`);
         return;
@@ -152,26 +150,29 @@ function CheckoutContent() {
       const provider = paymentMethod as PaymentProvider;
       const payment = await createPayment({
         orderId: order.orderCode,
-        amount: order.totalAmount,
         provider,
-        orderInfo: `Thanh toán đơn hàng ${order.orderCode}`,
+        ...(provider === "VNPAY" && vnpayChannel ? { channel: vnpayChannel } : {}),
       });
 
-      const params = new URLSearchParams({
-        orderCode: order.orderCode,
-        method: paymentMethod,
-        total: String(order.totalAmount),
-        paymentId: String(payment.id),
-      });
-
-      if (payment.paymentUrl) {
-        params.set("paymentUrl", payment.paymentUrl);
-      }
       setCart({ ...cart, items: [], totalItems: 0, totalAmount: 0 });
-      router.push(`/checkout/success?${params.toString()}`);
+      if (payment.status === "FAILED") {
+        router.push(`/checkout/success?paymentId=${payment.paymentId}`);
+        return;
+      }
+      if (provider === "MOMO" && (payment.qrCodeUrl || payment.deeplink)) {
+        router.push(`/checkout/success?paymentId=${payment.paymentId}`);
+        return;
+      }
+      const paymentUrl = payment.paymentUrl || payment.payUrl;
+      if (!paymentUrl) {
+        router.push(`/checkout/success?paymentId=${payment.paymentId}`);
+        return;
+      }
+      window.location.assign(paymentUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Không thể đặt hàng.");
     } finally {
+      submitLock.current = false;
       setIsSubmitting(false);
     }
   };
@@ -310,6 +311,21 @@ function CheckoutContent() {
                     <span className="text-sm font-bold text-gray-700">{option.label}</span>
                   </label>
                 ))}
+                {paymentMethod === "VNPAY" && (
+                  <div className="ml-7 grid gap-2 rounded-xl border border-blue-100 bg-blue-50/50 p-4 sm:grid-cols-2">
+                    {vnpayChannels.map((channel) => (
+                      <label key={channel.value || "AUTO"} className="flex cursor-pointer items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="radio"
+                          name="vnpayChannel"
+                          checked={vnpayChannel === channel.value}
+                          onChange={() => setVnpayChannel(channel.value)}
+                        />
+                        <span>{channel.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
               </div>
             </section>
           </fieldset>
@@ -402,6 +418,16 @@ const paymentOptions: Array<{ value: PaymentMethod; label: string }> = [
   { value: "COD", label: "Thanh toán khi nhận hàng (COD)" },
   { value: "VNPAY", label: "Thanh toán qua VNPAY" },
   { value: "MOMO", label: "Thanh toán qua ví MoMo" },
+];
+
+const vnpayChannels: Array<{
+  value: "" | "VNPAYQR" | "VNBANK" | "INTCARD";
+  label: string;
+}> = [
+  { value: "", label: "Chọn phương thức tại VNPAY" },
+  { value: "VNPAYQR", label: "Quét mã VNPAY-QR" },
+  { value: "VNBANK", label: "Ngân hàng nội địa" },
+  { value: "INTCARD", label: "Thẻ quốc tế" },
 ];
 
 export default function CheckoutPage() {

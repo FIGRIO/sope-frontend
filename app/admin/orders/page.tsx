@@ -168,7 +168,7 @@ export default function AdminOrdersPage() {
   }, [loadOrders, loadStatsOrders]);
 
   useEffect(() => {
-    void refreshOrdersPage();
+    void Promise.resolve().then(refreshOrdersPage);
   }, [refreshOrdersPage]);
 
   const filteredOrders = useMemo(() => {

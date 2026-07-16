@@ -71,11 +71,13 @@ export default function ReviewModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    setRating(0);
-    setHoverRating(0);
-    setReviewText("");
-    setError("");
-    setIsSubmitting(false);
+    void Promise.resolve().then(() => {
+      setRating(0);
+      setHoverRating(0);
+      setReviewText("");
+      setError("");
+      setIsSubmitting(false);
+    });
   }, [isOpen, productId]);
 
   if (!isOpen) return null;

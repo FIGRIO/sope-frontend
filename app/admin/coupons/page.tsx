@@ -114,7 +114,7 @@ export default function AdminCouponsPage() {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    void Promise.resolve().then(loadData);
   }, [loadData]);
 
   const categories = useMemo(() => [...new Set(products.map((product) => product.category).filter((value): value is string => Boolean(value)))].sort(), [products]);

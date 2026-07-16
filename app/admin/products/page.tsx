@@ -175,7 +175,7 @@ export default function AdminProductsPage() {
   }, [filters, page, refreshKey, size, sortValue]);
 
   useEffect(() => {
-    void loadProducts();
+    void Promise.resolve().then(loadProducts);
   }, [loadProducts]);
 
   const visiblePages = useMemo(() => {

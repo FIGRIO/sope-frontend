@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ChatbotWidget from "@/components/ChatbotWidget";
@@ -19,17 +19,18 @@ export const metadata: Metadata = {
   title: "SOPE - Mua sắm thông minh",
   description: "Trải nghiệm mua sắm mượt mà cùng trợ lý AI và hệ thống gợi ý 24/7.",
   manifest: "/manifest.json",
-  themeColor: "#EE4D2D",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
     title: "SOPE",
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  themeColor: "#EE4D2D",
 };
 
 export default function RootLayout({

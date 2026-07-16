@@ -445,12 +445,14 @@ export default function AdminDashboard() {
 
     if (!token) {
       const message = "Không tìm thấy phiên đăng nhập Admin.";
-      setStatsError(message);
-      setRevenueError(message);
-      setInventoryError(message);
-      setIsStatsLoading(false);
-      setIsRevenueLoading(false);
-      setIsInventoryLoading(false);
+      void Promise.resolve().then(() => {
+        setStatsError(message);
+        setRevenueError(message);
+        setInventoryError(message);
+        setIsStatsLoading(false);
+        setIsRevenueLoading(false);
+        setIsInventoryLoading(false);
+      });
       return () => controller.abort();
     }
 
@@ -514,9 +516,11 @@ export default function AdminDashboard() {
       }
     };
 
-    void loadStats();
-    void loadRevenue();
-    void loadInventory();
+    void Promise.resolve().then(() => Promise.all([
+      loadStats(),
+      loadRevenue(),
+      loadInventory(),
+    ]));
 
     return () => controller.abort();
   }, []);

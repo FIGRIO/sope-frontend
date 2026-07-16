@@ -84,8 +84,10 @@ export default function AdminUsersPage() {
   }, []);
 
   useEffect(() => {
-    setCurrentAuth(getStoredAuth());
-    void loadUsers();
+    void Promise.resolve().then(() => {
+      setCurrentAuth(getStoredAuth());
+      return loadUsers();
+    });
   }, [loadUsers]);
 
   const filteredUsers = useMemo(() => {
@@ -115,12 +117,6 @@ export default function AdminUsersPage() {
     const start = safePage * pageSize;
     return filteredUsers.slice(start, start + pageSize);
   }, [filteredUsers, pageSize, safePage]);
-
-  useEffect(() => {
-    if (page >= totalPages) {
-      setPage(totalPages - 1);
-    }
-  }, [page, totalPages]);
 
   const visiblePages = useMemo(() => {
     const pages: number[] = [];

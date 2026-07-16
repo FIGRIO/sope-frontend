@@ -41,6 +41,14 @@ export type CouponPreviewResponse = {
 
 export type PaymentMethod = "COD" | "VNPAY" | "MOMO";
 export type PaymentProvider = "VNPAY" | "MOMO";
+export type PaymentStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "SUCCESS"
+  | "FAILED"
+  | "CANCELLED"
+  | "EXPIRED"
+  | "REFUNDED";
 
 export type OrderResponse = {
   id: number;
@@ -70,13 +78,34 @@ export type OrderResponse = {
 
 export type PaymentResponse = {
   id: number;
-  orderId: string;
+  paymentId: number;
+  orderId: number;
+  orderCode: string;
   amount: number;
+  currency: string;
   provider: PaymentProvider;
-  status: string;
+  status: PaymentStatus;
+  orderStatus: string;
   transactionId?: string | null;
+  providerTransactionId?: string | null;
+  providerOrderId?: string | null;
+  providerRequestId?: string | null;
   orderInfo?: string | null;
+  paymentChannel?: string | null;
+  responseCode?: string | null;
+  transactionStatus?: string | null;
+  responseMessage?: string | null;
+  bankCode?: string | null;
+  cardType?: string | null;
+  payDate?: string | null;
+  paidAt?: string | null;
+  expiresAt?: string | null;
+  signatureVerified: boolean;
+  canRetry: boolean;
   paymentUrl?: string | null;
+  payUrl?: string | null;
+  deeplink?: string | null;
+  qrCodeUrl?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
 };
@@ -176,9 +205,8 @@ export async function cancelOrder(id: number) {
 
 export async function createPayment(payload: {
   orderId: string;
-  amount: number;
   provider: PaymentProvider;
-  orderInfo: string;
+  channel?: "VNPAYQR" | "VNBANK" | "INTCARD";
 }) {
   return requestJson<PaymentResponse>("/api/payment/create", {
     method: "POST",
@@ -186,8 +214,12 @@ export async function createPayment(payload: {
   });
 }
 
-export async function simulateBankTransfer(paymentId: number) {
-  return requestJson<PaymentResponse>(`/api/payment/${paymentId}/simulate-bank-transfer`, {
+export async function getPayment(paymentId: number) {
+  return requestJson<PaymentResponse>(`/api/payment/${paymentId}`);
+}
+
+export async function retryPayment(paymentId: number) {
+  return requestJson<PaymentResponse>(`/api/payment/${paymentId}/retry`, {
     method: "POST",
   });
 }

@@ -598,8 +598,9 @@ export default function ProductClient() {
   };
 
   useEffect(() => {
-    if (activeVariant?.imageUrl) {
-      setMainImage(activeVariant.imageUrl);
+    const imageUrl = activeVariant?.imageUrl;
+    if (imageUrl) {
+      void Promise.resolve().then(() => setMainImage(imageUrl));
     }
   }, [activeVariant]);
 

@@ -20,20 +20,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const storedAuth = getStoredAuth();
-
-    if (!storedAuth?.accessToken) {
-      router.replace("/login");
-      return;
-    }
-
-    if (!isAdminAuth(storedAuth)) {
-      router.replace("/");
-      return;
-    }
-
-    setAuth(storedAuth);
-    setChecking(false);
+    void Promise.resolve().then(() => {
+      const storedAuth = getStoredAuth();
+      if (!storedAuth?.accessToken) {
+        router.replace("/login");
+        return;
+      }
+      if (!isAdminAuth(storedAuth)) {
+        router.replace("/");
+        return;
+      }
+      setAuth(storedAuth);
+      setChecking(false);
+    });
   }, [router]);
 
   const handleLogout = () => {

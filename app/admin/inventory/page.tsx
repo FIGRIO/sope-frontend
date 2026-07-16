@@ -99,7 +99,7 @@ export default function AdminInventoryPage() {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    void Promise.resolve().then(loadData);
   }, [loadData]);
 
   const filteredProducts = useMemo(() => {

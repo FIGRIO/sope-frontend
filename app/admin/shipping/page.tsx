@@ -73,7 +73,7 @@ export default function AdminShippingPage() {
   }, []);
 
   useEffect(() => {
-    void loadData();
+    void Promise.resolve().then(loadData);
   }, [loadData]);
 
   const stats = useMemo(() => ({

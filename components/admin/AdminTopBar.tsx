@@ -174,9 +174,11 @@ export default function AdminTopBar({
     const trimmedQuery = query.trim();
 
     if (trimmedQuery.length < 2) {
-      setResults(EMPTY_RESULTS);
-      setSearchError("");
-      setSearching(false);
+      void Promise.resolve().then(() => {
+        setResults(EMPTY_RESULTS);
+        setSearchError("");
+        setSearching(false);
+      });
       return;
     }
 

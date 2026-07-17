@@ -1,5 +1,20 @@
 # CONTEXT.md - Bộ nhớ riêng cho sope-frontend
 
+## Cập nhật 2026-07-17 – Sửa đăng nhập/đăng ký
+
+- File sửa: `lib/auth.ts`.
+- Thay đổi: thêm `credentials: "include"` vào helper POST JSON/text để login, Google login và các request auth nhận/gửi cookie HttpOnly theo cấu hình CORS backend.
+- Luồng register giữ nguyên: tạo tài khoản rồi login tự động; sau khi JWT backend hợp lệ, luồng đã smoke test thành công.
+- Kiểm tra: ESLint `lib/auth.ts`, `/login`, `/register` pass; API runtime register 201 và login 200.
+- Lưu ý: đăng nhập mới sẽ ghi đè token localStorage cũ.
+
+## Cập nhật 2026-07-17 – Chẩn đoán 403 khi thêm giỏ
+
+- API liên quan: `POST /api/cart/items` trong `lib/shop.ts`; request có Bearer token lấy từ `localStorage` và `credentials: include`.
+- Không sửa code frontend. Diff payment chỉ đổi kiểu/endpoint payment, không đổi `addToCart` hay `requestJson`.
+- Kết luận: frontend đã có token nhưng backend không xác thực được token cũ sau khi JWT secret đổi nên UI nhận body rỗng với status 403. Chỉ đăng nhập lại sau khi backend đã được cấu hình JWT secret Base64 hợp lệ; cấu hình hiện tại làm login trả 500.
+- CORS đã xác nhận hợp lệ cho `http://localhost:3000`; nếu chạy frontend ở port/IP khác phải thêm đúng origin vào `APP_FRONTEND_ORIGINS`.
+
 ## 1. Vai trò của frontend
 
 `sope-frontend/` là phần giao diện người dùng của dự án SOPE.

@@ -108,6 +108,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(body),
   });
 
@@ -124,6 +125,7 @@ async function postText(path: string, body: unknown): Promise<string> {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify(body),
   });
 

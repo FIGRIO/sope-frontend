@@ -1,46 +1,36 @@
 "use client";
 
 import Header from "@/components/Header";
+import { useWebSocket } from "@/hooks/useWebSocket";
 import { getStoredAuth } from "@/lib/auth";
+import {
+  getOrderStatusBadgeClass,
+  getOrderStatusLabel,
+  PAYMENT_METHOD_LABELS,
+} from "@/lib/order-status";
 import { formatVnd, getMyOrders, type OrderResponse } from "@/lib/shop";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-
-const statusClasses: Record<string, string> = {
-  PENDING: "border-amber-200 bg-amber-50 text-amber-700",
-  PAID: "border-green-200 bg-green-50 text-green-700",
-  SHIPPING: "border-blue-200 bg-blue-50 text-blue-700",
-  COMPLETED: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  CANCELLED: "border-red-200 bg-red-50 text-red-700",
-};
-
-const statusLabels: Record<string, string> = {
-  PENDING: "Chờ xử lý",
-  PAID: "Đã thanh toán",
-  SHIPPING: "Đang giao",
-  COMPLETED: "Hoàn tất",
-  CANCELLED: "Đã hủy",
-};
-
-const paymentLabels: Record<string, string> = {
-  COD: "Thanh toán khi nhận hàng",
-  VNPAY: "VNPAY",
-  MOMO: "MoMo",
-};
 
 export default function OrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<OrderResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [accessToken, setAccessToken] = useState("");
+  const [notificationUserId, setNotificationUserId] = useState("");
 
-  const loadOrders = useCallback(async () => {
-    setIsLoading(true);
+  const loadOrders = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setError("");
 
     try {
-      setOrders(await getMyOrders());
+      const data = await getMyOrders();
+      setOrders(data);
+      if (data[0]?.userId) {
+        setNotificationUserId(String(data[0].userId));
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Không thể tải lịch sử mua hàng.";
       setError(message);
@@ -48,27 +38,47 @@ export default function OrdersPage() {
         router.replace("/login");
       }
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, [router]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      if (!getStoredAuth()?.accessToken) {
+      const auth = getStoredAuth();
+      if (!auth?.accessToken) {
         router.replace("/login");
         setIsLoading(false);
         return;
       }
 
+      setAccessToken(auth.accessToken);
       void loadOrders();
     }, 0);
 
     return () => window.clearTimeout(timer);
   }, [loadOrders, router]);
 
+  const notificationHandlers = useMemo(
+    () => ({
+      onNotification: (notification: { type: string }) => {
+        if (
+          notification.type === "ORDER_STATUS_UPDATED" ||
+          notification.type === "ORDER_PLACED"
+        ) {
+          void loadOrders(false);
+        }
+      },
+    }),
+    [loadOrders],
+  );
+
+  useWebSocket(accessToken, notificationUserId, notificationHandlers);
+
   const totalSpent = useMemo(() => {
     return orders
-      .filter((order) => order.status === "PAID" || order.status === "COMPLETED")
+      .filter((order) =>
+        ["PAID", "PROCESSING", "SHIPPING", "COMPLETED"].includes(order.status),
+      )
       .reduce((sum, order) => sum + order.totalAmount, 0);
   }, [orders]);
 
@@ -116,21 +126,38 @@ export default function OrdersPage() {
         ) : (
           <div className="space-y-5">
             {orders.map((order) => (
-              <article key={order.id} className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
+              <article
+                key={order.id}
+                role="link"
+                tabIndex={0}
+                aria-label={`Xem chi tiết đơn hàng ${order.orderCode}`}
+                onClick={(event) => {
+                  if ((event.target as HTMLElement).closest("a, button")) return;
+                  router.push(`/orders/${order.id}`);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") router.push(`/orders/${order.id}`);
+                }}
+                className="cursor-pointer overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm transition hover:border-orange-200 hover:shadow-md"
+              >
                 <div className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <h2 className="text-base font-extrabold text-gray-900">{order.orderCode}</h2>
-                      <span
-                        className={`rounded-full border px-3 py-1 text-xs font-bold ${
-                          statusClasses[order.status] ?? "border-gray-200 bg-gray-50 text-gray-600"
-                        }`}
+                      <Link
+                        href={`/orders/${order.id}`}
+                        className="text-base font-extrabold text-gray-900 hover:text-[#EE4D2D]"
                       >
-                        {statusLabels[order.status] ?? order.status}
+                        {order.orderCode}
+                      </Link>
+                      <span
+                        className={`rounded-full border px-3 py-1 text-xs font-bold ${getOrderStatusBadgeClass(order.status)}`}
+                      >
+                        {getOrderStatusLabel(order.status)}
                       </span>
                     </div>
                     <p className="mt-1 text-xs font-medium text-gray-500">
-                      {formatOrderDate(order.createdAt)} - {paymentLabels[order.paymentMethod] ?? order.paymentMethod}
+                      {formatOrderDate(order.createdAt)} -{" "}
+                      {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
                     </p>
                   </div>
                   <div className="text-left sm:text-right">
@@ -155,12 +182,20 @@ export default function OrdersPage() {
                   ))}
                 </div>
 
-                <div className="border-t border-gray-100 bg-gray-50 px-5 py-4 text-sm text-gray-600">
-                  <p className="font-semibold text-gray-800">Người nhận: {order.recipientName}</p>
-                  <p className="mt-1">
-                    {order.phone} - {order.shippingAddress}
-                  </p>
-                  {order.note && <p className="mt-1">Ghi chú: {order.note}</p>}
+                <div className="flex flex-col gap-4 border-t border-gray-100 bg-gray-50 px-5 py-4 text-sm text-gray-600 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-semibold text-gray-800">Người nhận: {order.recipientName}</p>
+                    <p className="mt-1">
+                      {order.phone} - {order.shippingAddress}
+                    </p>
+                    {order.note && <p className="mt-1">Ghi chú: {order.note}</p>}
+                  </div>
+                  <Link
+                    href={`/orders/${order.id}`}
+                    className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[#EE4D2D] px-4 py-2.5 text-xs font-bold text-white transition hover:bg-orange-600"
+                  >
+                    Xem chi tiết đơn hàng
+                  </Link>
                 </div>
               </article>
             ))}

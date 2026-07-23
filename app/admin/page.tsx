@@ -1,6 +1,7 @@
 "use client";
 
 import { API_BASE_URL, getAccessToken } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 import {
   getAdminProducts,
   type ProductResponse,
@@ -125,7 +126,7 @@ async function fetchAdminJson<T>(
     throw new Error(await readErrorMessage(response));
   }
 
-  return response.json() as Promise<T>;
+  return parseJsonResponse<T>(response);
 }
 
 async function loadRevenueData(token: string, signal?: AbortSignal) {

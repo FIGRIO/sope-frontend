@@ -1,4 +1,5 @@
 import { API_BASE_URL, getAccessToken } from "./auth";
+import { parseJsonResponse } from "./api-response";
 
 export const CART_UPDATED_EVENT = "sope:cart-updated";
 
@@ -52,6 +53,7 @@ export type PaymentStatus =
 
 export type OrderResponse = {
   id: number;
+  userId: number;
   orderCode: string;
   status: string;
   paymentMethod: PaymentMethod;
@@ -64,7 +66,8 @@ export type OrderResponse = {
   shippingAddress: string;
   note?: string | null;
   shippingMethodCode?: string | null;
-  estimatedDeliveryDate?: string | null;
+  estimatedDeliveryMinDate?: string | null;
+  estimatedDeliveryMaxDate?: string | null;
   trackingNumber?: string | null;
   items: Array<{
     productId: number;
@@ -74,6 +77,7 @@ export type OrderResponse = {
     lineTotal: number;
   }>;
   createdAt?: string | null;
+  updatedAt?: string | null;
 };
 
 export type PaymentResponse = {
@@ -244,7 +248,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}) {
     throw new Error(await readErrorMessage(response));
   }
 
-  return response.json() as Promise<T>;
+  return parseJsonResponse<T>(response);
 }
 
 async function requestVoid(path: string, init: RequestInit = {}) {
@@ -293,7 +297,7 @@ export async function getDeliveryEstimate(payload: {
     body: JSON.stringify(payload),
   });
   if (!response.ok) throw new Error(await readErrorMessage(response));
-  return response.json() as Promise<DeliveryEstimateResponse>;
+  return parseJsonResponse<DeliveryEstimateResponse>(response);
 }
 
 export async function getDeliveryOptions(payload: {
@@ -306,7 +310,7 @@ export async function getDeliveryOptions(payload: {
     body: JSON.stringify(payload),
   });
   if (!response.ok) throw new Error(await readErrorMessage(response));
-  return response.json() as Promise<DeliveryEstimateResponse[]>;
+  return parseJsonResponse<DeliveryEstimateResponse[]>(response);
 }
 
 export function formatDeliveryWindow(estimate: DeliveryEstimateResponse) {

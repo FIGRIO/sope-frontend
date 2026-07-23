@@ -4,18 +4,26 @@
 import {
   type ChangeEvent,
   type FormEvent,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
+import { useWebSocket } from "@/hooks/useWebSocket";
 import {
   API_BASE_URL,
   getAccessToken,
   type AuthResponse,
 } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
+import {
+  dispatchAdminOrderCreated,
+  type RealtimeNotification,
+} from "@/lib/order-notifications";
 
 type AdminTopBarProps = {
   auth: AuthResponse;
@@ -132,6 +140,7 @@ export default function AdminTopBar({
 }: AdminTopBarProps) {
   const router = useRouter();
   const searchContainerRef = useRef<HTMLDivElement | null>(null);
+  const notificationContainerRef = useRef<HTMLDivElement | null>(null);
   const usersCacheRef = useRef<UserSearchItem[] | null>(null);
 
   const [query, setQuery] = useState("");
@@ -139,6 +148,9 @@ export default function AdminTopBar({
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
   const [showResults, setShowResults] = useState(false);
+  const [notifications, setNotifications] = useState<RealtimeNotification[]>([]);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const displayName = auth.fullName || auth.username || "Admin";
   const normalizedQuery = useMemo(() => normalizeText(query), [query]);
@@ -153,11 +165,18 @@ export default function AdminTopBar({
       ) {
         setShowResults(false);
       }
+      if (
+        notificationContainerRef.current &&
+        !notificationContainerRef.current.contains(target)
+      ) {
+        setShowNotifications(false);
+      }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowResults(false);
+        setShowNotifications(false);
       }
     };
 
@@ -169,6 +188,29 @@ export default function AdminTopBar({
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
+
+  const handleAdminOrderNotification = useCallback(
+    (notification: RealtimeNotification) => {
+      setNotifications((current) => [notification, ...current].slice(0, 10));
+      setUnreadNotifications((current) => current + 1);
+      dispatchAdminOrderCreated(notification);
+      toast.success(notification.message || "Có đơn hàng mới cần duyệt.", {
+        duration: 5000,
+      });
+    },
+    [],
+  );
+
+  const websocketHandlers = useMemo(
+    () => ({ onAdminOrder: handleAdminOrderNotification }),
+    [handleAdminOrderNotification],
+  );
+
+  const { isConnected: isNotificationConnected } = useWebSocket(
+    auth.accessToken,
+    "",
+    websocketHandlers,
+  );
 
   useEffect(() => {
     const trimmedQuery = query.trim();
@@ -214,7 +256,9 @@ export default function AdminTopBar({
             throw new Error(await readResponseError(response));
           }
 
-          return parseProducts(await response.json()).slice(0, 6);
+          return parseProducts(
+            await parseJsonResponse<unknown>(response),
+          ).slice(0, 6);
         });
 
         const userRequest = usersCacheRef.current
@@ -231,7 +275,9 @@ export default function AdminTopBar({
                 throw new Error(await readResponseError(response));
               }
 
-              const users = parseUsers(await response.json());
+              const users = parseUsers(
+                await parseJsonResponse<unknown>(response),
+              );
               usersCacheRef.current = users;
               return users;
             });
@@ -555,7 +601,96 @@ export default function AdminTopBar({
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center">
+      <div className="flex shrink-0 items-center gap-3">
+        <div ref={notificationContainerRef} className="relative">
+          <button
+            type="button"
+            onClick={() => {
+              setShowNotifications((current) => !current);
+              setUnreadNotifications(0);
+            }}
+            className="relative grid h-10 w-10 place-items-center rounded-full border border-gray-200 bg-white text-gray-600 transition hover:border-orange-200 hover:bg-orange-50 hover:text-[#EE4D2D]"
+            aria-label="Thông báo đơn hàng"
+            aria-expanded={showNotifications}
+            title={
+              isNotificationConnected
+                ? "Đang nhận thông báo đơn hàng realtime"
+                : "Đang kết nối lại thông báo"
+            }
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 10-12 0v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 01-6 0"
+              />
+            </svg>
+            {unreadNotifications > 0 ? (
+              <span className="absolute -right-1 -top-1 grid min-h-5 min-w-5 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white">
+                {Math.min(unreadNotifications, 99)}
+              </span>
+            ) : null}
+            <span
+              className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white ${
+                isNotificationConnected ? "bg-emerald-500" : "bg-amber-400"
+              }`}
+            />
+          </button>
+
+          {showNotifications ? (
+            <div className="absolute right-0 top-[calc(100%+10px)] z-50 w-[min(360px,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                <div>
+                  <p className="font-bold text-gray-900">Thông báo đơn hàng</p>
+                  <p className="text-xs text-gray-500">
+                    {isNotificationConnected ? "Realtime đang kết nối" : "Đang kết nối lại..."}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => router.push("/admin/orders")}
+                  className="text-xs font-bold text-[#EE4D2D] hover:underline"
+                >
+                  Xem đơn
+                </button>
+              </div>
+
+              {notifications.length === 0 ? (
+                <div className="px-5 py-8 text-center text-sm text-gray-500">
+                  Chưa có đơn mới trong phiên làm việc này.
+                </div>
+              ) : (
+                <div className="max-h-96 divide-y divide-gray-100 overflow-y-auto">
+                  {notifications.map((notification, index) => (
+                    <button
+                      key={`${notification.referenceId ?? "notification"}-${notification.timestamp ?? index}`}
+                      type="button"
+                      onClick={() => {
+                        setShowNotifications(false);
+                        router.push("/admin/orders");
+                      }}
+                      className="w-full px-4 py-3 text-left transition hover:bg-orange-50"
+                    >
+                      <p className="text-sm font-bold text-gray-900">{notification.title}</p>
+                      <p className="mt-1 text-xs leading-5 text-gray-600">{notification.message}</p>
+                      <p className="mt-1 text-[11px] text-gray-400">
+                        {formatNotificationTime(notification.timestamp)}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : null}
+        </div>
+
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 overflow-hidden rounded-full border-2 border-white bg-gray-200 shadow-sm">
             {auth.avatarUrl ? (
@@ -587,4 +722,18 @@ export default function AdminTopBar({
       </div>
     </header>
   );
+}
+
+function formatNotificationTime(value?: string | null) {
+  if (!value) return "Vừa xong";
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Vừa xong";
+
+  return new Intl.DateTimeFormat("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+  }).format(date);
 }

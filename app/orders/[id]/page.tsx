@@ -1,22 +1,19 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Header from "@/components/Header";
+import OrderProgress from "@/components/OrderProgress";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { getAccessToken } from "@/lib/auth";
+import {
+    canCustomerCancelOrder,
+    getOrderStatusBadgeClass,
+    getOrderStatusLabel,
+    PAYMENT_METHOD_LABELS,
+} from "@/lib/order-status";
 import { getOrderById, cancelOrder, OrderResponse, formatVnd } from "@/lib/shop";
 import Link from "next/link";
-
-// Helper chuyển đổi trạng thái sang Tiếng Việt
-const statusLabels: Record<string, string> = {
-    PENDING: "Chờ xác nhận",
-    PAID: "Đã thanh toán",
-    SHIPPING: "Đang giao hàng",
-    COMPLETED: "Hoàn tất",
-    CANCELLED: "Đã hủy",
-};
-
-// Cấu trúc các bước trong Timeline
-const timelineSteps = ["PENDING", "PAID", "SHIPPING", "COMPLETED"];
 
 function formatDateTime(value?: string | null) {
     if (!value) return "Chưa cập nhật";
@@ -36,28 +33,51 @@ export default function OrderDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState("");
     const [isCancelling, setIsCancelling] = useState(false);
+    const [accessToken, setAccessToken] = useState("");
+    const [notificationUserId, setNotificationUserId] = useState("");
 
-    const fetchOrder = useCallback(async () => {
+    const fetchOrder = useCallback(async (showLoading = true) => {
         if (!orderId || Number.isNaN(orderId)) {
             setError("Mã đơn hàng không hợp lệ.");
             setIsLoading(false);
             return;
         }
 
-        setIsLoading(true);
+        if (showLoading) setIsLoading(true);
         try {
             const data = await getOrderById(orderId);
             setOrder(data);
+            if (data.userId) setNotificationUserId(String(data.userId));
+            setError("");
         } catch (err) {
             setError(err instanceof Error ? err.message : "Không thể tải chi tiết đơn hàng.");
         } finally {
-            setIsLoading(false);
+            if (showLoading) setIsLoading(false);
         }
     }, [orderId]);
 
     useEffect(() => {
-        void Promise.resolve().then(fetchOrder);
+        void Promise.resolve().then(() => {
+            setAccessToken(getAccessToken() ?? "");
+            return fetchOrder();
+        });
     }, [fetchOrder]);
+
+    const notificationHandlers = useMemo(
+        () => ({
+            onNotification: (notification: { type: string; referenceId?: string | null }) => {
+                if (
+                    notification.type === "ORDER_STATUS_UPDATED" &&
+                    notification.referenceId === String(orderId)
+                ) {
+                    void fetchOrder(false);
+                }
+            },
+        }),
+        [fetchOrder, orderId],
+    );
+
+    useWebSocket(accessToken, notificationUserId, notificationHandlers);
 
     const handleCancelOrder = async () => {
         if (!window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) return;
@@ -95,10 +115,6 @@ export default function OrderDetailPage() {
         );
     }
 
-    // Xác định vị trí hiện tại của Timeline
-    const currentStepIndex = timelineSteps.indexOf(order.status);
-    const isCancelled = order.status === "CANCELLED";
-
     return (
         <div className="min-h-screen bg-[#F4F6F8] pb-20">
             <Header />
@@ -122,38 +138,18 @@ export default function OrderDetailPage() {
 
                 {/* Khối Trạng thái & Timeline */}
                 <div className="mb-6 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                    {isCancelled ? (
-                        <div className="flex items-center justify-center gap-3 py-6 text-red-600">
-                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            <h2 className="text-2xl font-bold uppercase tracking-wide">Đơn hàng đã hủy</h2>
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Trạng thái hiện tại</p>
+                            <span className={`mt-2 inline-flex rounded-full border px-3 py-1 text-xs font-bold ${getOrderStatusBadgeClass(order.status)}`}>
+                                {getOrderStatusLabel(order.status)}
+                            </span>
                         </div>
-                    ) : (
-                        <div className="py-6">
-                            <div className="flex items-center justify-between relative">
-                                {/* Thanh chạy nền */}
-                                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-gray-200 rounded-full z-0"></div>
-                                {/* Thanh chạy progress */}
-                                <div
-                                    className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-green-500 rounded-full z-0 transition-all duration-500"
-                                    style={{ width: `${currentStepIndex >= 0 ? (currentStepIndex / (timelineSteps.length - 1)) * 100 : 0}%` }}
-                                ></div>
-
-                                {timelineSteps.map((step, index) => {
-                                    const isActive = currentStepIndex >= index;
-                                    return (
-                                        <div key={step} className="relative z-10 flex flex-col items-center bg-white px-2">
-                                            <div className={`w-8 h-8 rounded-full flex items-center justify-center border-2 font-bold text-xs ${isActive ? 'bg-green-500 border-green-500 text-white shadow-md' : 'bg-white border-gray-300 text-gray-300'}`}>
-                                                {isActive ? "✓" : index + 1}
-                                            </div>
-                                            <span className={`mt-2 text-xs font-semibold uppercase tracking-wider ${isActive ? 'text-green-600' : 'text-gray-400'}`}>
-                                                {statusLabels[step]}
-                                            </span>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        </div>
-                    )}
+                        <p className="text-xs text-gray-500">
+                            Cập nhật lần cuối: {formatDateTime(order.updatedAt ?? order.createdAt)}
+                        </p>
+                    </div>
+                    <OrderProgress status={order.status} paymentMethod={order.paymentMethod} />
                 </div>
 
                 {/* Cột thông tin: Địa chỉ & Vận chuyển */}
@@ -183,7 +179,9 @@ export default function OrderDetailPage() {
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-gray-500">Dự kiến giao hàng:</span>
-                                <span className="font-semibold text-green-600">{formatDateTime(order.estimatedDeliveryDate)}</span>
+                                <span className="font-semibold text-green-600">
+                                    {formatDeliveryRange(order.estimatedDeliveryMinDate, order.estimatedDeliveryMaxDate)}
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -217,8 +215,8 @@ export default function OrderDetailPage() {
                 {/* Tổng kết tiền bạc & Hành động */}
                 <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
                     <div className="w-full md:w-auto">
-                        {/* Chỉ hiện nút Hủy nếu đơn hàng mới được tạo (PENDING hoặc PAID) */}
-                        {(order.status === "PENDING" || order.status === "PAID") && (
+                        {/* Backend chỉ cho khách hủy khi đơn vẫn đang chờ duyệt. */}
+                        {canCustomerCancelOrder(order.status) && (
                             <button
                                 onClick={handleCancelOrder}
                                 disabled={isCancelling}
@@ -249,7 +247,10 @@ export default function OrderDetailPage() {
                             <span className="text-2xl font-extrabold text-[#EE4D2D]">{formatVnd(order.totalAmount)}</span>
                         </div>
                         <div className="text-right text-xs text-gray-400 mt-1">
-                            Thanh toán qua: <span className="uppercase font-semibold">{order.paymentMethod}</span>
+                            Thanh toán qua:{" "}
+                            <span className="font-semibold">
+                                {PAYMENT_METHOD_LABELS[order.paymentMethod] ?? order.paymentMethod}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -257,4 +258,11 @@ export default function OrderDetailPage() {
             </main>
         </div>
     );
+}
+
+function formatDeliveryRange(minDate?: string | null, maxDate?: string | null) {
+    if (!minDate && !maxDate) return "Đang cập nhật";
+    if (!minDate) return formatDateTime(maxDate);
+    if (!maxDate || minDate === maxDate) return formatDateTime(minDate);
+    return `${formatDateTime(minDate)} - ${formatDateTime(maxDate)}`;
 }

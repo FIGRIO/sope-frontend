@@ -1,6 +1,7 @@
 "use client";
 
 import { API_BASE_URL, getAccessToken } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 import Image from "next/image";
 import { useEffect, useState, type ChangeEvent } from "react";
 
@@ -123,7 +124,7 @@ export default function ReviewModal({
         throw new Error(await readErrorMessage(response));
       }
 
-      const savedReview = (await response.json()) as ReviewResponse;
+      const savedReview = await parseJsonResponse<ReviewResponse>(response);
       await onSubmitted(savedReview);
       onClose();
     } catch (submitError) {

@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { API_BASE_URL } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 import ProductClient from "./ProductClient";
 
 interface Product {
@@ -27,7 +28,7 @@ async function getProduct(id: string): Promise<Product | null> {
       next: { revalidate: 60 },
     });
     if (!res.ok) return null;
-    return res.json();
+    return await parseJsonResponse<Product>(res);
   } catch {
     return null;
   }

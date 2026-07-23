@@ -1,6 +1,7 @@
 "use client";
 
 import { API_BASE_URL, clearAuth, getStoredAuth, isAdminAuth, type AuthResponse } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 import { CART_UPDATED_EVENT, getCart } from "@/lib/shop";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -83,7 +84,9 @@ export default function Header() {
           return;
         }
 
-        const payload = await response.json();
+        const payload = await parseJsonResponse<
+          SearchSuggestion[] | { content?: SearchSuggestion[] }
+        >(response);
         const products = Array.isArray(payload) ? payload : payload.content ?? [];
         setSuggestions(rankSearchSuggestions(products, keyword).slice(0, 6));
       } catch {

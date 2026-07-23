@@ -5,6 +5,7 @@ import type { ProductCatalogItem } from "@/components/ProductCard";
 import ProductFilterSidebar from "@/components/ProductFilterSidebar";
 import ProductSortBar from "@/components/ProductSortBar";
 import { API_BASE_URL } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 
 type ProductSummary = {
     id: number;
@@ -67,16 +68,17 @@ export default async function ProductsPage({
     try {
         const res = await fetch(backendUrl.toString(), { cache: 'no-store' });
         if (res.ok) {
-            const pagedResponse = (await res.json()) as ProductsApiResponse;
+            const pagedResponse = await parseJsonResponse<ProductsApiResponse>(res);
             filteredProducts = pagedResponse.content || [];
             totalPages = pagedResponse.totalPages || 1;
         } else {
-            const errorDetail = await res.text(); 
-            console.log("❌ CHI TIẾT LỖI TỪ BACKEND TRẢ VỀ:", errorDetail);
             catalogError = "Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.";
         }
     } catch (error) {
-        console.error("Lỗi kết nối tới Backend Spring Boot:", error);
+        console.warn(
+            "Không thể tải danh sách sản phẩm:",
+            error instanceof Error ? error.message : "Lỗi không xác định",
+        );
         catalogError = "Không thể kết nối dịch vụ sản phẩm. Vui lòng kiểm tra Backend.";
     }
 
@@ -94,13 +96,16 @@ export default async function ProductsPage({
 
                 const res = await fetch(filterSourceUrl.toString(), { cache: 'no-store' });
                 if (!res.ok) return [];
-                const data = (await res.json()) as ProductsApiResponse;
+                const data = await parseJsonResponse<ProductsApiResponse>(res);
                 return data.content || [];
             })
         );
         filterSourceProducts = filterResponses.flat();
     } catch (error) {
-        console.error("Không thể tải dữ liệu bộ lọc sản phẩm:", error);
+        console.warn(
+            "Không thể tải dữ liệu bộ lọc sản phẩm:",
+            error instanceof Error ? error.message : "Lỗi không xác định",
+        );
     }
 
     const dynamicCategories = buildCategoryOptions(filterSourceProducts);

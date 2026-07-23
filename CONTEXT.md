@@ -1,5 +1,21 @@
 # CONTEXT.md - Bộ nhớ riêng cho sope-frontend
 
+## Cập nhật 2026-07-23 – Chuẩn bị deploy frontend
+
+- `Dockerfile` tiếp tục dùng Next.js standalone/non-root và bổ sung healthcheck HTTP cổng 3000.
+- `lib/auth.ts` tách URL theo môi trường: browser dùng `NEXT_PUBLIC_API_URL` công khai; Server Component ưu tiên `INTERNAL_API_URL`. Full-stack Compose đặt internal URL là `http://backend:8080`.
+- `.env.example` và README đã ghi rõ public build-time URL so với private runtime URL; đổi public backend URL phải build lại frontend.
+- Kiểm tra: lint toàn dự án exit 0 (còn warning cũ), lint file thay đổi 0 lỗi, `npm run build` pass 25 route, frontend local trả HTTP 200.
+- Full-stack deploy dùng `../docker-compose.yml`, `../.env.example`, `../DEPLOYMENT.md`.
+
+## Cập nhật 2026-07-23 – Chatbot hỏi trạng thái đơn hàng
+
+- `components/ChatbotWidget.tsx` tiếp tục gửi Bearer token hiện có tới `POST /api/chat`, nhờ đó backend xác định đúng tài khoản khi trả trạng thái đơn.
+- Lời chào và placeholder nêu rõ chatbot hỗ trợ đơn cá nhân; thêm câu hỏi nhanh “Đơn gần nhất của tôi đang ở đâu?” và “Có đơn nào đang giao không?”.
+- Link nội bộ trong câu trả lời như `/login`, `/orders`, `/orders/{id}` mở cùng tab; chỉ link ngoài dùng `https://` mới được mở tab mới.
+- ID tin nhắn dùng bộ đếm `useRef`, không gọi hàm thời gian không thuần trong đường render theo quy tắc lint React.
+- Kiểm tra: ESLint riêng widget 0 lỗi; toàn bộ `npm run lint` exit 0 (còn warning có sẵn ở file khác); `npm run build` pass đủ 25 route.
+
 ## Cập nhật 2026-07-17 – Sửa đăng nhập/đăng ký
 
 - File sửa: `lib/auth.ts`.
@@ -521,3 +537,22 @@ Khi kiểm tra cần ghi rõ:
 - API: `createPayment({orderId, provider, channel})`, `getPayment`, `retryPayment`; đã xóa helper simulate.
 - Kiểm tra: lint toàn dự án 0 error; `npm run build` pass. Còn warning `<img>` cũ trong lint; build không còn warning metadata viewport sau khi chuyển sang export `viewport`.
 - Tiếp theo: smoke test trình duyệt với backend, credential Sandbox và Ngrok; không đưa secret vào frontend env.
+## 2026-07-23 - Sửa JSON catalog và chuẩn bị deploy frontend
+
+- Yêu cầu: sửa lỗi `Unexpected non-whitespace character after JSON` khi tải trang sản phẩm, rà soát các trang lấy dữ liệu và chuẩn bị FE để deploy.
+- Route/khu vực: `/`, `/products`, `/products/[id]`, các API helper auth/cart/admin, Header search, review và chatbot.
+- Đã sửa: thêm `lib/api-response.ts` để đọc body trước rồi parse JSON có kiểm soát; thay toàn bộ `response.json()` trực tiếp trong các luồng API; các Server Component hiển thị empty/error state thay vì làm Next error overlay.
+- Deploy: bật `output: "standalone"`; Docker dùng standalone runner/non-root user/build args; thêm `.dockerignore` và hướng dẫn env/Docker/Vercel trong README.
+- API liên quan: `GET /api/products`, `GET /api/products/{id}` và các endpoint JSON dùng trong auth/cart/admin/review/chat.
+- Kiểm tra: `npm run lint` đạt 0 error; `npm run build` pass; standalone smoke test 25 route đều HTTP 200 khi dùng backend đã sửa. Browser tích hợp không có phiên khả dụng nên kiểm tra route bằng HTTP/log runtime.
+- Lưu ý: `NEXT_PUBLIC_API_URL` phải là URL HTTPS public của backend và được truyền trước lúc build; backend phải cho phép origin FE qua `APP_FRONTEND_ORIGINS`.
+
+## 2026-07-23 - Chi tiết đơn mua, duyệt đơn và thông báo realtime admin
+
+- Yêu cầu: mở được từng đơn trong `/orders`, admin nhận thông báo khi có đơn mới và tiến trình client/admin phải thống nhất.
+- Route/khu vực: `/orders`, `/orders/[id]`, `/admin/orders`, `AdminTopBar`, WebSocket hook và API order.
+- Đã sửa: thẻ/mã/nút đơn mua đều điều hướng tới chi tiết; thêm `OrderProgress` và `lib/order-status.ts` dùng chung nhãn, badge, timeline, luật chuyển trạng thái cho cả client/admin.
+- Luồng trạng thái: COD dùng `PENDING → PROCESSING → SHIPPING → COMPLETED`; VNPAY/MoMo dùng `PENDING → PAID → PROCESSING → SHIPPING → COMPLETED`; khách chỉ hủy khi `PENDING`.
+- Realtime: admin subscribe `/topic/admin.orders`, nhận toast/chuông/badge và bảng đơn tự refresh; client subscribe topic cá nhân để tự tải lại khi admin đổi trạng thái; WebSocket URL hỗ trợ cả `NEXT_PUBLIC_API_URL` và `NEXT_PUBLIC_API_BASE_URL`.
+- Contract: `OrderResponse` nhận thêm `userId`, `updatedAt`, dùng đúng `estimatedDeliveryMinDate`/`estimatedDeliveryMaxDate`.
+- Kiểm tra: lint toàn dự án 0 error (còn warning cũ); `npm run build` pass; production runtime `/orders` và `/admin/orders` HTTP 200. Browser tích hợp không có phiên khả dụng.

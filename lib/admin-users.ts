@@ -1,4 +1,5 @@
 import { API_BASE_URL, getAccessToken } from "./auth";
+import { parseJsonResponse } from "./api-response";
 
 export type AdminUserRole = "ROLE_USER" | "ROLE_ADMIN";
 
@@ -56,7 +57,7 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
     throw new Error(await readErrorMessage(response));
   }
 
-  return response.json() as Promise<T>;
+  return parseJsonResponse<T>(response);
 }
 
 async function readErrorMessage(response: Response) {

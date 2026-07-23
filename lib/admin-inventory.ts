@@ -1,4 +1,5 @@
 import { API_BASE_URL, getAccessToken } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 import type { ProductStatus, StockUpdateResult } from "@/lib/admin-products";
 
 export type InventoryOverview = {
@@ -92,5 +93,5 @@ async function requestJson<T>(path: string, init: RequestInit = {}) {
     }
   }
 
-  return response.json() as Promise<T>;
+  return parseJsonResponse<T>(response);
 }

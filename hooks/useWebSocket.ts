@@ -1,27 +1,52 @@
-import { useEffect, useState, useCallback } from 'react';
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+import type { RealtimeNotification } from "@/lib/order-notifications";
 
-const SOCKET_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const SOCKET_URL = (
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  "http://localhost:8080"
+).replace(/\/+$/, "");
 
-// Định nghĩa kiểu dữ liệu trả về của Hook giúp IDE gợi ý code tốt hơn
 export interface UseWebSocketReturn {
   stompClient: Client | null;
   isConnected: boolean;
   sendMessage: (destination: string, body: unknown) => void;
 }
 
-export const useWebSocket = (token: string, userId: string): UseWebSocketReturn => {
-  // Định nghĩa rõ ràng state này là Client hoặc null
+type WebSocketNotificationHandlers = {
+  onNotification?: (notification: RealtimeNotification) => void;
+  onAdminOrder?: (notification: RealtimeNotification) => void;
+};
+
+function parseNotification(body: string): RealtimeNotification | null {
+  try {
+    const parsed = JSON.parse(body) as RealtimeNotification;
+    return parsed && typeof parsed === "object" ? parsed : null;
+  } catch (error) {
+    console.error("Không thể đọc thông báo WebSocket:", error);
+    return null;
+  }
+}
+
+export const useWebSocket = (
+  token: string,
+  userId: string,
+  handlers: WebSocketNotificationHandlers = {},
+): UseWebSocketReturn => {
   const [stompClient, setStompClient] = useState<Client | null>(null);
-  // Định nghĩa state này là boolean
-  const [isConnected, setIsConnected] = useState<boolean>(false);
+  const [isConnected, setIsConnected] = useState(false);
+  const handlersRef = useRef(handlers);
+
+  useEffect(() => {
+    handlersRef.current = handlers;
+  }, [handlers]);
 
   useEffect(() => {
     if (!token) return;
 
     const client = new Client({
-      brokerURL: `${SOCKET_URL.replace('http', 'ws')}/ws`,
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
@@ -29,54 +54,63 @@ export const useWebSocket = (token: string, userId: string): UseWebSocketReturn 
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-
       onConnect: () => {
-        console.log('Đã kết nối WebSocket thành công');
         setIsConnected(true);
 
         if (userId) {
           client.subscribe(`/topic/notification.${userId}`, (message) => {
-            const notificationData = JSON.parse(message.body);
-            console.log('Có thông báo mới:', notificationData);
-          });
-          
-          client.subscribe('/user/queue/errors', (message) => {
-             console.error('Lỗi từ server:', message.body);
+            const notification = parseNotification(message.body);
+            if (notification) {
+              handlersRef.current.onNotification?.(notification);
+            }
           });
         }
-      },
 
-      onStompError: (frame) => {
-        console.error('Lỗi STOMP Broker: ' + frame.headers['message']);
-        console.error('Chi tiết: ' + frame.body);
+        if (handlersRef.current.onAdminOrder) {
+          client.subscribe("/topic/admin.orders", (message) => {
+            const notification = parseNotification(message.body);
+            if (notification) {
+              handlersRef.current.onAdminOrder?.(notification);
+            }
+          });
+        }
+
+        client.subscribe("/user/queue/errors", (message) => {
+          console.error("Lỗi từ WebSocket server:", message.body);
+        });
       },
-      
+      onStompError: (frame) => {
+        console.error("Lỗi STOMP Broker:", frame.headers.message, frame.body);
+      },
       onWebSocketClose: () => {
         setIsConnected(false);
-      }
+      },
     });
 
     client.activate();
-    void Promise.resolve().then(() => setStompClient(client));
+    setStompClient(client);
 
     return () => {
-      client.deactivate();
+      void client.deactivate();
       setStompClient(null);
       setIsConnected(false);
     };
   }, [token, userId]);
 
-  // Thêm type string cho destination và any (hoặc type cụ thể) cho body
-  const sendMessage = useCallback((destination: string, body: unknown) => {
-    if (stompClient && stompClient.connected) {
+  const sendMessage = useCallback(
+    (destination: string, body: unknown) => {
+      if (!stompClient?.connected) {
+        console.warn("WebSocket chưa kết nối, không thể gửi tin nhắn.");
+        return;
+      }
+
       stompClient.publish({
-        destination: destination,
+        destination,
         body: JSON.stringify(body),
       });
-    } else {
-      console.warn('WebSocket chưa kết nối, không thể gửi tin nhắn.');
-    }
-  }, [stompClient]);
+    },
+    [stompClient],
+  );
 
   return { stompClient, isConnected, sendMessage };
 };

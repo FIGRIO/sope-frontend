@@ -1,3 +1,5 @@
+import { parseJsonResponse } from "./api-response";
+
 export type AuthResponse = {
   accessToken: string;
   tokenType?: string;
@@ -21,10 +23,15 @@ export type PasswordResetResponse = {
 const AUTH_STORAGE_KEY = "sope_auth";
 const TOKEN_STORAGE_KEY = "sope_token";
 
-export const API_BASE_URL =
+const PUBLIC_API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ??
   process.env.NEXT_PUBLIC_API_BASE_URL ??
   "http://localhost:8080";
+
+export const API_BASE_URL =
+  typeof window === "undefined"
+    ? process.env.INTERNAL_API_URL ?? PUBLIC_API_BASE_URL
+    : PUBLIC_API_BASE_URL;
 
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 
@@ -58,7 +65,7 @@ export async function getGoogleClientId() {
     throw new Error(await readErrorMessage(response));
   }
 
-  const payload = (await response.json()) as { clientId?: string };
+  const payload = await parseJsonResponse<{ clientId?: string }>(response);
   return payload.clientId?.trim() ?? "";
 }
 
@@ -118,7 +125,7 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
     throw new Error(await readErrorMessage(response));
   }
 
-  return response.json() as Promise<T>;
+  return parseJsonResponse<T>(response);
 }
 
 async function postText(path: string, body: unknown): Promise<string> {

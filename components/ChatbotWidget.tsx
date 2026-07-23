@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
 import { API_BASE_URL, getAccessToken } from '@/lib/auth';
+import { parseJsonResponse } from '@/lib/api-response';
 
 // Định nghĩa cấu trúc dữ liệu cho một tin nhắn
 interface Message {
@@ -20,12 +21,18 @@ export default function ChatbotWidget() {
         {
             id: 'welcome',
             sender: 'ai',
-            text: 'Chào bạn! Mình là trợ lý ảo AI. Mình có thể giúp gì cho bạn về các sản phẩm điện thoại, tablet hay laptop của cửa hàng hôm nay?',
+            text: 'Chào bạn! Mình có thể tư vấn sản phẩm và kiểm tra trạng thái đơn hàng cá nhân khi bạn đã đăng nhập.',
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
     ]);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const messageSequenceRef = useRef(0);
+
+    const nextMessageId = (sender: Message['sender'] | 'error') => {
+        messageSequenceRef.current += 1;
+        return `${sender}-${messageSequenceRef.current}`;
+    };
 
     // Tự động cuộn xuống dưới cùng khi có tin nhắn mới
     useEffect(() => {
@@ -33,17 +40,15 @@ export default function ChatbotWidget() {
     }, [messages, isOpen]);
 
     // Hàm gọi API xử lý tin nhắn
-    const handleSendMessage = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        
-        const trimmedInput = inputValue.trim();
+    const sendMessage = async (messageText?: string) => {
+        const trimmedInput = (messageText ?? inputValue).trim();
         if (!trimmedInput || isLoading) return;
 
         const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         // 1. Thêm tin nhắn của User vào giao diện
         const userMsg: Message = {
-            id: `user-${Date.now()}`,
+            id: nextMessageId('user'),
             sender: 'user',
             text: trimmedInput,
             timestamp: currentTime
@@ -72,11 +77,11 @@ export default function ChatbotWidget() {
                 throw new Error('Lỗi kết nối đến dịch vụ chatbot');
             }
 
-            const data = await response.json();
+            const data = await parseJsonResponse<{ reply?: string }>(response);
 
             // 3. Hiển thị câu trả lời của AI
             const aiMsg: Message = {
-                id: `ai-${Date.now()}`,
+                id: nextMessageId('ai'),
                 sender: 'ai',
                 text: data.reply || 'Xin lỗi, mình không nhận được phản hồi hợp lệ.',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -84,10 +89,13 @@ export default function ChatbotWidget() {
 
             setMessages(prev => [...prev, aiMsg]);
         } catch (error) {
-            console.error("Lỗi khi gọi Chatbot API:", error);
+            console.warn(
+                "Không thể gọi Chatbot API:",
+                error instanceof Error ? error.message : "Lỗi không xác định",
+            );
             // Hiển thị thông báo lỗi nếu server sập hoặc không kết nối được
             setMessages(prev => [...prev, {
-                id: `error-${Date.now()}`,
+                id: nextMessageId('error'),
                 sender: 'ai',
                 text: 'Hệ thống chatbot đang bận. Vui lòng thử lại sau!',
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
@@ -101,7 +109,7 @@ export default function ChatbotWidget() {
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === 'Enter') {
             e.preventDefault();
-            handleSendMessage();
+            void sendMessage();
         }
     };
 // Hàm biến cú pháp [Tên](/link) của AI thành thẻ <a> có thể click được
@@ -117,17 +125,23 @@ export default function ChatbotWidget() {
             if (match.index > lastIndex) {
                 parts.push(text.substring(lastIndex, match.index));
             }
-            // Push thẻ <a> (Link)
+            const href = match[2].trim();
+            const isInternalLink = href.startsWith('/') && !href.startsWith('//');
+            const isSafeExternalLink = href.startsWith('https://');
             parts.push(
-                <a 
-                    key={match.index} 
-                    href={match[2]} 
-                    target="_blank" // Mở link ở tab mới, có thể bỏ dòng này nếu muốn chuyển trang ở tab hiện tại
-                    rel="noopener noreferrer" 
-                    className="text-blue-700 font-bold underline hover:text-blue-900 transition-colors"
-                >
-                    {match[1]}
-                </a>
+                isInternalLink || isSafeExternalLink ? (
+                    <a
+                        key={match.index}
+                        href={href}
+                        target={isInternalLink ? undefined : '_blank'}
+                        rel={isInternalLink ? undefined : 'noopener noreferrer'}
+                        className="text-blue-700 font-bold underline hover:text-blue-900 transition-colors"
+                    >
+                        {match[1]}
+                    </a>
+                ) : (
+                    match[1]
+                )
             );
             lastIndex = match.index + match[0].length;
         }
@@ -213,25 +227,44 @@ export default function ChatbotWidget() {
             </div>
 
             {/* Input Chat */}
-            <div className="h-[70px] border-t border-gray-200 p-3 bg-white flex items-center gap-2 shrink-0">
-                <input
-                    type="text"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={handleKeyDown}
-                    disabled={isLoading}
-                    placeholder="Nhập tin nhắn của bạn..."
-                    className="text-black flex-1 bg-gray-100 border-transparent rounded-full px-4 py-2.5 text-sm focus:ring-0 focus:outline-none disabled:opacity-50"
-                />
-                <button 
-                    onClick={handleSendMessage}
-                    disabled={isLoading || !inputValue.trim()}
-                    className="w-10 h-10 rounded-full bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] flex items-center justify-center text-white shrink-0 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 ml-1">
-                        <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
-                    </svg>
-                </button>
+            <div className="shrink-0 border-t border-gray-200 bg-white p-3">
+                <div className="mb-2 flex gap-2 overflow-x-auto pb-1">
+                    {[
+                        'Đơn gần nhất của tôi đang ở đâu?',
+                        'Có đơn nào đang giao không?',
+                    ].map((question) => (
+                        <button
+                            key={question}
+                            type="button"
+                            onClick={() => void sendMessage(question)}
+                            disabled={isLoading}
+                            className="shrink-0 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-[#EE4D2D] transition hover:bg-orange-100 disabled:opacity-50"
+                        >
+                            {question}
+                        </button>
+                    ))}
+                </div>
+                <div className="flex items-center gap-2">
+                    <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        disabled={isLoading}
+                        placeholder="Hỏi sản phẩm hoặc trạng thái đơn..."
+                        className="text-black flex-1 bg-gray-100 border-transparent rounded-full px-4 py-2.5 text-sm focus:ring-0 focus:outline-none disabled:opacity-50"
+                    />
+                    <button
+                        type="button"
+                        onClick={() => void sendMessage()}
+                        disabled={isLoading || !inputValue.trim()}
+                        className="w-10 h-10 rounded-full bg-gradient-to-r from-[#EE4D2D] to-[#FFD400] flex items-center justify-center text-white shrink-0 hover:opacity-90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 ml-1">
+                            <path d="M3.478 2.404a.75.75 0 0 0-.926.941l2.432 7.905H13.5a.75.75 0 0 1 0 1.5H4.984l-2.432 7.905a.75.75 0 0 0 .926.94 60.519 60.519 0 0 0 18.445-8.986.75.75 0 0 0 0-1.218A60.517 60.517 0 0 0 3.478 2.404Z" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
     );

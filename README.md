@@ -29,6 +29,44 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Environment
+
+Copy `.env.example` to `.env.local` for local development:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8080
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id.apps.googleusercontent.com
+INTERNAL_API_URL=http://localhost:8080
+```
+
+`NEXT_PUBLIC_API_URL` must be the public HTTPS URL of the Spring Boot backend
+when the frontend is deployed. The backend must also allow the deployed
+frontend origin through `APP_FRONTEND_ORIGINS`. `INTERNAL_API_URL` is optional
+and is only used by Server Components; the full-stack Docker Compose sets it to
+`http://backend:8080`, while browser requests continue using the public URL.
+
+## Deploy
+
+For Vercel, set the project root directory to `sope-frontend` and configure both
+public environment variables before running the production build.
+
+The Docker image uses Next.js standalone output:
+
+```bash
+docker build \
+  --build-arg NEXT_PUBLIC_API_URL=https://api.example.com \
+  --build-arg NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_client_id \
+  -t sope-frontend .
+
+docker run --rm -p 3000:3000 sope-frontend
+```
+
+Public Next.js environment variables are embedded into browser bundles during
+`docker build`; rebuilding is required when the backend URL changes.
+
+For the complete MySQL + Backend + Chatbot + Frontend deployment, use
+`../docker-compose.yml`, `../.env.example` and `../DEPLOYMENT.md`.
+
 ## Deploy on Vercel
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.

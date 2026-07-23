@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Link from 'next/link';
 import { API_BASE_URL } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 
 // ==========================================
 // 1. KHAI BÁO INTERFACE (Tránh lỗi any)
@@ -13,6 +14,13 @@ interface Product {
   mainThumbnail?: string;
   images?: string[];
 }
+
+type ProductsApiResponse = {
+  content?: Product[];
+  data?: {
+    content?: Product[];
+  };
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -31,11 +39,14 @@ async function getProductsByCategory(category: string): Promise<Product[]> {
     
     if (!res.ok) return [];
     
-    const data = await res.json();
+    const data = await parseJsonResponse<Product[] | ProductsApiResponse>(res);
     const content = Array.isArray(data) ? data : data.content ?? data.data?.content ?? [];
     return Array.isArray(content) ? content : [];
   } catch (error) {
-    console.error(`Lỗi fetch data category ${category}:`, error);
+    console.warn(
+      `Không thể tải danh mục ${category}:`,
+      error instanceof Error ? error.message : "Lỗi không xác định",
+    );
     return [];
   }
 }

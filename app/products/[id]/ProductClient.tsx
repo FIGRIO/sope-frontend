@@ -7,6 +7,7 @@ import ReviewModal from "@/components/ReviewModal";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { API_BASE_URL, getAccessToken } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 import { addToCart } from "@/lib/shop";
 import {
   checkIsInWishlist,
@@ -192,7 +193,7 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
           }
           return;
         }
-        const data = await res.json();
+        const data = await parseJsonResponse<unknown>(res);
         if (isMounted) {
           if (Array.isArray(data)) {
             setSimilar(data);
@@ -201,7 +202,10 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
         }
       } catch (err) {
         if (isMounted) {
-          console.error("Lỗi tải sản phẩm tương tự:", err);
+          console.warn(
+            "Không thể tải sản phẩm tương tự:",
+            err instanceof Error ? err.message : "Lỗi không xác định",
+          );
           setIsLoading(false);
         }
       }
@@ -345,7 +349,7 @@ export default function ProductClient() {
           throw new Error("Không tìm thấy sản phẩm");
         }
 
-        const rawData = (await response.json()) as ProductApiResponse;
+        const rawData = await parseJsonResponse<ProductApiResponse>(response);
         const mappedVariants: ProductVariant[] = (rawData.variants ?? [])
           .map((variant) => ({
             id: variant.id,
@@ -420,7 +424,7 @@ export default function ProductClient() {
             JSON.stringify(list.slice(0, 10)),
           );
         } catch (storageError) {
-          console.error("Lỗi lưu lịch sử xem", storageError);
+          console.warn("Không thể lưu lịch sử xem", storageError);
         }
       } catch (loadError) {
         if (
@@ -428,7 +432,10 @@ export default function ProductClient() {
           loadError.name === "AbortError"
         )
           return;
-        console.error("Lỗi khi tải dữ liệu:", loadError);
+        console.warn(
+          "Không thể tải dữ liệu sản phẩm:",
+          loadError instanceof Error ? loadError.message : "Lỗi không xác định",
+        );
         setProduct(null);
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
@@ -453,7 +460,7 @@ export default function ProductClient() {
           { signal: controller.signal },
         );
         if (!response.ok) throw new Error(await readPublicApiError(response));
-        const payload = (await response.json()) as ProductReviewsResponse;
+        const payload = await parseJsonResponse<ProductReviewsResponse>(response);
         setReviews(Array.isArray(payload.items) ? payload.items : []);
         setAverageRating(Number(payload.averageRating) || 0);
       } catch (loadError) {
@@ -483,7 +490,7 @@ export default function ProductClient() {
           { signal: controller.signal },
         );
         if (!response.ok) throw new Error(await readPublicApiError(response));
-        const payload = (await response.json()) as AvailableCoupon[];
+        const payload = await parseJsonResponse<AvailableCoupon[]>(response);
         setAvailableCoupons(Array.isArray(payload) ? payload : []);
       } catch (loadError) {
         if (

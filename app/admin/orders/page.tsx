@@ -3,6 +3,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
+import OrderProgress from "@/components/OrderProgress";
 import {
   AdminOrderResponse,
   AdminOrderStatus,
@@ -10,60 +11,34 @@ import {
   getAdminOrders,
   updateAdminOrderStatus,
 } from "@/lib/admin-orders";
+import { ADMIN_ORDER_CREATED_EVENT } from "@/lib/order-notifications";
+import {
+  getNextOrderStatuses,
+  getOrderStatusBadgeClass,
+  getOrderStatusLabel,
+  ORDER_STATUS_VALUES,
+  PAYMENT_METHOD_LABELS,
+} from "@/lib/order-status";
 import { formatVnd } from "@/lib/shop";
 
-const ORDER_STATUSES = ["ALL", "PENDING", "PAID", "PROCESSING", "SHIPPING", "COMPLETED", "CANCELLED"] as const;
-
-const STATUS_LABEL: Record<string, string> = {
-  ALL: "Tất cả",
-  PENDING: "Chờ xử lý",
-  PAID: "Đã thanh toán",
-  PROCESSING: "Đang xử lý",
-  SHIPPING: "Đang giao",
-  COMPLETED: "Hoàn thành",
-  CANCELLED: "Đã hủy",
-};
-
-const PAYMENT_LABEL: Record<string, string> = {
-  COD: "COD",
-  VNPAY: "VNPAY",
-  MOMO: "MoMo",
-};
-
-const STATUS_BADGE_CLASS: Record<string, string> = {
-  PENDING: "bg-amber-100 text-amber-700 border-amber-200",
-  PAID: "bg-sky-100 text-sky-700 border-sky-200",
-  PROCESSING: "bg-violet-100 text-violet-700 border-violet-200",
-  SHIPPING: "bg-indigo-100 text-indigo-700 border-indigo-200",
-  COMPLETED: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  CANCELLED: "bg-rose-100 text-rose-700 border-rose-200",
-};
-
-const NEXT_STATUS_MAP: Record<string, AdminOrderStatus[]> = {
-  PENDING: ["PAID", "CANCELLED"],
-  PAID: ["PROCESSING", "CANCELLED"],
-  PROCESSING: ["SHIPPING", "CANCELLED"],
-  SHIPPING: ["COMPLETED"],
-  COMPLETED: [],
-  CANCELLED: [],
-};
+const ORDER_STATUSES = ["ALL", ...ORDER_STATUS_VALUES] as const;
 
 function getOrderCode(order: AdminOrderResponse) {
   return order.orderCode ?? order.code ?? `#${order.id}`;
 }
 
 function getStatusLabel(status?: string) {
-  if (!status) return "Không rõ";
-  return STATUS_LABEL[status] ?? status;
+  if (status === "ALL") return "Tất cả";
+  return getOrderStatusLabel(status);
 }
 
 function getPaymentLabel(method?: string) {
   if (!method) return "Chưa rõ";
-  return PAYMENT_LABEL[method] ?? method;
+  return PAYMENT_METHOD_LABELS[method] ?? method;
 }
 
 function getStatusBadgeClass(status?: string) {
-  return STATUS_BADGE_CLASS[status ?? ""] ?? "bg-slate-100 text-slate-700 border-slate-200";
+  return getOrderStatusBadgeClass(status);
 }
 
 function formatMoney(value?: number) {
@@ -101,14 +76,7 @@ function formatDate(value?: string | null) {
 }
 
 function getNextStatuses(order: AdminOrderResponse) {
-  const currentStatus = order.status ?? "";
-  const nextStatuses = NEXT_STATUS_MAP[currentStatus];
-
-  if (!nextStatuses) {
-    return ORDER_STATUSES.filter((status) => status !== "ALL" && status !== currentStatus);
-  }
-
-  return nextStatuses.filter((status) => status !== currentStatus);
+  return getNextOrderStatuses(order.status, order.paymentMethod);
 }
 
 function getItemName(item: NonNullable<AdminOrderResponse["items"]>[number]) {
@@ -169,6 +137,15 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     void Promise.resolve().then(refreshOrdersPage);
+  }, [refreshOrdersPage]);
+
+  useEffect(() => {
+    const handleNewOrder = () => {
+      void refreshOrdersPage();
+    };
+
+    window.addEventListener(ADMIN_ORDER_CREATED_EVENT, handleNewOrder);
+    return () => window.removeEventListener(ADMIN_ORDER_CREATED_EVENT, handleNewOrder);
   }, [refreshOrdersPage]);
 
   const filteredOrders = useMemo(() => {
@@ -623,6 +600,14 @@ function OrderDetailModal({
                         ))}
                       </select>
                     ) : null}
+                  </div>
+
+                  <div className="mt-5 overflow-x-auto">
+                    <OrderProgress
+                      compact
+                      status={order.status}
+                      paymentMethod={order.paymentMethod}
+                    />
                   </div>
                 </section>
 

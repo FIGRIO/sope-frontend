@@ -1,4 +1,5 @@
 import { API_BASE_URL, getAccessToken } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 
 export type ProductStatus = "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK";
 
@@ -188,7 +189,7 @@ async function requestJson<T>(
     throw new Error(await readErrorMessage(response));
   }
 
-  return response.json() as Promise<T>;
+  return parseJsonResponse<T>(response);
 }
 
 async function requestVoid(path: string, init: RequestInit = {}) {

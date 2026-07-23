@@ -1,4 +1,5 @@
 import { API_BASE_URL, getAccessToken } from "@/lib/auth";
+import { parseJsonResponse } from "@/lib/api-response";
 
 export type AdminOrderStatus =
   | "PENDING"
@@ -33,6 +34,7 @@ export type AdminOrderItemResponse = {
 
 export type AdminOrderResponse = {
   id: number;
+  userId?: number;
   orderCode?: string;
   code?: string;
   status: AdminOrderStatus;
@@ -91,15 +93,21 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
   });
 
   const contentType = response.headers.get("content-type") ?? "";
-  const payload = contentType.includes("application/json")
-    ? await response.json().catch(() => null)
+  const payload: unknown = contentType.includes("application/json")
+    ? await parseJsonResponse<unknown>(response)
     : await response.text().catch(() => "");
 
   if (!response.ok) {
+    const errorPayload =
+      typeof payload === "object" && payload !== null
+        ? (payload as { message?: string; error?: string })
+        : null;
     const message =
       typeof payload === "string"
         ? payload
-        : payload?.message ?? payload?.error ?? "Không thể xử lý yêu cầu quản lý đơn hàng.";
+        : errorPayload?.message ??
+          errorPayload?.error ??
+          "Không thể xử lý yêu cầu quản lý đơn hàng.";
     throw new Error(message);
   }
 

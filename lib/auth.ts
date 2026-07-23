@@ -16,8 +16,6 @@ export type RegisterPayload = {
 
 export type PasswordResetResponse = {
   message: string;
-  resetLink?: string;
-  expiresAt?: string;
 };
 
 const AUTH_STORAGE_KEY = "sope_auth";
@@ -48,6 +46,10 @@ export async function requestPasswordReset(email: string) {
 
 export async function resetPassword(token: string, password: string, confirmPassword: string) {
   return postText("/api/auth/reset-password", { token, password, confirmPassword });
+}
+
+export async function verifyEmail(token: string) {
+  return postText("/api/auth/verify-email", { token });
 }
 
 export async function getGoogleClientId() {

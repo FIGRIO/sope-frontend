@@ -6,7 +6,6 @@ import { FormEvent, useState } from "react";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [resetLink, setResetLink] = useState("");
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -14,7 +13,6 @@ export default function ForgotPasswordPage() {
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setMessage("");
-    setResetLink("");
     setErrorMessage("");
 
     const trimmedEmail = email.trim();
@@ -25,9 +23,8 @@ export default function ForgotPasswordPage() {
 
     setIsSubmitting(true);
     try {
-      const response = await requestPasswordReset(trimmedEmail);
-      setMessage("Nếu email tồn tại, liên kết đặt lại mật khẩu đã được tạo.");
-      setResetLink(response.resetLink ?? "");
+      await requestPasswordReset(trimmedEmail);
+      setMessage("Nếu email tồn tại, một email đặt lại mật khẩu đã được gửi tới hộp thư của bạn.");
     } catch (error) {
       setErrorMessage(getApiErrorMessage(error));
     } finally {
@@ -82,11 +79,6 @@ export default function ForgotPasswordPage() {
             {message && (
               <div className="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-700">
                 <p>{message}</p>
-                {resetLink && (
-                  <Link href={resetLink} className="mt-2 block font-bold text-[#EE4D2D] hover:underline">
-                    Mở trang đặt lại mật khẩu
-                  </Link>
-                )}
               </div>
             )}
 

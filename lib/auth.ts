@@ -23,14 +23,20 @@ export type PasswordResetResponse = {
 const AUTH_STORAGE_KEY = "sope_auth";
 const TOKEN_STORAGE_KEY = "sope_token";
 
-const PUBLIC_API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  process.env.NEXT_PUBLIC_API_BASE_URL ??
-  "http://localhost:8080";
+const normalizeApiBaseUrl = (value: string) =>
+  value.trim().replace(/\/+$/, "");
+
+const PUBLIC_API_BASE_URL = normalizeApiBaseUrl(
+  process.env.NEXT_PUBLIC_API_URL?.trim() ||
+    process.env.NEXT_PUBLIC_API_BASE_URL?.trim() ||
+    "http://localhost:8080",
+);
 
 export const API_BASE_URL =
   typeof window === "undefined"
-    ? process.env.INTERNAL_API_URL ?? PUBLIC_API_BASE_URL
+    ? normalizeApiBaseUrl(
+        process.env.INTERNAL_API_URL?.trim() || PUBLIC_API_BASE_URL,
+      )
     : PUBLIC_API_BASE_URL;
 
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";

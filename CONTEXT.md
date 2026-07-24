@@ -1,5 +1,14 @@
 # CONTEXT.md - Bộ nhớ riêng cho sope-frontend
 
+## Cập nhật 2026-07-24 – Phân biệt lỗi CORS/mạng với sản phẩm không tồn tại
+
+- Route: `/products/[id]`; API: GET product, reviews và coupon từ Spring Boot.
+- `lib/auth.ts` tiếp tục ưu tiên `NEXT_PUBLIC_API_URL`, fallback `NEXT_PUBLIC_API_BASE_URL`; Server Component ưu tiên `INTERNAL_API_URL`. URL được trim và bỏ dấu `/` cuối, nhưng biến deploy vẫn phải là domain gốc không có `/api`.
+- `ProductClient.tsx` chỉ hiển thị “Không tìm thấy sản phẩm” khi backend trả đúng HTTP 404. Lỗi CORS/mạng, 401/403/5xx và JSON lỗi hiển thị trạng thái “Không thể tải sản phẩm” cùng thông báo phù hợp.
+- Production tại thời điểm kiểm tra: bundle dùng `https://sope-backend-wezh.onrender.com`, không dùng localhost; `/products/3` và ba API liên quan đều HTTP 200.
+- Kiểm tra local: ESLint hai file sửa đạt 0 lỗi; `npm ci` và `npm run build` trong bản sao source sạch pass TypeScript và đủ 25 route.
+- Cấu hình/redeploy/kiểm tra đầy đủ ở `../CORS_DEPLOYMENT_FIX.md`. Không thay đổi API contract, auth, payment hoặc route.
+
 ## Cập nhật 2026-07-23 – Chuẩn bị deploy frontend
 
 - `Dockerfile` tiếp tục dùng Next.js standalone/non-root và bổ sung healthcheck HTTP cổng 3000.

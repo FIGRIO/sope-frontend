@@ -292,6 +292,8 @@ export default function ProductClient() {
 
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [productLoadError, setProductLoadError] = useState("");
+  const [isProductNotFound, setIsProductNotFound] = useState(false);
 
   const [isSpecsModalOpen, setIsSpecsModalOpen] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -338,6 +340,8 @@ export default function ProductClient() {
 
     const loadProduct = async () => {
       setIsLoading(true);
+      setProductLoadError("");
+      setIsProductNotFound(false);
       try {
         const response = await fetch(
           `${API_BASE_URL}/api/products/${productId}`,
@@ -345,8 +349,13 @@ export default function ProductClient() {
             signal: controller.signal,
           },
         );
+        if (response.status === 404) {
+          setProduct(null);
+          setIsProductNotFound(true);
+          return;
+        }
         if (!response.ok) {
-          throw new Error("Không tìm thấy sản phẩm");
+          throw new Error(await readPublicApiError(response));
         }
 
         const rawData = await parseJsonResponse<ProductApiResponse>(response);
@@ -437,6 +446,14 @@ export default function ProductClient() {
           loadError instanceof Error ? loadError.message : "Lỗi không xác định",
         );
         setProduct(null);
+        setIsProductNotFound(false);
+        setProductLoadError(
+          loadError instanceof TypeError
+            ? "Không thể kết nối tới máy chủ. Vui lòng kiểm tra kết nối mạng hoặc cấu hình CORS rồi thử lại."
+            : loadError instanceof Error
+              ? loadError.message
+              : "Không thể tải sản phẩm. Vui lòng thử lại.",
+        );
       } finally {
         if (!controller.signal.aborted) setIsLoading(false);
       }
@@ -631,10 +648,15 @@ export default function ProductClient() {
         <Header />
         <div className="max-w-7xl mx-auto px-4 py-20 flex flex-col items-center">
           <h1 className="text-2xl font-bold text-gray-800">
-            Không tìm thấy sản phẩm
+            {isProductNotFound
+              ? "Không tìm thấy sản phẩm"
+              : "Không thể tải sản phẩm"}
           </h1>
           <p className="text-gray-500 mt-2">
-            Sản phẩm này không tồn tại hoặc đã bị xóa.
+            {isProductNotFound
+              ? "Sản phẩm này không tồn tại hoặc đã bị xóa."
+              : productLoadError ||
+                "Máy chủ chưa phản hồi. Vui lòng tải lại trang sau ít phút."}
           </p>
         </div>
       </div>

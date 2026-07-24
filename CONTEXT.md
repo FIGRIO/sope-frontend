@@ -1,5 +1,25 @@
 # CONTEXT.md - Bộ nhớ riêng cho sope-frontend
 
+## Cập nhật 2026-07-24 – Bổ sung mô tả, cấu trúc và link production
+
+- `README.md` mô tả đầy đủ chức năng khách hàng/admin/PWA/chatbot, cây App
+  Router thực tế và trách nhiệm của `app`, `components`, `hooks`, `lib`,
+  `public`, `tests`.
+- Thêm bảng link production của toàn hệ thống; website chính:
+  `https://sope-frontend-self.vercel.app/`.
+- Chỉ cập nhật tài liệu, không đổi route, component, API hoặc runtime.
+
+## Cập nhật 2026-07-24 – README hướng dẫn chạy dự án
+
+- Thay README mặc định của Create Next App bằng hướng dẫn SOPE thực tế:
+  Node.js 22, `npm ci`, `.env.local`, chạy dev, test/lint/build, Docker, Vercel
+  và xử lý lỗi CORS/port/build-time environment.
+- Ghi rõ `NEXT_PUBLIC_API_URL` là domain gốc Spring Boot không có `/api`,
+  `INTERNAL_API_URL` là tùy chọn server-side và frontend không gọi FastAPI trực
+  tiếp.
+- Hướng dẫn smoke test các route chính và chatbot qua `POST /api/chat` của
+  backend; không thay đổi code/runtime hay API contract.
+
 ## Cập nhật 2026-07-24 – Cô lập recommendation và khóa duplicate chat
 
 - `ProductClient.tsx` tải product chính độc lập với `SimilarProducts`.

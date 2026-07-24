@@ -1,5 +1,19 @@
 # CONTEXT.md - Bộ nhớ riêng cho sope-frontend
 
+## Cập nhật 2026-07-24 – Cô lập recommendation và khóa duplicate chat
+
+- `ProductClient.tsx` tải product chính độc lập với `SimilarProducts`.
+  Recommendation có `AbortController`, reset loading trong `finally` và chuyển
+  mọi lỗi/non-JSON/non-2xx thành danh sách rỗng; block tương tự tự ẩn khi rỗng.
+- `ChatbotWidget.tsx` dùng ref in-flight làm khóa đồng bộ ngay trước request,
+  nên click/Enter nhanh không tạo request trùng; ref và loading luôn reset trong
+  `finally`, lịch sử chat cũ được giữ nguyên khi lỗi.
+- Browser vẫn chỉ gọi `${NEXT_PUBLIC_API_URL}/api/chat` và endpoint
+  recommendation của Spring Boot, không gọi domain FastAPI trực tiếp.
+- `npm test` chạy kiểm tra kiến trúc/contract trong
+  `tests/chatbot-recommendation-isolation.test.mjs`; 4 test pass.
+  `npm run lint` đạt 0 error (còn warning cũ) và `npm run build` pass.
+
 ## Cập nhật 2026-07-24 – Phân biệt lỗi CORS/mạng với sản phẩm không tồn tại
 
 - Route: `/products/[id]`; API: GET product, reviews và coupon từ Spring Boot.

@@ -28,6 +28,7 @@ export default function ChatbotWidget() {
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messageSequenceRef = useRef(0);
+    const requestInFlightRef = useRef(false);
 
     const nextMessageId = (sender: Message['sender'] | 'error') => {
         messageSequenceRef.current += 1;
@@ -42,7 +43,8 @@ export default function ChatbotWidget() {
     // Hàm gọi API xử lý tin nhắn
     const sendMessage = async (messageText?: string) => {
         const trimmedInput = (messageText ?? inputValue).trim();
-        if (!trimmedInput || isLoading) return;
+        if (!trimmedInput || requestInFlightRef.current) return;
+        requestInFlightRef.current = true;
 
         const currentTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -101,6 +103,7 @@ export default function ChatbotWidget() {
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             }]);
         } finally {
+            requestInFlightRef.current = false;
             setIsLoading(false);
         }
     };

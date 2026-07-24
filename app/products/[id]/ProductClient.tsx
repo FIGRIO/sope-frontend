@@ -180,40 +180,41 @@ const SimilarProducts = ({ productId }: { productId: string | number }) => {
   useEffect(() => {
     if (!productId) return;
     let isMounted = true;
+    const controller = new AbortController();
 
     const fetchRecommendations = async () => {
+      setSimilar([]);
+      setIsLoading(true);
       try {
         const res = await fetch(
           `${API_BASE_URL}/api/recommendations/content-similar/${productId}`,
+          { signal: controller.signal },
         );
         if (!res.ok) {
-          if (isMounted) {
-            setSimilar([]);
-            setIsLoading(false);
-          }
           return;
         }
         const data = await parseJsonResponse<unknown>(res);
         if (isMounted) {
-          if (Array.isArray(data)) {
-            setSimilar(data);
-          }
-          setIsLoading(false);
+          setSimilar(Array.isArray(data) ? data : []);
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
         if (isMounted) {
           console.warn(
             "Không thể tải sản phẩm tương tự:",
             err instanceof Error ? err.message : "Lỗi không xác định",
           );
-          setIsLoading(false);
+          setSimilar([]);
         }
+      } finally {
+        if (isMounted) setIsLoading(false);
       }
     };
 
-    fetchRecommendations();
+    void fetchRecommendations();
     return () => {
       isMounted = false;
+      controller.abort();
     };
   }, [productId]);
 

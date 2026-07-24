@@ -32,6 +32,20 @@ Các service production:
 | Spring Boot API | [https://sope-backend-wezh.onrender.com/](https://sope-backend-wezh.onrender.com/) |
 | FastAPI Chatbot | [https://chatbot-tmdt.onrender.com/](https://chatbot-tmdt.onrender.com/) |
 
+## Tài khoản admin mặc định
+
+Đăng nhập tại [trang đăng nhập](https://sope-frontend-self.vercel.app/login),
+sau đó mở `/admin`:
+
+| Thông tin | Giá trị |
+|---|---|
+| Tên đăng nhập | `admin` |
+| Mật khẩu | `admin123` |
+
+Tài khoản này chỉ nên dùng cho local/demo. Production phải đặt
+`APP_ADMIN_PASSWORD` mạnh ở backend và không đưa mật khẩu production thật vào
+biến `NEXT_PUBLIC_*`, source code hoặc README.
+
 ## Cấu trúc dự án
 
 ```text

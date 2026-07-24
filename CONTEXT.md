@@ -1,5 +1,12 @@
 # CONTEXT.md - Bộ nhớ riêng cho sope-frontend
 
+## Cập nhật 2026-07-24 – Bổ sung tài khoản admin demo vào README
+
+- `README.md` đã ghi tài khoản đăng nhập admin mặc định: username `admin`, password `admin123`.
+- Trang đăng nhập là `/login` và trang quản trị là `/admin`.
+- Đây chỉ là thông tin dành cho môi trường local/demo; khi triển khai production phải đổi `APP_ADMIN_PASSWORD` và không đưa mật khẩu vào biến `NEXT_PUBLIC_*`, mã nguồn hoặc tài liệu công khai.
+- Thay đổi lần này chỉ cập nhật tài liệu, không thay đổi mã nguồn hay biến môi trường.
+
 ## Cập nhật 2026-07-24 – Bổ sung mô tả, cấu trúc và link production
 
 - `README.md` mô tả đầy đủ chức năng khách hàng/admin/PWA/chatbot, cây App
